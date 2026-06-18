@@ -348,6 +348,11 @@ function applyLang(){
   // valid + project defaults if untouched
   const v=document.getElementById('m_valid'); if(v.value===''||v.value===T[other].validVal) v.value=T[lang].validVal;
   const p=document.getElementById('m_proj'); if(p.value===''||p.value===T[other].projVal||p.value==='홈페이지 제작') p.value=T[lang].projVal;
+  // cycle select options: update display text without losing user's selection
+  document.querySelectorAll('select.r-freq').forEach(sel=>{
+    const cur=sel.value;
+    sel.innerHTML=['once','month','year'].map(v=>`<option value="${v}" ${v===cur?'selected':''}>${T[lang]['freq_'+v]}</option>`).join('');
+  });
 }
 
 // init

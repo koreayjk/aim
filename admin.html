@@ -172,7 +172,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 <script>
 const SUPABASE_URL = "https://lnrugwschlcesaaertgc.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxucnVnd3NjaGxjZXNhYWVydGdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0ODczNzgsImV4cCI6MjA5NjA2MzM3OH0.JTpEUF2TO2NcuS1ak04hqd2IYfZ2bYn40L3EaLIwVGw";
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+// 통합 Supabase 프로젝트 내에서 aim 전용 스키마를 사용해 다른 사이트와 데이터를 분리합니다.
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'aim' } });
 
 const STATUSES=["대기","견적발송","검토완료","제작중","제작완료","컨펌","확정"];
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};

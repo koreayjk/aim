@@ -67,6 +67,8 @@ textarea{resize:vertical;min-height:88px}
 
 .collapsible{display:block}
 .collapsible.hidden{display:none}
+.type-hide{display:none!important}
+.tysel{grid-template-columns:1fr 1fr!important}
 .note{background:var(--soft);border:1px solid rgba(31,63,115,.2);border-radius:12px;padding:14px 16px;color:var(--navy);font-size:.9rem;font-weight:500;margin-bottom:20px}
 
 .submit-row{text-align:center;margin-top:28px}
@@ -103,15 +105,44 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
 
 <main>
   <section class="hero wrap">
-    <span class="eyebrow">홈페이지 제작 의뢰</span>
-    <h1>함께 만들 홈페이지, 들려주세요</h1>
-    <p>모든 칸을 다 채우지 않으셔도 괜찮습니다. 아는 만큼, 떠오르는 대로 적어 주시면 정성껏 만들어 드립니다.</p>
+    <span class="eyebrow">제작 의뢰</span>
+    <h1>무엇을 만들어 드릴까요?</h1>
+    <p>홈페이지·앱·프로그램·홍보물까지. 먼저 종류를 골라 주시면, 거기에 맞는 질문만 보여 드립니다. 모든 칸을 다 채우지 않으셔도 괜찮습니다.</p>
   </section>
 
   <form class="wrap" id="reqForm" autocomplete="on">
 
-    <!-- 0. 제작 방식 분기 -->
+    <!-- 유형 선택 (항상) -->
     <div class="card">
+      <div class="sec-k">시작하기</div>
+      <h2>어떤 의뢰인가요?</h2>
+      <div class="modes tysel" id="types">
+        <div class="mode" data-type="website" tabindex="0">
+          <span class="num">01</span>
+          <div class="mt">홈페이지</div>
+          <div class="md">기업·교회·브랜드 웹사이트, 랜딩 페이지.</div>
+        </div>
+        <div class="mode" data-type="app" tabindex="0">
+          <span class="num">02</span>
+          <div class="mt">어플 (앱)</div>
+          <div class="md">모바일·웹 앱 기획과 개발.</div>
+        </div>
+        <div class="mode" data-type="program" tabindex="0">
+          <span class="num">03</span>
+          <div class="mt">프로그램</div>
+          <div class="md">업무 자동화·맞춤 시스템·소프트웨어.</div>
+        </div>
+        <div class="mode" data-type="promo" tabindex="0">
+          <span class="num">04</span>
+          <div class="mt">홍보물</div>
+          <div class="md">포스터·브로셔·팸플릿·명함 등 인쇄·홍보물.</div>
+        </div>
+      </div>
+      <input type="hidden" id="request_type" name="request_type" value="">
+    </div>
+
+    <!-- 0. 제작 방식 분기 (홈페이지) -->
+    <div class="card type-hide" data-types="website">
       <div class="sec-k">시작하기</div>
       <h2>어떻게 만들어 드릴까요?</h2>
       <div class="modes" id="modes">
@@ -144,7 +175,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
     </div>
 
     <!-- 1. 기본 정보 (항상) -->
-    <div class="card">
+    <div class="card type-hide" data-types="all">
       <div class="sec-k">Basic</div>
       <h2>기본 정보</h2>
       <div class="field"><label class="lab">단체 / 사업체명 <span class="req">*</span></label><input type="text" name="org_name" required></div>
@@ -155,7 +186,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
     </div>
 
     <!-- 2. 목적 (similar/new) -->
-    <div class="card collapsible detail">
+    <div class="card collapsible detail type-hide" data-types="website">
       <div class="sec-k">Purpose</div>
       <h2>홈페이지의 목적</h2>
       <div class="field">
@@ -173,7 +204,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
     </div>
 
     <!-- 3. 메뉴 (similar/new) -->
-    <div class="card collapsible detail">
+    <div class="card collapsible detail type-hide" data-types="website">
       <div class="sec-k">Pages</div>
       <h2>페이지(메뉴) 구성</h2>
       <div class="field">
@@ -194,7 +225,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
     </div>
 
     <!-- 4. 자료 (similar/new) -->
-    <div class="card collapsible detail">
+    <div class="card collapsible detail type-hide" data-types="website">
       <div class="sec-k">Content</div>
       <h2>준비해 주실 자료</h2>
       <div class="field">
@@ -211,8 +242,112 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
       <div class="field"><label class="lab">주소 · 운영시간 · 대표 연락처</label><textarea name="contact_info"></textarea></div>
     </div>
 
-    <!-- 5. 디자인 (항상) -->
-    <div class="card">
+    <!-- ===== 어플(앱) ===== -->
+    <div class="card type-hide" data-types="app">
+      <div class="sec-k">App</div>
+      <h2>어떤 앱인가요?</h2>
+      <div class="field">
+        <label class="lab">플랫폼 <span class="hint">(여러 개 선택 가능)</span></label>
+        <div class="checks" data-name="app_platform">
+          <label class="chk"><input type="checkbox" value="iOS(아이폰)">iOS(아이폰)</label>
+          <label class="chk"><input type="checkbox" value="Android(안드로이드)">Android(안드로이드)</label>
+          <label class="chk"><input type="checkbox" value="둘 다">둘 다</label>
+          <label class="chk"><input type="checkbox" value="웹앱(브라우저)">웹앱(브라우저)</label>
+          <label class="chk"><input type="checkbox" value="아직 모름">아직 모름</label>
+        </div>
+      </div>
+      <div class="field"><label class="lab">어떤 앱인가요? <span class="hint">(예: 쇼핑, 교육, 예약, 커뮤니티)</span></label><input type="text" name="app_kind"></div>
+      <div class="field"><label class="lab">참고하고 싶은 앱 <span class="hint">(예: 배민 비슷한 주문 앱)</span></label><input type="text" name="app_ref"></div>
+      <div class="field">
+        <label class="lab">핵심 기능 <span class="hint">(여러 개 선택 가능)</span></label>
+        <div class="checks" data-name="app_features">
+          <label class="chk"><input type="checkbox" value="회원가입·로그인">회원가입·로그인</label>
+          <label class="chk"><input type="checkbox" value="결제">결제</label>
+          <label class="chk"><input type="checkbox" value="푸시 알림">푸시 알림</label>
+          <label class="chk"><input type="checkbox" value="지도·위치">지도·위치</label>
+          <label class="chk"><input type="checkbox" value="채팅·메시지">채팅·메시지</label>
+          <label class="chk"><input type="checkbox" value="게시판·피드">게시판·피드</label>
+          <label class="chk"><input type="checkbox" value="사진·영상 업로드">사진·영상 업로드</label>
+          <label class="chk"><input type="checkbox" value="예약·신청">예약·신청</label>
+          <label class="chk"><input type="checkbox" value="관리자 페이지">관리자 페이지</label>
+          <label class="chk"><input type="checkbox" value="통계·리포트">통계·리포트</label>
+        </div>
+      </div>
+      <div class="field"><label class="lab">예상 사용자 규모 <span class="hint">(예: 100명, 1만명)</span></label><input type="text" name="app_users"></div>
+    </div>
+
+    <!-- ===== 프로그램 ===== -->
+    <div class="card type-hide" data-types="program">
+      <div class="sec-k">Software</div>
+      <h2>어떤 프로그램인가요?</h2>
+      <div class="field">
+        <label class="lab">형태</label>
+        <div class="checks" data-name="prog_form" data-single="1">
+          <label class="chk"><input type="checkbox" value="웹 시스템">웹 시스템</label>
+          <label class="chk"><input type="checkbox" value="데스크톱 프로그램">데스크톱 프로그램</label>
+          <label class="chk"><input type="checkbox" value="업무 자동화(매크로·봇)">업무 자동화</label>
+          <label class="chk"><input type="checkbox" value="기타">기타</label>
+        </div>
+      </div>
+      <div class="field"><label class="lab">어떤 업무를 처리하고 싶으신가요? <span class="hint">(지금은 어떻게 하고 계신지도 적어 주세요)</span></label><textarea name="prog_task"></textarea></div>
+      <div class="field">
+        <label class="lab">주요 기능 <span class="hint">(여러 개 선택 가능)</span></label>
+        <div class="checks" data-name="prog_features">
+          <label class="chk"><input type="checkbox" value="데이터 입력·관리">데이터 입력·관리</label>
+          <label class="chk"><input type="checkbox" value="자동화">자동화</label>
+          <label class="chk"><input type="checkbox" value="엑셀·문서 처리">엑셀·문서 처리</label>
+          <label class="chk"><input type="checkbox" value="통계·리포트">통계·리포트</label>
+          <label class="chk"><input type="checkbox" value="결제·정산">결제·정산</label>
+          <label class="chk"><input type="checkbox" value="재고·주문 관리">재고·주문 관리</label>
+          <label class="chk"><input type="checkbox" value="고객·회원 관리">고객·회원 관리</label>
+          <label class="chk"><input type="checkbox" value="알림(메일·문자)">알림(메일·문자)</label>
+          <label class="chk"><input type="checkbox" value="권한·계정 관리">권한·계정 관리</label>
+        </div>
+      </div>
+      <div class="field"><label class="lab">사용 인원 <span class="hint">(예: 나 혼자, 직원 5명)</span></label><input type="text" name="prog_users"></div>
+      <div class="field"><label class="lab">연동이 필요한 것 <span class="hint">(예: 엑셀, 카카오, 기존 DB, 결제사)</span></label><input type="text" name="prog_integrate"></div>
+      <div class="field"><label class="lab">데이터 규모 <span class="hint">(예: 월 1천 건, 고객 5만 명)</span></label><input type="text" name="prog_scale"></div>
+    </div>
+
+    <!-- ===== 홍보물 ===== -->
+    <div class="card type-hide" data-types="promo">
+      <div class="sec-k">Print</div>
+      <h2>어떤 홍보물인가요?</h2>
+      <div class="field">
+        <label class="lab">종류 <span class="hint">(여러 개 선택 가능)</span></label>
+        <div class="checks" data-name="promo_kind">
+          <label class="chk"><input type="checkbox" value="포스터">포스터</label>
+          <label class="chk"><input type="checkbox" value="브로셔·리플렛">브로셔·리플렛</label>
+          <label class="chk"><input type="checkbox" value="팸플릿">팸플릿</label>
+          <label class="chk"><input type="checkbox" value="명함">명함</label>
+          <label class="chk"><input type="checkbox" value="배너·현수막">배너·현수막</label>
+          <label class="chk"><input type="checkbox" value="메뉴판">메뉴판</label>
+          <label class="chk"><input type="checkbox" value="전단지">전단지</label>
+          <label class="chk"><input type="checkbox" value="로고">로고</label>
+          <label class="chk"><input type="checkbox" value="굿즈·기타">굿즈·기타</label>
+        </div>
+      </div>
+      <div class="field"><label class="lab">수량 <span class="hint">(예: 100장, 1종)</span></label><input type="text" name="promo_qty"></div>
+      <div class="field"><label class="lab">규격 · 크기 <span class="hint">(예: A4, A3, 명함 표준)</span></label><input type="text" name="promo_size"></div>
+      <div class="field">
+        <label class="lab">인쇄까지 필요하신가요?</label>
+        <div class="checks" data-name="promo_print" data-single="1">
+          <label class="chk"><input type="checkbox" value="디자인만">디자인만</label>
+          <label class="chk"><input type="checkbox" value="인쇄까지 필요">인쇄까지 필요</label>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lab">문구 · 내용이 준비되어 있나요?</label>
+        <div class="checks" data-name="promo_content" data-single="1">
+          <label class="chk"><input type="checkbox" value="준비되어 있음">준비되어 있음</label>
+          <label class="chk"><input type="checkbox" value="도움이 필요함">도움이 필요함</label>
+        </div>
+      </div>
+      <div class="field"><label class="lab">어디에 쓰시나요? <span class="hint">(예: 매장 비치, 온라인·SNS, 행사)</span></label><input type="text" name="promo_use"></div>
+    </div>
+
+    <!-- 5. 디자인 (홈페이지·앱·홍보물) -->
+    <div class="card type-hide" data-types="website app promo">
       <div class="sec-k">Look &amp; Feel</div>
       <h2>디자인 · 분위기</h2>
       <div class="field">
@@ -226,11 +361,11 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
         </div>
       </div>
       <div class="field"><label class="lab">좋아하는 색 / 피하고 싶은 색</label><input type="text" name="colors"></div>
-      <div class="field"><label class="lab">참고하고 싶은 홈페이지 주소 <span class="hint">(마음에 드는 곳 1~2개)</span></label><textarea name="ref_sites" style="min-height:60px"></textarea></div>
+      <div class="field"><label class="lab">참고하고 싶은 디자인 / 사이트 <span class="hint">(마음에 드는 곳 1~2개)</span></label><textarea name="ref_sites" style="min-height:60px"></textarea></div>
     </div>
 
     <!-- 6. 기능 (similar/new) -->
-    <div class="card collapsible detail">
+    <div class="card collapsible detail type-hide" data-types="website">
       <div class="sec-k">Features</div>
       <h2>필요한 기능</h2>
       <div class="field">
@@ -250,7 +385,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
     </div>
 
     <!-- 7. 도메인/운영 (similar/new) -->
-    <div class="card collapsible detail">
+    <div class="card collapsible detail type-hide" data-types="website">
       <div class="sec-k">Domain</div>
       <h2>도메인 · 운영</h2>
       <div class="field">
@@ -273,7 +408,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
     </div>
 
     <!-- 8. 일정/예산 (항상) -->
-    <div class="card">
+    <div class="card type-hide" data-types="all">
       <div class="sec-k">Timeline</div>
       <h2>일정 · 예산</h2>
       <div class="field"><label class="lab">희망 완료 시기</label><input type="text" name="timeline" placeholder="예: 한 달 안에, 급하지 않음"></div>
@@ -281,7 +416,7 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
     </div>
 
     <!-- 9. 기타 (항상) -->
-    <div class="card">
+    <div class="card type-hide" data-types="all">
       <div class="sec-k">Anything Else</div>
       <h2>기타 요청사항</h2>
       <div class="field"><textarea name="etc" placeholder="작은 바람이라도 좋습니다."></textarea></div>
@@ -311,7 +446,7 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // 통합 Supabase 프로젝트 내에서 aim 전용 스키마를 사용해 다른 사이트와 데이터를 분리합니다.
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'aim' } });
 
-// ---- mode branching ----
+// ---- mode branching (홈페이지 전용) ----
 let currentMode = "";
 const modesEl = document.getElementById('modes');
 const refField = document.getElementById('refUrlField');
@@ -338,6 +473,29 @@ modesEl.querySelectorAll('.mode').forEach(el=>{
   el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();applyMode(el.dataset.mode);} });
 });
 
+// ---- 유형(무엇을 만들까) 분기 ----
+let currentType = "";
+const TYPE_LABEL = { website:'홈페이지', app:'어플', program:'프로그램', promo:'홍보물' };
+const typesEl = document.getElementById('types');
+const typeCards = document.querySelectorAll('[data-types]');
+
+function applyType(t){
+  currentType = t;
+  document.getElementById('request_type').value = t;
+  typesEl.querySelectorAll('.mode').forEach(el=>el.classList.toggle('on', el.dataset.type===t));
+  typeCards.forEach(card=>{
+    const list = card.dataset.types.split(/\s+/);
+    const show = list.includes('all') || list.includes(t);
+    card.classList.toggle('type-hide', !show);
+  });
+  // 홈페이지면 제작방식(mode)에 따른 상세 카드 노출 재적용
+  if(t==='website') applyMode(currentMode);
+}
+typesEl.querySelectorAll('.mode').forEach(el=>{
+  el.addEventListener('click', ()=>applyType(el.dataset.type));
+  el.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){e.preventDefault();applyType(el.dataset.type);} });
+});
+
 // ---- checkbox chip visual + single-select groups ----
 document.querySelectorAll('.checks').forEach(group=>{
   const single = group.dataset.single==='1';
@@ -360,38 +518,73 @@ function collectChecks(name){
 const form=document.getElementById('reqForm');
 const msg=document.getElementById('msg');
 const btn=document.getElementById('submitBtn');
+function val(name){ const el=form.elements[name]; return el?String(el.value).trim():''; }
+
+// 유형별 상세 답변을 사람이 읽기 좋은 텍스트로 모음 (details 컬럼에 저장)
+function buildDetails(){
+  const L=[]; const add=(k,v)=>{ if(v) L.push(k+': '+v); };
+  if(currentType==='app'){
+    add('플랫폼', collectChecks('app_platform'));
+    add('앱 종류', val('app_kind'));
+    add('참고 앱', val('app_ref'));
+    add('핵심 기능', collectChecks('app_features'));
+    add('예상 사용자', val('app_users'));
+  } else if(currentType==='program'){
+    add('형태', collectChecks('prog_form'));
+    add('처리 업무', val('prog_task'));
+    add('주요 기능', collectChecks('prog_features'));
+    add('사용 인원', val('prog_users'));
+    add('연동 필요', val('prog_integrate'));
+    add('데이터 규모', val('prog_scale'));
+  } else if(currentType==='promo'){
+    add('종류', collectChecks('promo_kind'));
+    add('수량', val('promo_qty'));
+    add('규격·크기', val('promo_size'));
+    add('인쇄 여부', collectChecks('promo_print'));
+    add('문구·내용', collectChecks('promo_content'));
+    add('사용처', val('promo_use'));
+  }
+  return L.join('\n');
+}
+
 form.addEventListener('submit', async (e)=>{
   e.preventDefault();
   msg.textContent=""; msg.className="msg";
-  if(!currentMode){ msg.textContent="먼저 '어떻게 만들어 드릴까요?'에서 하나를 골라 주세요."; msg.className="msg err"; document.getElementById('modes').scrollIntoView({behavior:'smooth'}); return; }
+  if(!currentType){ msg.textContent="먼저 '어떤 의뢰인가요?'에서 종류를 골라 주세요."; msg.className="msg err"; document.getElementById('types').scrollIntoView({behavior:'smooth'}); return; }
+  if(currentType==='website' && !currentMode){ msg.textContent="'어떻게 만들어 드릴까요?'에서 하나를 골라 주세요."; msg.className="msg err"; document.getElementById('modes').scrollIntoView({behavior:'smooth'}); return; }
   const f=form;
   const row={
     status:'대기',
-    mode: currentMode,
+    request_type: TYPE_LABEL[currentType] || currentType,
     org_name: f.org_name.value.trim(),
     contact_name: f.contact_name.value.trim(),
     phone: f.phone.value.trim(),
     email: f.email.value.trim(),
     field: f.field.value.trim(),
-    ref_url: f.ref_url.value.trim(),
-    purpose: collectChecks('purpose'),
-    audience: f.audience.value.trim(),
-    goal: f.goal.value.trim(),
-    pages: collectChecks('pages'),
-    assets: collectChecks('assets'),
-    intro: f.intro.value.trim(),
-    contact_info: f.contact_info.value.trim(),
     mood: collectChecks('mood'),
-    colors: f.colors.value.trim(),
-    ref_sites: f.ref_sites.value.trim(),
-    features: collectChecks('features'),
-    domain: collectChecks('domain'),
-    domain_want: f.domain_want.value.trim(),
-    edit_pref: collectChecks('edit_pref'),
-    timeline: f.timeline.value.trim(),
-    budget: f.budget.value.trim(),
+    colors: val('colors'),
+    ref_sites: val('ref_sites'),
+    timeline: val('timeline'),
+    budget: val('budget'),
     etc: f.etc.value.trim()
   };
+  if(currentType==='website'){
+    row.mode = currentMode;
+    row.ref_url = val('ref_url');
+    row.purpose = collectChecks('purpose');
+    row.audience = val('audience');
+    row.goal = val('goal');
+    row.pages = collectChecks('pages');
+    row.assets = collectChecks('assets');
+    row.intro = val('intro');
+    row.contact_info = val('contact_info');
+    row.features = collectChecks('features');
+    row.domain = collectChecks('domain');
+    row.domain_want = val('domain_want');
+    row.edit_pref = collectChecks('edit_pref');
+  } else {
+    row.details = buildDetails();
+  }
   btn.disabled=true; btn.textContent="보내는 중…";
   try{
     const { error } = await sb.from('requests').insert([row]);

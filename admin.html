@@ -242,8 +242,8 @@ function renderList(){
     '<div class="lrow head"><div>#</div><div>단체명</div><div class="hide-m">방식</div><div class="hide-m">담당자</div><div class="hide-m">마감</div><div>상태</div></div>'+
     rows.map((r,i)=>`<div class="lrow" data-id="${r.id}">
       <div class="idx">${i+1}</div>
-      <div class="org">${esc(r.org_name)||'(이름없음)'} ${srcBadge(r)}<div class="dim" style="font-weight:400;font-size:.78rem">${fmtDate(r.created_at)}</div></div>
-      <div class="hide-m dim">${MODE_LABEL[r.mode]||r.mode||'-'}</div>
+      <div class="org">${esc(r.org_name)||'(이름없음)'} ${srcBadge(r)}<div class="dim" style="font-weight:400;font-size:.78rem">${r.request_type?esc(r.request_type)+' · ':''}${fmtDate(r.created_at)}</div></div>
+      <div class="hide-m dim">${MODE_LABEL[r.mode]||r.mode||esc(r.request_type)||'-'}</div>
       <div class="hide-m">${r.assignee?esc(r.assignee):'<span class="dim">미지정</span>'}</div>
       <div class="hide-m dim">${r.due_date||'-'}</div>
       <div><span class="badge st-${esc(r.status||'대기')}">${esc(r.status||'대기')}</span></div>
@@ -294,7 +294,7 @@ function openDetail(id){
   sheet.innerHTML=`
     <div class="mhead">
       <div><h2>${esc(r.org_name)||'(이름없음)'}</h2>
-        <div class="sub">${srcBadge(r)} ${MODE_LABEL[r.mode]||r.mode||''} · 접수 ${fmtDate(r.created_at)}</div></div>
+        <div class="sub">${srcBadge(r)} ${esc(r.request_type||'홈페이지')}${r.mode?(' · '+(MODE_LABEL[r.mode]||r.mode)):''} · 접수 ${fmtDate(r.created_at)}</div></div>
       <button class="x" id="mX">&times;</button>
     </div>
     <div class="mbody">
@@ -316,7 +316,8 @@ function openDetail(id){
         <div class="cl-add"><input id="clInput" placeholder="할 일 추가 후 Enter"><button class="btn-s" id="clAdd">추가</button></div>
       </div>
       <div class="detail-data">
-        <div class="dgrp"><div class="gk">의뢰처 정보</div>${field('담당자(의뢰처)',r.contact_name)}${field('전화',r.phone)}${field('이메일',r.email)}${field('분야',r.field)}</div>
+        <div class="dgrp"><div class="gk">의뢰처 정보</div>${field('유형',r.request_type)}${field('담당자(의뢰처)',r.contact_name)}${field('전화',r.phone)}${field('이메일',r.email)}${field('분야',r.field)}</div>
+        ${(r.details)?`<div class="dgrp"><div class="gk">${esc(r.request_type||'')} 상세</div><div class="drow"><div class="v" style="white-space:pre-line">${esc(r.details)}</div></div></div>`:''}
         ${(r.ref_url)?`<div class="dgrp"><div class="gk">${r.mode==='keep'?'기존 홈페이지':'참고 홈페이지'}</div>${field('주소',r.ref_url)}</div>`:''}
         ${(r.purpose||r.audience||r.goal)?`<div class="dgrp"><div class="gk">목적</div>${field('이유',r.purpose)}${field('방문자',r.audience)}${field('바라는 행동',r.goal)}</div>`:''}
         ${(r.pages)?`<div class="dgrp"><div class="gk">메뉴</div>${field('필요 메뉴',r.pages)}</div>`:''}
@@ -416,11 +417,12 @@ document.getElementById('addSave').addEventListener('click',async()=>{
 });
 
 function buildText(r){
-  const L=[]; L.push('[홈페이지 제작 의뢰]');
-  L.push('제작 방식: '+(MODE_LABEL[r.mode]||r.mode||''));
+  const L=[]; L.push('['+(r.request_type||'홈페이지')+' 제작 의뢰]');
+  if(r.mode) L.push('제작 방식: '+(MODE_LABEL[r.mode]||r.mode||''));
   L.push('상태: '+(r.status||'대기')+(r.assignee?(' / 담당: '+r.assignee):''));
   const add=(k,v)=>{if(v)L.push(k+': '+v);};
   add('단체/사업체명',r.org_name); add('담당자',r.contact_name); add('전화',r.phone); add('이메일',r.email); add('분야',r.field);
+  if(r.details) L.push('— 상세 —\n'+r.details);
   add((r.mode==='keep'?'기존 홈페이지':'참고 홈페이지'),r.ref_url);
   add('목적',r.purpose); add('방문자',r.audience); add('바라는 행동',r.goal);
   add('메뉴',r.pages); add('보유 자료',r.assets); add('소개글',r.intro); add('주소·운영시간·연락처',r.contact_info);

@@ -247,6 +247,19 @@ footer{border-top:1px solid var(--line);padding:26px 0;text-align:center;color:v
       <div class="sec-k">App</div>
       <h2>어떤 앱인가요?</h2>
       <div class="field">
+        <label class="lab">앱을 어떤 용도로 쓰실 건가요? <span class="hint">(가장 가까운 것 하나)</span></label>
+        <div class="checks" data-name="app_purpose" data-single="1">
+          <label class="chk"><input type="checkbox" value="단순 홍보용">단순 홍보·소개용</label>
+          <label class="chk"><input type="checkbox" value="업무용(직원·기사) + 관리자">업무용(직원·기사) + 관리자</label>
+          <label class="chk"><input type="checkbox" value="둘 다">둘 다</label>
+          <label class="chk"><input type="checkbox" value="잘 모르겠음">잘 모르겠음</label>
+        </div>
+        <div class="note" style="margin-top:12px">
+          · <b>단순 홍보·소개용</b> — 회사·매장·브랜드를 소개하고 알리는 앱이에요. (소개, 서비스·메뉴, 위치, 연락처 등을 보여주는 정도)<br>
+          · <b>업무용(직원·기사) + 관리자</b> — 현장에서 일하는 직원이나 기사(예: 설치·수리·청소·배달 기사)가 휴대폰으로 <b>오늘 할 일·고객 정보·작업 내용</b>을 확인하고 처리하는 앱이에요. 사장님·관리자는 따로 <b>관리자 화면</b>에서 직원·고객·일감을 배정하고 관리합니다.
+        </div>
+      </div>
+      <div class="field">
         <label class="lab">플랫폼 <span class="hint">(여러 개 선택 가능)</span></label>
         <div class="checks" data-name="app_platform">
           <label class="chk"><input type="checkbox" value="iOS(아이폰)">iOS(아이폰)</label>
@@ -524,6 +537,7 @@ function val(name){ const el=form.elements[name]; return el?String(el.value).tri
 function buildDetails(){
   const L=[]; const add=(k,v)=>{ if(v) L.push(k+': '+v); };
   if(currentType==='app'){
+    add('앱 용도', collectChecks('app_purpose'));
     add('플랫폼', collectChecks('app_platform'));
     add('앱 종류', val('app_kind'));
     add('참고 앱', val('app_ref'));

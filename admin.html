@@ -69,6 +69,19 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .card .cm{font-size:.76rem;color:var(--muted);display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .card .who{background:var(--soft);color:var(--navy);border-radius:20px;padding:1px 8px;font-weight:600}
 .card .due{color:#b9760a;font-weight:600}.card .due.over{color:var(--err)}
+/* imflow 스타일 작업진행 카드 */
+.card .ctype{background:#eef2f9;color:var(--navy);border-radius:20px;padding:1px 8px;font-weight:700;font-size:.7rem}
+.card .dday{margin-left:auto;font-weight:800;font-size:.72rem}
+.card .dday.soon{color:#b9760a}.card .dday.over{color:var(--err)}.card .dday.normal{color:var(--muted)}
+.cbar-lab{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin:9px 0 4px}
+.cbar{height:6px;background:#e7ebf1;border-radius:6px;overflow:hidden}
+.cbar>i{display:block;height:100%;background:var(--navy);border-radius:6px;transition:width .3s}
+.updue-h{font-size:.82rem;font-weight:700;color:var(--ink);margin:2px 0 9px;display:flex;align-items:center;gap:6px}
+.updue{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.updue .u{display:flex;align-items:center;gap:9px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 13px;font-size:.84rem;font-weight:600;cursor:pointer;transition:.15s}
+.updue .u:hover{border-color:var(--navy)}
+.updue .u .dday{font-weight:800;font-size:.74rem}
+.updue .u .dday.soon{color:#b9760a}.updue .u .dday.over{color:var(--err)}.updue .u .dday.normal{color:var(--muted)}
 .modal{display:none;position:fixed;inset:0;z-index:90;background:rgba(20,30,25,.5);backdrop-filter:blur(3px);padding:24px;overflow-y:auto}
 .modal.show{display:flex;align-items:flex-start;justify-content:center}
 .sheet{background:var(--panel);border-radius:20px;max-width:720px;width:100%;margin:auto;box-shadow:0 50px 90px -40px rgba(0,0,0,.5)}
@@ -136,7 +149,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
   <div class="toolbar">
     <div class="tabs">
       <button id="tabList" class="on">리스트</button>
-      <button id="tabBoard">보드</button>
+      <button id="tabBoard">작업진행</button>
     </div>
     <button class="btn-p" id="addBtn">+ 직접 의뢰 추가</button>
   </div>
@@ -233,6 +246,16 @@ function setView(v){view=v;
 }
 function render(){view==='list'?renderList():renderBoard();}
 function fmtDate(s){if(!s)return"";const d=new Date(s);return d.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
+function ddayInfo(due){
+  if(!due)return null;
+  const t=new Date(due+'T00:00:00'); if(isNaN(t.getTime()))return null;
+  const now=new Date(); now.setHours(0,0,0,0);
+  const diff=Math.round((t.getTime()-now.getTime())/86400000);
+  if(diff===0)return{label:'D-Day',tone:'soon'};
+  if(diff>0)return{label:'D-'+diff,tone:diff<=3?'soon':'normal'};
+  return{label:'D+'+Math.abs(diff),tone:'over'};
+}
+function clProg(r){const cl=Array.isArray(r.checklist)?r.checklist:[];const total=cl.length;const done=cl.filter(c=>c.d).length;return{done,total,pct:total?Math.round(done/total*100):0};}
 function srcBadge(r){return r.source==='manual'?'<span class="src src-manual">직접</span>':'<span class="src src-web">폼</span>';}
 
 function renderList(){
@@ -251,19 +274,36 @@ function renderList(){
   el.querySelectorAll('.lrow[data-id]').forEach(it=>it.addEventListener('click',()=>openDetail(Number(it.dataset.id))));
 }
 
+function boardCard(r){
+  const p=clProg(r), dd=ddayInfo(r.due_date);
+  return `<div class="card" draggable="true" data-id="${r.id}">
+    <div class="ct">${esc(r.org_name)||'(이름없음)'} ${srcBadge(r)}</div>
+    <div class="cm">
+      ${r.request_type?`<span class="ctype">${esc(r.request_type)}</span>`:''}
+      ${r.assignee?`<span class="who">${esc(r.assignee)}</span>`:'<span class="dim">미지정</span>'}
+      ${dd?`<span class="dday ${dd.tone}">${dd.label}</span>`:''}
+    </div>
+    ${p.total?`<div class="cbar-lab"><span>할일</span><span>${p.done}/${p.total} · ${p.pct}%</span></div><div class="cbar"><i style="width:${p.pct}%"></i></div>`:''}
+  </div>`;
+}
 function renderBoard(){
   const el=document.getElementById('boardView');
-  el.innerHTML='<div class="board">'+STATUSES.map(st=>{
+  // 다가오는 마감 (확정 제외, 임박·지남 우선)
+  const up=rows.filter(r=>r.due_date&&(r.status||'대기')!=='확정')
+    .map(r=>({r,dd:ddayInfo(r.due_date)}))
+    .filter(x=>x.dd&&x.dd.tone!=='normal')
+    .sort((a,b)=>a.r.due_date<b.r.due_date?-1:1).slice(0,8);
+  const upHtml=up.length
+    ? '<div class="updue-h">📅 다가오는 마감</div><div class="updue">'+
+      up.map(x=>`<div class="u" data-id="${x.r.id}"><span>${esc(x.r.org_name)||'(이름없음)'}</span><span class="dday ${x.dd.tone}">${x.dd.label}</span></div>`).join('')+'</div>'
+    : '';
+  el.innerHTML=upHtml+'<div class="board">'+STATUSES.map(st=>{
     const items=rows.filter(r=>(r.status||'대기')===st);
     return `<div class="col" data-st="${st}">
       <h3>${st}<span class="c">${items.length}</span></h3>
-      ${items.map(r=>{
-        const over=r.due_date&&new Date(r.due_date)<new Date(new Date().toDateString());
-        return `<div class="card" draggable="true" data-id="${r.id}">
-          <div class="ct">${esc(r.org_name)||'(이름없음)'} ${srcBadge(r)}</div>
-          <div class="cm">${r.assignee?`<span class="who">${esc(r.assignee)}</span>`:'<span class="dim">미지정</span>'}${r.due_date?`<span class="due ${over?'over':''}">~${r.due_date}</span>`:''}</div>
-        </div>`;}).join('')}
+      ${items.map(boardCard).join('')}
     </div>`;}).join('')+'</div>';
+  el.querySelectorAll('.updue .u').forEach(u=>u.addEventListener('click',()=>openDetail(Number(u.dataset.id))));
   let dragId=null;
   el.querySelectorAll('.card').forEach(c=>{
     c.addEventListener('click',()=>{if(!c.dataset.dragging)openDetail(Number(c.dataset.id));});

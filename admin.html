@@ -107,6 +107,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .insrow .dday{font-weight:800;font-size:.74rem}
 .insrow .dday.soon{color:#b9760a}.insrow .dday.over{color:var(--err)}.insrow .dday.normal{color:var(--muted)}
 @media(max-width:640px){.insgrid{grid-template-columns:1fr}}
+.rpt-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.rpt-title{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;color:var(--navy);min-width:130px;text-align:center}
 /* 알림 벨 */
 .bellwrap{position:relative;display:inline-block}
 .bell{position:relative}
@@ -252,6 +254,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
       <button id="tabList" class="on">리스트</button>
       <button id="tabBoard">작업진행</button>
       <button id="tabInsights">분석</button>
+      <button id="tabReport">월간 리포트</button>
       <button id="tabFlow">프로젝트 관리</button>
     </nav>
     <div class="side-foot">
@@ -277,6 +280,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
   <div id="listView"></div>
   <div id="boardView" style="display:none"></div>
   <div id="insightsView" style="display:none"></div>
+  <div id="reportView" style="display:none"></div>
   <div id="flowView" style="display:none">
     <iframe id="flowFrame" class="flowframe" title="IM Flow · 프로젝트 관리" loading="lazy"></iframe>
   </div>
@@ -489,6 +493,7 @@ document.addEventListener('click',e=>{const p=document.getElementById('bellPanel
 document.getElementById('tabList').addEventListener('click',()=>setView('list'));
 document.getElementById('tabBoard').addEventListener('click',()=>setView('board'));
 document.getElementById('tabInsights').addEventListener('click',()=>setView('insights'));
+document.getElementById('tabReport').addEventListener('click',()=>setView('report'));
 document.getElementById('tabFlow').addEventListener('click',()=>setView('flow'));
 document.getElementById('scAll').addEventListener('click',()=>setScope('all'));
 document.getElementById('scMine').addEventListener('click',()=>setScope('mine'));
@@ -501,17 +506,74 @@ function setView(v){view=v;
   document.getElementById('tabList').classList.toggle('on',v==='list');
   document.getElementById('tabBoard').classList.toggle('on',v==='board');
   document.getElementById('tabInsights').classList.toggle('on',v==='insights');
+  document.getElementById('tabReport').classList.toggle('on',v==='report');
   document.getElementById('tabFlow').classList.toggle('on',v==='flow');
   document.getElementById('listView').style.display=v==='list'?'block':'none';
   document.getElementById('boardView').style.display=v==='board'?'block':'none';
   document.getElementById('insightsView').style.display=v==='insights'?'block':'none';
+  document.getElementById('reportView').style.display=v==='report'?'block':'none';
   document.getElementById('flowView').style.display=v==='flow'?'block':'none';
-  const sm=document.getElementById('summary'); if(sm) sm.style.display=(v==='flow'||v==='insights')?'none':'';
+  const sm=document.getElementById('summary'); if(sm) sm.style.display=(v==='flow'||v==='insights'||v==='report')?'none':'';
   const sr=document.getElementById('scopeRow'); if(sr) sr.style.display=(v==='list'||v==='board')?'':'none';
   if(v==='flow'){ const fr=document.getElementById('flowFrame'); if(fr&&!fr.getAttribute('src')) fr.setAttribute('src','imflow.html?storageKey=tcs_imflow&header=0'); }
   else render();
 }
-function render(){ if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='flow'){} else renderList(); }
+function render(){ if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='flow'){} else renderList(); }
+// ---- 월간 리포트 + 결산 ----
+function pad2(n){return String(n).padStart(2,'0');}
+function thisMonth(){const d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1);}
+function todayStr(){const d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+function shiftMonth(ym,delta){let[y,m]=ym.split('-').map(Number);m+=delta;while(m<1){m+=12;y--;}while(m>12){m-=12;y++;}return y+'-'+pad2(m);}
+function monthLabel(ym){const[y,m]=ym.split('-');return y+'년 '+Number(m)+'월';}
+function fmtWon(n){return '₩'+Number(n||0).toLocaleString('ko-KR');}
+let reportMonth='';
+function renderReport(){
+  if(!reportMonth) reportMonth=thisMonth();
+  const el=document.getElementById('reportView'); const ym=reportMonth;
+  const inM=d=>d&&String(d).slice(0,7)===ym;
+  const created=rows.filter(r=>inM(r.created_at));
+  const doneM=rows.filter(r=>inM(r.done_at));
+  const paidM=rows.filter(r=>r.paid&&inM(r.paid_at)&&Number(r.amount));
+  const revenue=paidM.reduce((s,r)=>s+Number(r.amount||0),0);
+  const outstanding=rows.filter(r=>!r.paid&&Number(r.amount)>0).reduce((s,r)=>s+Number(r.amount||0),0);
+  // 유형별 (이번달 접수)
+  const byType={}; created.forEach(r=>{const t=r.request_type||'기타';byType[t]=(byType[t]||0)+1;});
+  const typeList=Object.entries(byType).sort((a,b)=>b[1]-a[1]);
+  const maxT=Math.max(1,...typeList.map(x=>x[1]));
+  // 담당자별 (이번달 완료)
+  const byA={}; doneM.forEach(r=>{const a=r.assignee||'미지정';byA[a]=(byA[a]||0)+1;});
+  const aList=Object.entries(byA).sort((a,b)=>b[1]-a[1]);
+  const maxA=Math.max(1,...aList.map(x=>x[1]));
+  // 6개월 매출 추이
+  const months=[]; let cur=ym; for(let i=0;i<6;i++){months.unshift(cur);cur=shiftMonth(cur,-1);}
+  const trend=months.map(mm=>({mm,rev:rows.filter(r=>r.paid&&inM2(r.paid_at,mm)&&Number(r.amount)).reduce((s,r)=>s+Number(r.amount||0),0)}));
+  function inM2(d,m){return d&&String(d).slice(0,7)===m;}
+  const maxR=Math.max(1,...trend.map(t=>t.rev));
+  const kpi=(label,val,tone)=>`<div class="scard ${tone||''}"><div class="n" style="font-size:1.25rem">${val}</div><div class="l">${label}</div></div>`;
+  el.innerHTML=`
+    <div class="rpt-nav">
+      <button class="btn-s" id="rptPrev">◀</button>
+      <div class="rpt-title">${monthLabel(ym)}</div>
+      <button class="btn-s" id="rptNext">▶</button>
+      <button class="btn-s" id="rptNow" style="margin-left:8px">이번 달</button>
+    </div>
+    <div class="summary" style="margin:0 0 16px">
+      ${kpi('이번달 매출', fmtWon(revenue))}
+      ${kpi('미수금(전체)', fmtWon(outstanding),'warn')}
+      ${kpi('이번달 접수', created.length+'건')}
+      ${kpi('이번달 완료', doneM.length+'건')}
+    </div>
+    <div class="insgrid">
+      <div class="ins-card"><h3>매출 추이 (최근 6개월)</h3>${trend.map(t=>`<div class="insbar"><div class="insbar-l"><span>${monthLabel(t.mm)}</span><span>${fmtWon(t.rev)}</span></div><div class="insbar-t"><i style="width:${t.rev/maxR*100}%"></i></div></div>`).join('')}</div>
+      <div class="ins-card"><h3>유형별 접수 (이번달)</h3>${typeList.length?typeList.map(([t,n])=>`<div class="insbar"><div class="insbar-l"><span>${esc(t)}</span><span>${n}건</span></div><div class="insbar-t"><i style="width:${n/maxT*100}%;background:#3a6db0"></i></div></div>`).join(''):'<p class="dim">이번달 접수가 없어요.</p>'}</div>
+      <div class="ins-card"><h3>담당자별 완료 (이번달)</h3>${aList.length?aList.map(([a,n])=>`<div class="insbar"><div class="insbar-l"><span>${esc(a)}</span><span>${n}건</span></div><div class="insbar-t"><i style="width:${n/maxA*100}%;background:#1e8a4c"></i></div></div>`).join(''):'<p class="dim">이번달 완료가 없어요.</p>'}</div>
+      <div class="ins-card ins-wide"><h3>이번달 입금 내역 · ${fmtWon(revenue)}</h3>${paidM.length?paidM.slice().sort((a,b)=>(a.paid_at<b.paid_at?1:-1)).map(r=>`<div class="insrow" data-id="${r.id}"><span class="t">${esc(r.org_name)||'(이름없음)'}</span><span class="dim">${r.assignee?esc(r.assignee)+' · ':''}${r.paid_at||''}</span><span style="font-weight:800;color:var(--navy)">${fmtWon(r.amount)}</span></div>`).join(''):'<p class="dim">이번달 입금 내역이 없어요.</p>'}</div>
+    </div>`;
+  document.getElementById('rptPrev').addEventListener('click',()=>{reportMonth=shiftMonth(ym,-1);renderReport();});
+  document.getElementById('rptNext').addEventListener('click',()=>{reportMonth=shiftMonth(ym,1);renderReport();});
+  document.getElementById('rptNow').addEventListener('click',()=>{reportMonth=thisMonth();renderReport();});
+  el.querySelectorAll('.insrow[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
+}
 function renderInsights(){
   const el=document.getElementById('insightsView'); const all=rows;
   let td=0,tt=0; all.forEach(r=>{const p=clProg(r);td+=p.done;tt+=p.total;});
@@ -661,6 +723,15 @@ function openDetail(id){
         </div>
         <div class="fld"><label>마감일</label><input type="date" id="f_due" value="${r.due_date||''}"></div>
       </div>
+      <div class="frow">
+        <div class="fld"><label>금액 (원)</label><input type="number" id="f_amount" value="${r.amount??''}" placeholder="예: 1500000"></div>
+        <div class="fld"><label>입금</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <label style="display:flex;gap:6px;align-items:center;font-weight:600;white-space:nowrap"><input type="checkbox" id="f_paid" ${r.paid?'checked':''}> 입금완료</label>
+            <input type="date" id="f_paid_at" value="${r.paid_at||''}" style="flex:1">
+          </div>
+        </div>
+      </div>
       <div class="fld" style="margin-bottom:16px"><label>제작 사이트 주소</label><input id="f_site" value="${esc(r.site_url||'')}" placeholder="https://koreayjk.github.io/aim/business/..."></div>
       <div class="fld" style="margin-bottom:6px"><label>진행 메모</label><textarea id="f_notes" placeholder="작업 진행 상황, 통화 내용 등">${esc(r.notes||'')}</textarea></div>
       <span class="saved" id="savedMsg">✓ 저장됨</span>
@@ -719,6 +790,9 @@ function bindDetail(r){
   const sel=document.getElementById('f_assignee');
   sel.addEventListener('change',()=>saveField(r.id,{assignee:sel.value||null}));
   document.getElementById('f_due').addEventListener('change',e=>saveField(r.id,{due_date:e.target.value||null}));
+  document.getElementById('f_amount').addEventListener('blur',e=>{const v=e.target.value.trim();saveField(r.id,{amount:v===''?null:Number(v)});});
+  document.getElementById('f_paid').addEventListener('change',e=>{const patch={paid:e.target.checked};if(e.target.checked&&!document.getElementById('f_paid_at').value)patch.paid_at=todayStr();saveField(r.id,patch);openDetail(r.id);});
+  document.getElementById('f_paid_at').addEventListener('change',e=>saveField(r.id,{paid_at:e.target.value||null}));
   document.getElementById('f_site').addEventListener('blur',e=>saveField(r.id,{site_url:e.target.value.trim()}));
   document.getElementById('f_notes').addEventListener('blur',e=>saveField(r.id,{notes:e.target.value}));
   // imflow 단계형 작업 보드
@@ -758,9 +832,12 @@ async function saveChecklist(id,cl){
   const r=rows.find(x=>x.id===id); if(r)r.checklist=cl; openDetail(id);
 }
 async function changeStatus(id,s,keepOpen){
-  const {error}=await sb.from('requests').update({status:s}).eq('id',id);
+  const r0=rows.find(x=>x.id===id);
+  const patch={status:s};
+  if(s==='완료' && r0 && !r0.done_at) patch.done_at=todayStr();
+  const {error}=await sb.from('requests').update(patch).eq('id',id);
   if(error){alert('상태 변경 실패: '+error.message);return;}
-  const r=rows.find(x=>x.id===id); if(r)r.status=s;
+  const r=rows.find(x=>x.id===id); if(r){r.status=s; if(patch.done_at)r.done_at=patch.done_at;}
   if(r){ const list=Array.isArray(r.comments)?[...r.comments]:[]; list.push({who:(me&&me.name)||'관리자',text:`상태를 '${s}'(으)로 변경`,at:new Date().toISOString(),sys:true}); const up=await sb.from('requests').update({comments:list}).eq('id',id); if(!up.error) r.comments=list; }
   renderSummary(); render(); if(keepOpen)openDetail(id);
 }

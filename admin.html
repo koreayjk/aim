@@ -59,6 +59,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .dim{color:var(--muted)}
 .empty{text-align:center;color:var(--muted);padding:50px}
 .board{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px}
+.flowframe{width:100%;border:0;display:block;border-radius:14px;background:#fff;box-shadow:0 12px 34px -22px rgba(0,0,0,.45);height:calc(100vh - 210px);min-height:520px}
+@media(max-width:640px){.flowframe{height:calc(100dvh - 150px);min-height:70vh;border-radius:10px}}
 .col{flex:0 0 248px;background:#eef0ea;border-radius:14px;padding:10px;min-height:160px}
 .col.drag{outline:2px dashed var(--navy);outline-offset:-4px}
 .col h3{font-size:.82rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px;color:var(--ink2)}
@@ -169,11 +171,15 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
     <div class="tabs">
       <button id="tabList" class="on">리스트</button>
       <button id="tabBoard">작업진행</button>
+      <button id="tabFlow">프로젝트 관리</button>
     </div>
     <button class="btn-p" id="addBtn">+ 직접 의뢰 추가</button>
   </div>
   <div id="listView"></div>
   <div id="boardView" style="display:none"></div>
+  <div id="flowView" style="display:none">
+    <iframe id="flowFrame" class="flowframe" title="IM Flow · 프로젝트 관리" loading="lazy"></iframe>
+  </div>
 </div>
 
 <div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
@@ -258,12 +264,17 @@ function renderSummary(){
 
 document.getElementById('tabList').addEventListener('click',()=>setView('list'));
 document.getElementById('tabBoard').addEventListener('click',()=>setView('board'));
+document.getElementById('tabFlow').addEventListener('click',()=>setView('flow'));
 function setView(v){view=v;
   document.getElementById('tabList').classList.toggle('on',v==='list');
   document.getElementById('tabBoard').classList.toggle('on',v==='board');
+  document.getElementById('tabFlow').classList.toggle('on',v==='flow');
   document.getElementById('listView').style.display=v==='list'?'block':'none';
   document.getElementById('boardView').style.display=v==='board'?'block':'none';
-  render();
+  document.getElementById('flowView').style.display=v==='flow'?'block':'none';
+  const sm=document.getElementById('summary'); if(sm) sm.style.display=v==='flow'?'none':'';
+  if(v==='flow'){ const fr=document.getElementById('flowFrame'); if(fr&&!fr.getAttribute('src')) fr.setAttribute('src','imflow.html?storageKey=tcs_imflow&header=0'); }
+  else render();
 }
 function render(){view==='list'?renderList():renderBoard();}
 function fmtDate(s){if(!s)return"";const d=new Date(s);return d.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}

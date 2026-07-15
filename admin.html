@@ -138,7 +138,20 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .tcol-h{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:var(--ink2);margin-bottom:8px;padding:0 2px}
 .tcol-h .tdot{width:8px;height:8px;border-radius:50%}
 .tcol-h .tc{margin-left:auto;background:#fff;border-radius:20px;padding:0 8px;font-size:.72rem;color:var(--muted);font-weight:600}
-.ttask{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 8px;margin-bottom:6px}
+.ttask{background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 8px;margin-bottom:6px}
+.ttask-main{display:flex;align-items:center;gap:7px}
+.ttask-meta{display:flex;gap:5px;margin-top:6px}
+.ttask-meta select,.ttask-meta input{font-size:.7rem;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:#fbfcfe;color:var(--ink2)}
+.ttask-meta select{flex:1;min-width:0}
+.ttask-meta input[type=date]{flex:0 0 auto;width:120px}
+.comments{margin-top:20px}
+.cmlist{margin:8px 0 10px;max-height:230px;overflow:auto}
+.cmitem{padding:8px 0;border-bottom:1px dashed var(--line)}
+.cmitem:last-child{border-bottom:none}
+.cmhead{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted);margin-bottom:2px}
+.cmhead b{color:var(--ink2);font-weight:700}
+.cmtext{font-size:.9rem;white-space:pre-wrap;line-height:1.4}
+.cmitem.sys .cmtext{color:var(--muted);font-size:.82rem;font-style:italic}
 .ttask input[type=checkbox]{width:16px;height:16px;accent-color:var(--navy);flex:0 0 auto}
 .ttask .t{flex:1;font-size:.86rem;line-height:1.3}
 .ttask.done .t{text-decoration:line-through;color:var(--muted)}
@@ -445,6 +458,19 @@ function ddayInfo(due){
 }
 function clProg(r){const cl=Array.isArray(r.checklist)?r.checklist:[];const total=cl.length;const done=cl.filter(c=>c.d).length;return{done,total,pct:total?Math.round(done/total*100):0};}
 function srcBadge(r){return r.source==='manual'?'<span class="src src-manual">직접</span>':'<span class="src src-web">폼</span>';}
+function taskAssigneeOpts(cur){
+  let o='<option value="">담당 미지정</option>';
+  assignees.forEach(n=>{o+=`<option value="${esc(n)}" ${n===cur?'selected':''}>${esc(n)}</option>`;});
+  return o;
+}
+async function addComment(id,text){
+  const r=rows.find(x=>x.id===id); if(!r)return;
+  const list=Array.isArray(r.comments)?[...r.comments]:[];
+  list.push({who:(me&&me.name)||'관리자',text,at:new Date().toISOString()});
+  const {error}=await sb.from('requests').update({comments:list}).eq('id',id);
+  if(error){alert('코멘트 저장 실패: '+error.message+'\n(comments 컬럼이 없으면 06_task_comments.sql 을 실행하세요)');return;}
+  r.comments=list; openDetail(id);
+}
 
 function renderList(){
   const rows=scopedRows();
@@ -547,10 +573,16 @@ function openDetail(id){
           return `<div class="tcol">
             <div class="tcol-h"><span class="tdot" style="background:${st.dot}"></span>${st.k}<span class="tc">${items.length}</span></div>
             ${items.map(o=>`<div class="ttask ${o.c.d?'done':''}">
-              <input type="checkbox" data-i="${o.idx}" ${o.c.d?'checked':''}>
-              <span class="t">${esc(o.c.t)}</span>
-              ${(st.k!=='완료'&&!o.c.d)?`<button class="mv" data-i="${o.idx}" title="다음 단계로">→</button>`:''}
-              <button class="rm" data-i="${o.idx}" title="삭제">&times;</button>
+              <div class="ttask-main">
+                <input type="checkbox" data-i="${o.idx}" ${o.c.d?'checked':''}>
+                <span class="t">${esc(o.c.t)}</span>
+                ${(st.k!=='완료'&&!o.c.d)?`<button class="mv" data-i="${o.idx}" title="다음 단계로">→</button>`:''}
+                <button class="rm" data-i="${o.idx}" title="삭제">&times;</button>
+              </div>
+              <div class="ttask-meta">
+                <select class="ta" data-i="${o.idx}">${taskAssigneeOpts(o.c.a||'')}</select>
+                <input type="date" class="tdue" data-i="${o.idx}" value="${o.c.due||''}">
+              </div>
             </div>`).join('')}
             <form class="tadd" data-stage="${st.k}"><input placeholder="할일 추가" maxlength="200"><button type="submit" title="추가">+</button></form>
           </div>`;}).join('')}</div>
@@ -567,6 +599,11 @@ function openDetail(id){
         ${(r.domain||r.domain_want||r.edit_pref)?`<div class="dgrp"><div class="gk">도메인·운영</div>${field('도메인 보유',r.domain)}${field('원하는 주소',r.domain_want)}${field('수정 선호',r.edit_pref)}</div>`:''}
         ${(r.timeline||r.budget)?`<div class="dgrp"><div class="gk">일정·예산</div>${field('완료 시기',r.timeline)}${field('예산',r.budget)}</div>`:''}
         ${(r.etc)?`<div class="dgrp"><div class="gk">기타 요청</div>${field('내용',r.etc)}</div>`:''}
+      </div>
+      <div class="comments">
+        <label style="font-size:.76rem;font-weight:700;color:var(--navy);letter-spacing:.3px">진행 히스토리 · 코멘트</label>
+        <div class="cmlist">${(Array.isArray(r.comments)?r.comments:[]).map(c=>`<div class="cmitem ${c.sys?'sys':''}"><div class="cmhead"><b>${esc(c.who||'')}</b><span>${fmtDate(c.at)}</span></div><div class="cmtext">${esc(c.text)}</div></div>`).join('')||'<p class="dim" style="font-size:.84rem;padding:6px 0">아직 코멘트가 없습니다.</p>'}</div>
+        <div class="cl-add"><input id="cmInput" placeholder="코멘트 입력 후 Enter"><button class="btn-s" id="cmAdd">등록</button></div>
       </div>
       <div class="mfoot">
         <button class="qbtn" id="quoteBtn">🧾 견적서 만들기</button>
@@ -599,6 +636,11 @@ function bindDetail(r){
   sheet.querySelectorAll('.taskboard .mv').forEach(b=>b.addEventListener('click',()=>{const cl=r.checklist.map(x=>({...x}));const i=Number(b.dataset.i);cl[i].s=nextTaskStage(cl[i].s||'준비');saveChecklist(r.id,cl);}));
   sheet.querySelectorAll('.taskboard .rm').forEach(b=>b.addEventListener('click',()=>{const cl=r.checklist.map(x=>({...x}));cl.splice(Number(b.dataset.i),1);saveChecklist(r.id,cl);}));
   sheet.querySelectorAll('.taskboard .tadd').forEach(f=>f.addEventListener('submit',e=>{e.preventDefault();const inp=f.querySelector('input');const t=inp.value.trim();if(!t)return;const cl=Array.isArray(r.checklist)?r.checklist.map(x=>({...x})):[];cl.push({t,d:false,s:f.dataset.stage});saveChecklist(r.id,cl);}));
+  sheet.querySelectorAll('.taskboard .ta').forEach(s=>s.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));cl[Number(s.dataset.i)].a=s.value;saveChecklist(r.id,cl);}));
+  sheet.querySelectorAll('.taskboard .tdue').forEach(d=>d.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));cl[Number(d.dataset.i)].due=d.value;saveChecklist(r.id,cl);}));
+  const cmAdd=()=>{const inp=document.getElementById('cmInput');const t=inp.value.trim();if(!t)return;addComment(r.id,t);};
+  const cmBtn=document.getElementById('cmAdd'); if(cmBtn)cmBtn.addEventListener('click',cmAdd);
+  const cmIn=document.getElementById('cmInput'); if(cmIn)cmIn.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();cmAdd();}});
   document.getElementById('copyBtn').addEventListener('click',async e=>{
     const t=buildText(r); try{await navigator.clipboard.writeText(t);}catch(_){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();}
     const b=e.currentTarget,o=b.textContent;b.classList.add('ok');b.textContent='✓ 복사되었습니다!';setTimeout(()=>{b.classList.remove('ok');b.textContent=o;},1600);
@@ -629,6 +671,7 @@ async function changeStatus(id,s,keepOpen){
   const {error}=await sb.from('requests').update({status:s}).eq('id',id);
   if(error){alert('상태 변경 실패: '+error.message);return;}
   const r=rows.find(x=>x.id===id); if(r)r.status=s;
+  if(r){ const list=Array.isArray(r.comments)?[...r.comments]:[]; list.push({who:(me&&me.name)||'관리자',text:`상태를 '${s}'(으)로 변경`,at:new Date().toISOString(),sys:true}); const up=await sb.from('requests').update({comments:list}).eq('id',id); if(!up.error) r.comments=list; }
   renderSummary(); render(); if(keepOpen)openDetail(id);
 }
 async function del(id){

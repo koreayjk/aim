@@ -175,17 +175,19 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .cl-bar{height:6px;background:#eceff3;border-radius:6px;overflow:hidden;margin:6px 0 12px}
 .cl-bar > i{display:block;height:100%;background:var(--navy)}
 /* imflow 단계형 작업 보드 */
-.taskboard{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
-.tcol{background:#f3f5f9;border:1px solid var(--line);border-radius:12px;padding:9px}
-.tcol-h{display:flex;align-items:center;gap:6px;font-size:.8rem;font-weight:700;color:var(--ink2);margin-bottom:8px;padding:0 2px}
-.tcol-h .tdot{width:8px;height:8px;border-radius:50%}
-.tcol-h .tc{margin-left:auto;background:#fff;border-radius:20px;padding:0 8px;font-size:.72rem;color:var(--muted);font-weight:600}
-.ttask{background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 8px;margin-bottom:6px}
-.ttask-main{display:flex;align-items:center;gap:7px}
-.ttask-meta{display:flex;gap:5px;margin-top:6px}
-.ttask-meta select,.ttask-meta input{font-size:.7rem;padding:3px 5px;border:1px solid var(--line);border-radius:6px;background:#fbfcfe;color:var(--ink2)}
-.ttask-meta select{flex:1;min-width:0}
-.ttask-meta input[type=date]{flex:0 0 auto;width:120px}
+.tasklist{margin-top:6px;margin-bottom:8px}
+.trow{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:6px 8px;margin-bottom:6px}
+.trow .tt{flex:1;min-width:0;font-size:.9rem;line-height:1.3;overflow-wrap:anywhere}
+.trow.done .tt{text-decoration:line-through;color:var(--muted)}
+.trow .tstage{flex:0 0 auto;width:80px;font-size:.76rem;padding:5px 4px;border:1px solid var(--line);border-radius:6px;background:#fbfcfe;color:var(--ink2);font-weight:600}
+.trow .ta{flex:0 0 auto;width:108px;font-size:.76rem;padding:5px 4px;border:1px solid var(--line);border-radius:6px;background:#fbfcfe;color:var(--ink2)}
+.trow .rm{background:none;border:none;color:#b6bfcf;cursor:pointer;font-size:1rem;padding:1px 5px;border-radius:6px;line-height:1}
+.trow .rm:hover{background:#fdecec;color:var(--err)}
+.tadd{display:flex;gap:6px;margin-top:2px}
+.tadd input{flex:1;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:.86rem;background:#fff}
+.tadd input:focus{outline:none;border-color:var(--navy)}
+.tadd button{flex:0 0 auto;padding:0 14px;border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--navy);font-weight:700;font-size:.82rem;cursor:pointer}
+.tadd button:hover{border-color:var(--navy);background:var(--soft)}
 .comments{margin-top:20px}
 .cmlist{margin:8px 0 10px;max-height:230px;overflow:auto}
 .cmitem{padding:8px 0;border-bottom:1px dashed var(--line)}
@@ -194,18 +196,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .cmhead b{color:var(--ink2);font-weight:700}
 .cmtext{font-size:.9rem;white-space:pre-wrap;line-height:1.4}
 .cmitem.sys .cmtext{color:var(--muted);font-size:.82rem;font-style:italic}
-.ttask input[type=checkbox]{width:16px;height:16px;accent-color:var(--navy);flex:0 0 auto}
-.ttask .t{flex:1;font-size:.86rem;line-height:1.3}
-.ttask.done .t{text-decoration:line-through;color:var(--muted)}
-.ttask .mv,.ttask .rm{background:none;border:none;color:#b6bfcf;cursor:pointer;font-size:.95rem;padding:1px 5px;border-radius:6px;line-height:1}
-.ttask .mv:hover{background:var(--soft);color:var(--navy)}
-.ttask .rm:hover{background:#fdecec;color:var(--err)}
-.tadd{display:flex;gap:5px;margin-top:2px}
-.tadd input{flex:1;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:.82rem;background:#fff}
-.tadd input:focus{outline:none;border-color:var(--navy)}
-.tadd button{flex:0 0 auto;width:30px;border:1px solid var(--line);background:#fff;border-radius:8px;color:var(--muted);font-size:1rem;cursor:pointer}
-.tadd button:hover{border-color:var(--navy);color:var(--navy)}
-@media(max-width:560px){.taskboard{grid-template-columns:1fr}}
+@media(max-width:560px){.trow{flex-wrap:wrap}.trow .tt{flex:1 0 100%}.trow .tstage,.trow .ta{flex:1}}
 .detail-data{margin-top:8px;border-top:1px solid var(--line);padding-top:16px}
 .dgrp{margin-bottom:16px}
 .dgrp .gk{font-weight:700;font-size:.7rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--navy);margin-bottom:8px}
@@ -319,8 +310,10 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'aim' } });
 
 const STATUSES=["접수","견적","제작중","완료"];
-const TASK_STAGES=[{k:'준비',dot:'#94a3b8'},{k:'진행',dot:'#1f3f73'},{k:'검토',dot:'#d99a2b'},{k:'완료',dot:'#1e8a4c'}];
-function nextTaskStage(s){const ks=TASK_STAGES.map(x=>x.k);const i=ks.indexOf(s);return (i>=0&&i<ks.length-1)?ks[i+1]:s;}
+const TASK_STAGES=['해야함','하는중','검토','끝'];
+const STAGE_COLOR={'해야함':'#94a3b8','하는중':'#1f3f73','검토':'#d99a2b','끝':'#1e8a4c'};
+const STAGE_MAP={'준비':'해야함','진행':'하는중','검토':'검토','완료':'끝'};
+function effStage(c){ if(c.d) return '끝'; const s=c.s||''; return TASK_STAGES.includes(s)?s:(STAGE_MAP[s]||'해야함'); }
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
 let rows=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false;
 const DONE_CAP=5;
@@ -608,7 +601,7 @@ function ddayInfo(due){
   if(diff>0)return{label:'D-'+diff,tone:diff<=3?'soon':'normal'};
   return{label:'D+'+Math.abs(diff),tone:'over'};
 }
-function clProg(r){const cl=Array.isArray(r.checklist)?r.checklist:[];const total=cl.length;const done=cl.filter(c=>c.d).length;return{done,total,pct:total?Math.round(done/total*100):0};}
+function clProg(r){const cl=Array.isArray(r.checklist)?r.checklist:[];const total=cl.length;const done=cl.filter(c=>effStage(c)==='끝').length;return{done,total,pct:total?Math.round(done/total*100):0};}
 function srcBadge(r){return r.source==='manual'?'<span class="src src-manual">직접</span>':'<span class="src src-web">폼</span>';}
 function taskAssigneeOpts(cur){
   let o='<option value="">담당 미지정</option>';
@@ -708,7 +701,7 @@ function field(k,v){if(!v)return'';const val=/^https?:\/\//.test(v)?`<a href="${
 function openDetail(id){
   const r=rows.find(x=>x.id===id); if(!r)return; selId=id;
   const cl=Array.isArray(r.checklist)?r.checklist:[];
-  const done=cl.filter(c=>c.d).length; const pct=cl.length?Math.round(done/cl.length*100):0;
+  const done=cl.filter(c=>effStage(c)==='끝').length; const pct=cl.length?Math.round(done/cl.length*100):0;
   sheet.innerHTML=`
     <div class="mhead">
       <div><h2>${esc(r.org_name)||'(이름없음)'}</h2>
@@ -738,24 +731,14 @@ function openDetail(id){
       <div class="checklist" style="margin-top:18px">
         <label style="font-size:.76rem;font-weight:700;color:var(--navy);letter-spacing:.3px">작업 진행 ${cl.length?`(${done}/${cl.length} · ${pct}%)`:''}</label>
         <div class="cl-bar"><i style="width:${pct}%"></i></div>
-        <div class="taskboard">${TASK_STAGES.map(st=>{
-          const items=cl.map((c,idx)=>({c,idx})).filter(o=>(o.c.s||'준비')===st.k);
-          return `<div class="tcol">
-            <div class="tcol-h"><span class="tdot" style="background:${st.dot}"></span>${st.k}<span class="tc">${items.length}</span></div>
-            ${items.map(o=>`<div class="ttask ${o.c.d?'done':''}">
-              <div class="ttask-main">
-                <input type="checkbox" data-i="${o.idx}" ${o.c.d?'checked':''}>
-                <span class="t">${esc(o.c.t)}</span>
-                ${(st.k!=='완료'&&!o.c.d)?`<button class="mv" data-i="${o.idx}" title="다음 단계로">→</button>`:''}
-                <button class="rm" data-i="${o.idx}" title="삭제">&times;</button>
-              </div>
-              <div class="ttask-meta">
-                <select class="ta" data-i="${o.idx}">${taskAssigneeOpts(o.c.a||'')}</select>
-                <input type="date" class="tdue" data-i="${o.idx}" value="${o.c.due||''}">
-              </div>
-            </div>`).join('')}
-            <form class="tadd" data-stage="${st.k}"><input placeholder="할일 추가" maxlength="200"><button type="submit" title="추가">+</button></form>
+        <div class="tasklist">${cl.map((c,idx)=>{const es=effStage(c);return `
+          <div class="trow ${es==='끝'?'done':''}">
+            <span class="tt">${esc(c.t)}</span>
+            <select class="tstage" data-i="${idx}" style="border-left:3px solid ${STAGE_COLOR[es]}">${TASK_STAGES.map(s=>`<option ${es===s?'selected':''}>${s}</option>`).join('')}</select>
+            <select class="ta" data-i="${idx}">${taskAssigneeOpts(c.a||'')}</select>
+            <button class="rm" data-i="${idx}" title="삭제">&times;</button>
           </div>`;}).join('')}</div>
+        <form class="tadd"><input placeholder="할 일 입력 후 Enter" maxlength="200"><button type="submit">추가</button></form>
       </div>
       <div class="detail-data">
         <div class="dgrp"><div class="gk">의뢰처 정보</div>${field('유형',r.request_type)}${field('대표자',r.contact_name)}${field('전화',r.phone)}${field('이메일',r.email)}${field('분야',r.field)}</div>
@@ -796,12 +779,10 @@ function bindDetail(r){
   document.getElementById('f_site').addEventListener('blur',e=>saveField(r.id,{site_url:e.target.value.trim()}));
   document.getElementById('f_notes').addEventListener('blur',e=>saveField(r.id,{notes:e.target.value}));
   // imflow 단계형 작업 보드
-  sheet.querySelectorAll('.taskboard .ttask input[type=checkbox]').forEach(cb=>cb.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));cl[Number(cb.dataset.i)].d=cb.checked;saveChecklist(r.id,cl);}));
-  sheet.querySelectorAll('.taskboard .mv').forEach(b=>b.addEventListener('click',()=>{const cl=r.checklist.map(x=>({...x}));const i=Number(b.dataset.i);cl[i].s=nextTaskStage(cl[i].s||'준비');saveChecklist(r.id,cl);}));
-  sheet.querySelectorAll('.taskboard .rm').forEach(b=>b.addEventListener('click',()=>{const cl=r.checklist.map(x=>({...x}));cl.splice(Number(b.dataset.i),1);saveChecklist(r.id,cl);}));
-  sheet.querySelectorAll('.taskboard .tadd').forEach(f=>f.addEventListener('submit',e=>{e.preventDefault();const inp=f.querySelector('input');const t=inp.value.trim();if(!t)return;const cl=Array.isArray(r.checklist)?r.checklist.map(x=>({...x})):[];cl.push({t,d:false,s:f.dataset.stage});saveChecklist(r.id,cl);}));
-  sheet.querySelectorAll('.taskboard .ta').forEach(s=>s.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));cl[Number(s.dataset.i)].a=s.value;saveChecklist(r.id,cl);}));
-  sheet.querySelectorAll('.taskboard .tdue').forEach(d=>d.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));cl[Number(d.dataset.i)].due=d.value;saveChecklist(r.id,cl);}));
+  sheet.querySelectorAll('.tasklist .tstage').forEach(s=>s.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));const i=Number(s.dataset.i);cl[i].s=s.value;delete cl[i].d;saveChecklist(r.id,cl);}));
+  sheet.querySelectorAll('.tasklist .ta').forEach(s=>s.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));cl[Number(s.dataset.i)].a=s.value;saveChecklist(r.id,cl);}));
+  sheet.querySelectorAll('.tasklist .rm').forEach(b=>b.addEventListener('click',()=>{const cl=r.checklist.map(x=>({...x}));cl.splice(Number(b.dataset.i),1);saveChecklist(r.id,cl);}));
+  const tf=sheet.querySelector('.tadd'); if(tf)tf.addEventListener('submit',e=>{e.preventDefault();const inp=tf.querySelector('input');const t=inp.value.trim();if(!t)return;const cl=Array.isArray(r.checklist)?r.checklist.map(x=>({...x})):[];cl.push({t,s:'해야함',a:r.assignee||''});saveChecklist(r.id,cl);});
   const cmAdd=()=>{const inp=document.getElementById('cmInput');const t=inp.value.trim();if(!t)return;addComment(r.id,t);};
   const cmBtn=document.getElementById('cmAdd'); if(cmBtn)cmBtn.addEventListener('click',cmAdd);
   const cmIn=document.getElementById('cmInput'); if(cmIn)cmIn.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();cmAdd();}});

@@ -81,6 +81,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .dim{color:var(--muted)}
 .empty{text-align:center;color:var(--muted);padding:50px}
 .board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding-bottom:10px}
+.donemore{width:100%;margin-top:4px;background:#fff;border:1px dashed var(--line);border-radius:10px;padding:9px;font-size:.8rem;font-weight:700;color:var(--navy);cursor:pointer}
+.donemore:hover{border-color:var(--navy);background:var(--soft)}
 @media(max-width:900px){.board{display:flex;overflow-x:auto;gap:12px}}
 .flowframe{width:100%;border:0;display:block;border-radius:14px;background:#fff;box-shadow:0 12px 34px -22px rgba(0,0,0,.45);height:calc(100vh - 210px);min-height:520px}
 @media(max-width:640px){.flowframe{height:calc(100dvh - 150px);min-height:70vh;border-radius:10px}}
@@ -316,7 +318,8 @@ const STATUSES=["접수","견적","제작중","완료"];
 const TASK_STAGES=[{k:'준비',dot:'#94a3b8'},{k:'진행',dot:'#1f3f73'},{k:'검토',dot:'#d99a2b'},{k:'완료',dot:'#1e8a4c'}];
 function nextTaskStage(s){const ks=TASK_STAGES.map(x=>x.k);const i=ks.indexOf(s);return (i>=0&&i<ks.length-1)?ks[i+1]:s;}
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
-let rows=[], assignees=[], selId=null, view='list', scope='all';
+let rows=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false;
+const DONE_CAP=5;
 function scopedRows(){ return (scope==='mine' && me && me.name) ? rows.filter(r=>r.assignee===me.name) : rows; }
 
 const gate=document.getElementById('gate'), app=document.getElementById('app'), gerr=document.getElementById('gerr');
@@ -602,11 +605,19 @@ function renderBoard(){
       up.map(x=>`<div class="u" data-id="${x.r.id}"><span>${esc(x.r.org_name)||'(이름없음)'}</span><span class="dday ${x.dd.tone}">${x.dd.label}</span></div>`).join('')+'</div>'
     : '';
   el.innerHTML=upHtml+'<div class="board">'+STATUSES.map(st=>{
-    const items=rows.filter(r=>(r.status||'접수')===st);
+    let items=rows.filter(r=>(r.status||'접수')===st);
+    const total=items.length; let extra='';
+    if(st==='완료'){
+      items=items.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+      if(!showAllDone && total>DONE_CAP){ extra=`<button class="donemore" data-more="1">+ ${total-DONE_CAP}건 더 보기</button>`; items=items.slice(0,DONE_CAP); }
+      else if(showAllDone && total>DONE_CAP){ extra='<button class="donemore" data-more="0">접기</button>'; }
+    }
     return `<div class="col" data-st="${st}">
-      <h3>${st}<span class="c">${items.length}</span></h3>
+      <h3>${st}<span class="c">${total}</span></h3>
       ${items.map(boardCard).join('')}
+      ${extra}
     </div>`;}).join('')+'</div>';
+  el.querySelectorAll('[data-more]').forEach(b=>b.addEventListener('click',()=>{showAllDone=b.dataset.more==='1';renderBoard();}));
   el.querySelectorAll('.updue .u').forEach(u=>u.addEventListener('click',()=>openDetail(Number(u.dataset.id))));
   let dragId=null;
   el.querySelectorAll('.card').forEach(c=>{

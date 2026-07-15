@@ -61,6 +61,27 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .board{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px}
 .flowframe{width:100%;border:0;display:block;border-radius:14px;background:#fff;box-shadow:0 12px 34px -22px rgba(0,0,0,.45);height:calc(100vh - 210px);min-height:520px}
 @media(max-width:640px){.flowframe{height:calc(100dvh - 150px);min-height:70vh;border-radius:10px}}
+/* 분석 대시보드 */
+.insgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.ins-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px}
+.ins-card h3{font-size:.9rem;font-weight:700;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.ins-wide{grid-column:1/-1}
+.ins-donut{display:flex;flex-direction:column;align-items:center;text-align:center}
+.ins-donut h3{align-self:flex-start}
+.donutwrap{position:relative;display:flex;align-items:center;justify-content:center;margin:4px 0}
+.donutc{position:absolute;text-align:center}
+.donutc b{font-family:'Fraunces',serif;font-size:1.9rem;color:var(--navy);display:block;line-height:1}
+.donutc span{font-size:.72rem;color:var(--muted)}
+.insbar{margin-bottom:11px}
+.insbar-l{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;margin-bottom:5px;color:var(--ink2)}
+.insbar-t{height:8px;background:#eceff3;border-radius:8px;overflow:hidden}
+.insbar-t>i{display:block;height:100%;background:var(--navy);border-radius:8px}
+.insrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:.88rem}
+.insrow:last-child{border-bottom:none}
+.insrow .t{flex:1;font-weight:600}
+.insrow .dday{font-weight:800;font-size:.74rem}
+.insrow .dday.soon{color:#b9760a}.insrow .dday.over{color:var(--err)}.insrow .dday.normal{color:var(--muted)}
+@media(max-width:640px){.insgrid{grid-template-columns:1fr}}
 .col{flex:0 0 248px;background:#eef0ea;border-radius:14px;padding:10px;min-height:160px}
 .col.drag{outline:2px dashed var(--navy);outline-offset:-4px}
 .col h3{font-size:.82rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px;color:var(--ink2)}
@@ -183,12 +204,20 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
     <div class="tabs">
       <button id="tabList" class="on">리스트</button>
       <button id="tabBoard">작업진행</button>
+      <button id="tabInsights">분석</button>
       <button id="tabFlow">프로젝트 관리</button>
     </div>
     <button class="btn-p" id="addBtn">+ 직접 의뢰 추가</button>
   </div>
+  <div class="toolbar" id="scopeRow" style="margin-top:-4px">
+    <div class="tabs">
+      <button id="scAll" class="on">전체</button>
+      <button id="scMine">내 작업</button>
+    </div>
+  </div>
   <div id="listView"></div>
   <div id="boardView" style="display:none"></div>
+  <div id="insightsView" style="display:none"></div>
   <div id="flowView" style="display:none">
     <iframe id="flowFrame" class="flowframe" title="IM Flow · 프로젝트 관리" loading="lazy"></iframe>
   </div>
@@ -229,7 +258,8 @@ const STATUSES=["대기","견적발송","검토완료","제작중","제작완료
 const TASK_STAGES=[{k:'준비',dot:'#94a3b8'},{k:'진행',dot:'#1f3f73'},{k:'검토',dot:'#d99a2b'},{k:'완료',dot:'#1e8a4c'}];
 function nextTaskStage(s){const ks=TASK_STAGES.map(x=>x.k);const i=ks.indexOf(s);return (i>=0&&i<ks.length-1)?ks[i+1]:s;}
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
-let rows=[], assignees=[], selId=null, view='list';
+let rows=[], assignees=[], selId=null, view='list', scope='all';
+function scopedRows(){ return (scope==='mine' && me && me.name) ? rows.filter(r=>r.assignee===me.name) : rows; }
 
 const gate=document.getElementById('gate'), app=document.getElementById('app'), gerr=document.getElementById('gerr');
 let me=null, authMode='login';
@@ -341,12 +371,13 @@ document.getElementById('refresh').addEventListener('click',loadAll);
 
 function inThisWeek(d){if(!d)return false;const due=new Date(d+'T00:00:00');const now=new Date();const end=new Date();end.setDate(now.getDate()+7);return due>=new Date(now.toDateString())&&due<=end;}
 function renderSummary(){
+  const rows=scopedRows();
   const total=rows.length;
   const making=rows.filter(r=>r.status==='제작중').length;
   const wk=rows.filter(r=>inThisWeek(r.due_date)&&r.status!=='확정').length;
   const done=rows.filter(r=>r.status==='확정').length;
   document.getElementById('summary').innerHTML=`
-    <div class="scard"><div class="n">${total}</div><div class="l">전체 의뢰</div></div>
+    <div class="scard"><div class="n">${total}</div><div class="l">${scope==='mine'?'내 의뢰':'전체 의뢰'}</div></div>
     <div class="scard"><div class="n">${making}</div><div class="l">제작중</div></div>
     <div class="scard warn"><div class="n">${wk}</div><div class="l">이번주 마감</div></div>
     <div class="scard"><div class="n">${done}</div><div class="l">확정 완료</div></div>`;
@@ -354,19 +385,54 @@ function renderSummary(){
 
 document.getElementById('tabList').addEventListener('click',()=>setView('list'));
 document.getElementById('tabBoard').addEventListener('click',()=>setView('board'));
+document.getElementById('tabInsights').addEventListener('click',()=>setView('insights'));
 document.getElementById('tabFlow').addEventListener('click',()=>setView('flow'));
+document.getElementById('scAll').addEventListener('click',()=>setScope('all'));
+document.getElementById('scMine').addEventListener('click',()=>setScope('mine'));
+function setScope(s){scope=s;
+  document.getElementById('scAll').classList.toggle('on',s==='all');
+  document.getElementById('scMine').classList.toggle('on',s==='mine');
+  renderSummary(); render();
+}
 function setView(v){view=v;
   document.getElementById('tabList').classList.toggle('on',v==='list');
   document.getElementById('tabBoard').classList.toggle('on',v==='board');
+  document.getElementById('tabInsights').classList.toggle('on',v==='insights');
   document.getElementById('tabFlow').classList.toggle('on',v==='flow');
   document.getElementById('listView').style.display=v==='list'?'block':'none';
   document.getElementById('boardView').style.display=v==='board'?'block':'none';
+  document.getElementById('insightsView').style.display=v==='insights'?'block':'none';
   document.getElementById('flowView').style.display=v==='flow'?'block':'none';
-  const sm=document.getElementById('summary'); if(sm) sm.style.display=v==='flow'?'none':'';
+  const sm=document.getElementById('summary'); if(sm) sm.style.display=(v==='flow'||v==='insights')?'none':'';
+  const sr=document.getElementById('scopeRow'); if(sr) sr.style.display=(v==='list'||v==='board')?'':'none';
   if(v==='flow'){ const fr=document.getElementById('flowFrame'); if(fr&&!fr.getAttribute('src')) fr.setAttribute('src','imflow.html?storageKey=tcs_imflow&header=0'); }
   else render();
 }
-function render(){view==='list'?renderList():renderBoard();}
+function render(){ if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='flow'){} else renderList(); }
+function renderInsights(){
+  const el=document.getElementById('insightsView'); const all=rows;
+  let td=0,tt=0; all.forEach(r=>{const p=clProg(r);td+=p.done;tt+=p.total;});
+  const pct=tt?Math.round(td/tt*100):0;
+  const R=52,circ=2*Math.PI*R,off=circ*(1-pct/100);
+  const donut=`<div class="ins-card ins-donut"><h3>전체 작업 진행률</h3>
+    <div class="donutwrap"><svg width="150" height="150" viewBox="0 0 120 120">
+      <circle cx="60" cy="60" r="${R}" fill="none" stroke="#e7ebf1" stroke-width="12"/>
+      <circle cx="60" cy="60" r="${R}" fill="none" stroke="#1f3f73" stroke-width="12" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}" transform="rotate(-90 60 60)"/>
+    </svg><div class="donutc"><b>${pct}%</b><span>할일 완료</span></div></div>
+    <p class="dim" style="font-size:.8rem">전체 ${tt}개 중 ${td}개 완료</p></div>`;
+  const stC=STATUSES.map(s=>({s,n:all.filter(r=>(r.status||'대기')===s).length}));
+  const maxSt=Math.max(1,...stC.map(c=>c.n));
+  const statusCard=`<div class="ins-card"><h3>상태별 의뢰</h3>${stC.map(c=>`<div class="insbar"><div class="insbar-l"><span class="badge st-${c.s}">${c.s}</span><span>${c.n}건</span></div><div class="insbar-t"><i style="width:${c.n/maxSt*100}%"></i></div></div>`).join('')}</div>`;
+  const active=all.filter(r=>(r.status||'')!=='확정'); const byA={};
+  active.forEach(r=>{const a=r.assignee||'미지정';byA[a]=(byA[a]||0)+1;});
+  const aList=Object.entries(byA).sort((a,b)=>b[1]-a[1]); const maxA=Math.max(1,...aList.map(x=>x[1]));
+  const workCard=`<div class="ins-card"><h3>담당자별 진행 중 업무</h3>${aList.length?aList.map(([a,n])=>`<div class="insbar"><div class="insbar-l"><span>${esc(a)}</span><span>${n}건</span></div><div class="insbar-t"><i style="width:${n/maxA*100}%;background:#3a6db0"></i></div></div>`).join(''):'<p class="dim">진행 중 업무가 없어요.</p>'}</div>`;
+  const up=all.filter(r=>r.due_date&&(r.status||'대기')!=='확정').map(r=>({r,dd:ddayInfo(r.due_date)})).filter(x=>x.dd).sort((a,b)=>a.r.due_date<b.r.due_date?-1:1).slice(0,10);
+  const overdue=all.filter(r=>{const d=ddayInfo(r.due_date);return d&&d.tone==='over'&&(r.status||'')!=='확정';}).length;
+  const upCard=`<div class="ins-card ins-wide"><h3>다가오는 마감 ${overdue?`<span class="dday over" style="font-weight:800">지연 ${overdue}</span>`:''}</h3>${up.length?up.map(x=>`<div class="insrow" data-id="${x.r.id}"><span class="t">${esc(x.r.org_name)||'(이름없음)'}</span><span class="dim">${x.r.assignee?esc(x.r.assignee)+' · ':''}${x.r.due_date}</span><span class="dday ${x.dd.tone}">${x.dd.label}</span></div>`).join(''):'<p class="dim">예정된 마감이 없어요.</p>'}</div>`;
+  el.innerHTML=`<div class="insgrid">${donut}${statusCard}${workCard}${upCard}</div>`;
+  el.querySelectorAll('.insrow[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
+}
 function fmtDate(s){if(!s)return"";const d=new Date(s);return d.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function ddayInfo(due){
   if(!due)return null;
@@ -381,8 +447,9 @@ function clProg(r){const cl=Array.isArray(r.checklist)?r.checklist:[];const tota
 function srcBadge(r){return r.source==='manual'?'<span class="src src-manual">직접</span>':'<span class="src src-web">폼</span>';}
 
 function renderList(){
+  const rows=scopedRows();
   const el=document.getElementById('listView');
-  if(!rows.length){el.innerHTML='<div class="listwrap"><div class="empty">아직 들어온 의뢰가 없습니다.</div></div>';return;}
+  if(!rows.length){el.innerHTML='<div class="listwrap"><div class="empty">'+(scope==='mine'?'나에게 배정된 의뢰가 없습니다.':'아직 들어온 의뢰가 없습니다.')+'</div></div>';return;}
   el.innerHTML='<div class="listwrap">'+
     '<div class="lrow head"><div>#</div><div>단체명</div><div class="hide-m">방식</div><div class="hide-m">담당자</div><div class="hide-m">마감</div><div>상태</div></div>'+
     rows.map((r,i)=>`<div class="lrow" data-id="${r.id}">
@@ -409,6 +476,7 @@ function boardCard(r){
   </div>`;
 }
 function renderBoard(){
+  const rows=scopedRows();
   const el=document.getElementById('boardView');
   // 다가오는 마감 (확정 제외, 임박·지남 우선)
   const up=rows.filter(r=>r.due_date&&(r.status||'대기')!=='확정')

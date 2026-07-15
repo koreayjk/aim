@@ -58,7 +58,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .lrow .idx{font-family:'Fraunces',serif;color:var(--muted)}
 .dim{color:var(--muted)}
 .empty{text-align:center;color:var(--muted);padding:50px}
-.board{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px}
+.board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:9px;padding-bottom:10px}
+@media(max-width:900px){.board{display:flex;overflow-x:auto;gap:12px}}
 .flowframe{width:100%;border:0;display:block;border-radius:14px;background:#fff;box-shadow:0 12px 34px -22px rgba(0,0,0,.45);height:calc(100vh - 210px);min-height:520px}
 @media(max-width:640px){.flowframe{height:calc(100dvh - 150px);min-height:70vh;border-radius:10px}}
 /* 분석 대시보드 */
@@ -96,13 +97,14 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .ntag.over{background:#fdecec;color:var(--err)}.ntag.soon{background:#fff2dd;color:#b9760a}.ntag.new{background:#e7f0fb;color:#2266b8}
 .nempty{padding:22px 10px;text-align:center;color:var(--muted);font-size:.88rem}
 @media(max-width:640px){.bellpanel{width:min(300px,86vw)}}
-.col{flex:0 0 248px;background:#eef0ea;border-radius:14px;padding:10px;min-height:160px}
+.col{min-width:0;background:#eef0ea;border-radius:14px;padding:8px;min-height:140px}
+@media(max-width:900px){.col{flex:0 0 210px}}
 .col.drag{outline:2px dashed var(--navy);outline-offset:-4px}
 .col h3{font-size:.82rem;font-weight:700;display:flex;justify-content:space-between;align-items:center;padding:4px 6px 10px;color:var(--ink2)}
 .col h3 .c{background:#fff;border-radius:20px;padding:1px 9px;font-size:.74rem;color:var(--muted)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:12px 13px;margin-bottom:9px;cursor:grab;box-shadow:0 6px 14px -12px rgba(0,0,0,.4)}
 .card:active{cursor:grabbing}
-.card .ct{font-weight:700;font-size:.92rem;margin-bottom:5px}
+.card .ct{font-weight:700;font-size:.9rem;margin-bottom:5px;overflow-wrap:anywhere;word-break:keep-all}
 .card .cm{font-size:.76rem;color:var(--muted);display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .card .who{background:var(--soft);color:var(--navy);border-radius:20px;padding:1px 8px;font-weight:600}
 .card .due{color:#b9760a;font-weight:600}.card .due.over{color:var(--err)}

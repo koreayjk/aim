@@ -644,7 +644,7 @@ function boardCard(r){
       ${r.assignee?`<span class="who">${esc(r.assignee)}</span>`:'<span class="dim">미지정</span>'}
       ${dd?`<span class="dday ${dd.tone}">${dd.label}</span>`:''}
     </div>
-    ${p.total?`<div class="cbar-lab"><span>할일</span><span>${p.done}/${p.total} · ${p.pct}%</span></div><div class="cbar"><i style="width:${p.pct}%"></i></div>`:''}
+    ${p.total?`<div class="cbar-lab"><span>할일</span><span>${p.done}/${p.total} · ${p.pct}%</span></div><div class="cbar"><i style="width:${p.pct}%"></i></div>`:`<div class="cbar-lab" style="opacity:.55"><span>할일</span><span>없음</span></div>`}
   </div>`;
 }
 function renderBoard(){

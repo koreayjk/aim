@@ -26,8 +26,8 @@ create policy orgm_write on aim.org_members for all    to authenticated using (a
 insert into aim.org_members(name, title, scope, tier, sort)
 select v.name, v.title, v.scope, v.tier, v.sort
 from (values
-  ('마이클 조 선교사', '이사장',   null,       'board', 0),
-  ('레베카 선교사',    '부이사장', null,       'board', 1),
+  ('마이클 조 선교사', '이사장',   null,       'chair', 0),
+  ('레베카 선교사',    '부이사장', null,       'chair', 1),
   ('클라라 선교사',    '이사',     '한국본부',  'board', 2),
   ('드보라 선교사',    '이사',     '필리핀본부','board', 3),
   ('줄리엣 선교사',    '이사',     '미국본부',  'board', 4)

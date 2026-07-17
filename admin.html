@@ -176,7 +176,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .ocol-t{font-weight:800;font-size:.9rem;color:var(--ink)}
 .ocol-c{font-size:.72rem;color:var(--muted);font-weight:700}
 .ocol-body{padding:8px;display:flex;flex-direction:column;gap:8px;flex:1;transition:background .12s}
-.ocol-body.over,.obench-body.over{background:#eaf1fb;outline:2px dashed var(--navy);outline-offset:-4px}
+.ocol-body.over,.obench-body.over,.opm-slot.over{background:#eaf1fb;outline:2px dashed var(--navy);outline-offset:-4px}
+.opm-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.opm-slot{border:1px dashed #c9d3e0;border-radius:12px;padding:8px;min-width:190px;display:flex;flex-direction:column;gap:8px;background:#fafbfc}
+.opm-slot-h{font-size:.7rem;font-weight:800;text-align:center;letter-spacing:.3px}
 .opers{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:8px 10px;cursor:pointer;box-shadow:0 6px 14px -13px rgba(0,0,0,.5)}
 .opers.drg{cursor:grab}.opers.drg:active{cursor:grabbing}
 .opers.dragging{opacity:.4}
@@ -657,26 +660,33 @@ function renderOrgView(){
 }
 function orgChart(ro){
   const appr=staffData.filter(s=>s.status==='approved');
-  const boss=appr.filter(s=>(s.rank||'')==='대표');
-  const pm=appr.filter(s=>isPMrank(s.rank)).sort((a,b)=>RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank));
   const isDir=s=>DIRECTORS.includes(s.rank||'');
-  const crew=appr.filter(s=>!isDir(s)&&(s.rank||'')!=='대표'&&!isPMrank(s.rank));   // 팀원(크루)
-  const unassigned=crew.filter(s=>!s.department);
+  const boss=appr.filter(s=>(s.rank||'')==='대표');
+  const pmAll=appr.filter(s=>isPMrank(s.rank));
+  const members=appr.filter(s=>(s.rank||'')!=='대표'&&!isPMrank(s.rank));   // 디렉터 + 크루 (부서로 배치)
+  const unassigned=members.filter(s=>!s.department);
   const chair=orgMembers.filter(m=>m.tier==='chair');
   const boardM=orgMembers.filter(m=>m.tier!=='chair'&&m.tier!=='advisory');
   const advisory=orgMembers.filter(m=>m.tier==='advisory');
-  const emptyMem=ro?'배정된 크루가 없어요':'여기로 크루를 끌어다 놓으세요';
   const cols=DEPTS.map(d=>{
-    const dir=appr.find(s=>s.rank===DEPT_DIRECTOR[d]);
-    const mem=crew.filter(s=>s.department===d);
+    const inD=members.filter(s=>s.department===d);
+    const heads=inD.filter(isDir), reg=inD.filter(s=>!isDir(s));
     return `<div class="ocol">
-      <div class="ocol-h" style="box-shadow:inset 0 3px 0 ${DEPT_COLOR[d]}"><span class="ocol-t">${d}</span><span class="ocol-c">${(dir?1:0)+mem.length}명</span></div>
+      <div class="ocol-h" style="box-shadow:inset 0 3px 0 ${DEPT_COLOR[d]}"><span class="ocol-t">${d}</span><span class="ocol-c">${inD.length}명</span></div>
       <div class="ocol-body" ${ro?'':'data-drop'} data-dept="${d}">
-        ${dir?orgPersonCard(dir,false,true):'<div class="odir-empty">디렉터 미지정</div>'}
-        ${mem.length?mem.map(s=>orgPersonCard(s,!ro,false)).join(''):`<div class="odrop-hint">${emptyMem}</div>`}
+        ${heads.length?heads.map(s=>orgPersonCard(s,!ro,true)).join(''):'<div class="odir-empty">디렉터 미지정</div>'}
+        ${reg.length?reg.map(s=>orgPersonCard(s,!ro,false)).join(''):(ro?'':'<div class="odrop-hint">여기로 크루를 드래그</div>')}
       </div>
     </div>`;
   }).join('');
+  const pmSlots=['한국 PM','미국 PM'].map(r=>{
+    const hold=pmAll.filter(s=>s.rank===r);
+    return `<div class="opm-slot" ${ro?'':'data-drop'} data-pm="${r}">
+      <div class="opm-slot-h" style="color:${r==='한국 PM'?'#33507e':'#b0433a'}">${r}</div>
+      ${hold.length?hold.map(s=>orgPersonCard(s,!ro,false)).join(''):`<div class="odrop-hint">${ro?'미지정':'여기로 드래그'}</div>`}
+    </div>`;
+  }).join('');
+  const pmLegacy=pmAll.filter(s=>!['한국 PM','미국 PM'].includes(s.rank));
   const tierRow=(label,cards)=>`<div class="ogov-tier"><div class="ogov-tierlabel">${label}</div><div class="ogov-row">${cards}</div><span class="ogov-tierpad"></span></div>`;
   const govMain=`<div class="ogov-main">
       ${chair.length?tierRow('이사장 · 부이사장',chair.map(govCard).join('')):''}
@@ -704,19 +714,19 @@ function orgChart(ro){
     </div>`;
   const benchBlock=(ro && !unassigned.length)?'':`
     <div class="obench">
-      <div class="obench-h">미배정 크루 <span class="dim">${unassigned.length}명</span>${ro?'':' <span class="dim" style="font-weight:400">· 부서로 드래그해서 배치</span>'}</div>
-      <div class="obench-body" ${ro?'':'data-drop'} data-dept="">${unassigned.length?unassigned.map(s=>orgPersonCard(s,!ro,false)).join(''):'<div class="dim" style="padding:8px">미배정 크루가 없어요.</div>'}</div>
+      <div class="obench-h">미배정 <span class="dim">${unassigned.length}명</span>${ro?'':' <span class="dim" style="font-weight:400">· 부서/PM 자리로 드래그해서 배치</span>'}</div>
+      <div class="obench-body" ${ro?'':'data-drop'} data-dept="">${unassigned.length?unassigned.map(s=>orgPersonCard(s,!ro,false)).join(''):'<div class="dim" style="padding:8px">미배정 인원이 없어요.</div>'}</div>
     </div>`;
   const foot=ro
     ? ''
-    : '<p class="dim" style="margin-top:14px;font-size:.8rem"><b>크루 카드를 다른 부서로 드래그</b>하면 소속이 바뀌고, 그 부서에서의 재직 시작일이 오늘로 기록돼요. 카드를 클릭하면 상세로 이동합니다. (모바일은 상세의 <b>소속 부서</b>에서 변경)</p>';
+    : '<p class="dim" style="margin-top:14px;font-size:.8rem"><b>크루·디렉터·PM 카드를 드래그</b>해서 부서/PM 자리로 옮길 수 있어요. 부서에 드롭한 <b>디렉터</b>는 그 부서 디렉터가 되고, <b>PM 자리</b>에 드롭하면 한국/미국 PM이 됩니다. 카드를 클릭하면 상세로 이동해요.</p>';
   return `<div class="orgpage">
     ${gov}
     <div class="otier-label">대표 (CEO)</div>
     <div class="oboss">${boss.length?boss.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim">대표(CEO) 미지정 · 직원 목록에서 직급을 대표로 지정</div>'}</div>
     <div class="ostem"></div>
     <div class="otier-label">프로젝트 매니저 (PM)</div>
-    <div class="oboss">${pm.length?pm.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim" style="padding:6px 12px;border:1px dashed var(--line);border-radius:12px">PM 미지정 · 직원 목록에서 직급을 한국 PM / 미국 PM으로 지정</div>'}</div>
+    <div class="opm-row">${pmSlots}${pmLegacy.length?`<div class="opm-slot" ${ro?'':'data-drop'} data-pm="한국 PM"><div class="opm-slot-h dim">기타 PM</div>${pmLegacy.map(s=>orgPersonCard(s,!ro,false)).join('')}</div>`:''}</div>
     <div class="ostem"></div>
     <div class="oboard">${cols}</div>
     ${benchBlock}
@@ -733,7 +743,10 @@ function wireOrg(el){
   el.querySelectorAll('[data-drop]').forEach(z=>{
     z.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';z.classList.add('over');});
     z.addEventListener('dragleave',()=>z.classList.remove('over'));
-    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');const id=e.dataTransfer.getData('text/plain')||dragId;if(id)moveDept(id,z.dataset.dept||'');});
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');const id=e.dataTransfer.getData('text/plain')||dragId;if(!id)return;
+      if(z.dataset.pm) assignRole(id,{pm:z.dataset.pm});
+      else if(z.dataset.dept) assignRole(id,{dept:z.dataset.dept});
+      else assignRole(id,{});});
   });
   el.querySelectorAll('.opers[data-sid]').forEach(c=>c.addEventListener('click',()=>{if(c.classList.contains('dragging'))return;staffSel=c.dataset.sid;staffMode='list';renderStaff();}));
   // 거버넌스 편집기
@@ -766,7 +779,27 @@ async function delOrgMember(id){
   if(error){alert('삭제 실패: '+error.message);return;}
   loadStaff();
 }
-// 부서 이동: 현재 부서를 이력에 마감 기록하고 새 부서로 (재직 시작일=오늘)
+// 드래그 배치: target = {dept:'테크'} | {pm:'한국 PM'} | {} (미배정)
+// 부서 이동 이력(dept_history)과 재직 시작일(dept_since)을 함께 갱신
+async function assignRole(id,target){
+  const s=staffData.find(x=>x.id===id); if(!s)return;
+  let rank=s.rank||'크루', dept=s.department||null;
+  if(target.pm){ rank=target.pm; dept=null; }               // PM 자리로
+  else if(target.dept){                                     // 부서로
+    dept=target.dept;
+    if(DIRECTORS.includes(s.rank)) rank=DEPT_DIRECTOR[target.dept];  // 디렉터는 그 부서 디렉터로
+    else if(isPMrank(s.rank)) rank='크루';                  // PM을 부서로 내리면 크루
+  } else { dept=null; }                                     // 미배정 (직급 유지)
+  const cur=s.department||null, today=todayStr();
+  const hist=Array.isArray(s.dept_history)?[...s.dept_history]:[];
+  if(cur && cur!==dept) hist.push({dept:cur,from:s.dept_since||today,to:today});
+  const patch={rank, department:dept,
+    dept_since: dept?(dept===cur?(s.dept_since||today):today):null,
+    dept_history:hist};
+  if(rank===s.rank && dept===cur) return;   // 변화 없음
+  await setStaff(id,patch);
+}
+// 상세의 소속 부서 드롭다운용 (직급은 유지, 부서만 변경)
 async function moveDept(id,dept){
   const s=staffData.find(x=>x.id===id); if(!s)return;
   const cur=s.department||null, nd=dept||null;

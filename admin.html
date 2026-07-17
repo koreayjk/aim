@@ -81,7 +81,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .lrow:last-child{border-bottom:none}
 .lrow:hover{background:#fafbf8}
 .lrow.head{background:#fafbf8;font-weight:700;color:var(--muted);font-size:.76rem;text-transform:uppercase;letter-spacing:.5px;cursor:default}
-.lrow .org{font-weight:700;font-size:.95rem;display:flex;align-items:center;gap:8px;min-width:0;text-align:left}
+.lrow .org{font-weight:700;font-size:.95rem;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:8px;min-width:0;text-align:left;padding:0}
 .lrow .org .org-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lrow .org .org-meta{font-weight:400;font-size:.78rem;white-space:nowrap;flex:0 0 auto}
 .lrow .org .src{flex:0 0 auto}
@@ -99,9 +99,9 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .donechip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:5px 12px;font-size:.82rem;font-weight:600;cursor:pointer;color:var(--ink)}
 .donechip:hover{border-color:var(--navy)}
 .donechip .dim{font-weight:400;font-size:.72rem}
-.sdue-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.sdue-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
 .sdue-item{display:flex;flex-direction:column;gap:3px;font-size:.72rem;color:var(--muted);font-weight:600}
-.sdue-item input{font-size:.82rem;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fcfcfa}
+.sdue-item input{width:100%;box-sizing:border-box;font-size:.82rem;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fcfcfa}
 .donemore:hover{border-color:var(--navy);background:var(--soft)}
 @media(max-width:900px){.board{display:flex;overflow-x:auto;gap:12px}}
 .flowframe{width:100%;border:0;display:block;border-radius:14px;background:#fff;box-shadow:0 12px 34px -22px rgba(0,0,0,.45);height:calc(100vh - 210px);min-height:520px}
@@ -164,11 +164,36 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .workrow .t{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .workrow .badge,.workrow .rk{flex:0 0 auto}
 .workrow .dday{flex:0 0 auto;font-weight:800;font-size:.74rem}
-.org{display:flex;flex-direction:column;align-items:center;padding:12px 0}
-.org-tier{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
-.org-line{width:2px;height:26px;background:var(--line)}
-.orgbox{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:0 10px 22px -18px rgba(0,0,0,.5);min-width:154px}
-.orgbox-n{font-weight:700;font-size:.9rem}
+/* --- 조직도 (드래그로 부서 이동) --- */
+.orgpage{padding:8px 2px 4px}
+.oboss{display:flex;justify-content:center;gap:12px}
+.oboss .opers{min-width:190px;border-color:#cdddf3;background:linear-gradient(#fff,#f3f7fd)}
+.ostem{width:2px;height:22px;background:var(--line);margin:2px auto}
+.oboard{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;align-items:start}
+.ocol{background:#fafbfc;border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;min-height:130px}
+.ocol-h{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--panel);border-bottom:1px solid var(--line)}
+.ocol-t{font-weight:800;font-size:.9rem;color:var(--ink)}
+.ocol-c{font-size:.72rem;color:var(--muted);font-weight:700}
+.ocol-body{padding:8px;display:flex;flex-direction:column;gap:8px;flex:1;transition:background .12s}
+.ocol-body.over,.obench-body.over{background:#eaf1fb;outline:2px dashed var(--navy);outline-offset:-4px}
+.opers{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:8px 10px;cursor:pointer;box-shadow:0 6px 14px -13px rgba(0,0,0,.5)}
+.opers.drg{cursor:grab}.opers.drg:active{cursor:grabbing}
+.opers.dragging{opacity:.4}
+.opers.odir{background:linear-gradient(#fff,#f5f8fd);border-color:#cdddf3}
+.opers-b{min-width:0;flex:1}
+.opers-n{font-weight:700;font-size:.86rem;display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opers-role{font-size:.64rem;font-weight:700;color:var(--muted);background:var(--soft);padding:1px 6px;border-radius:5px;flex:0 0 auto}
+.opers-days{font-size:.72rem;color:var(--navy);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.opers-days b{font-weight:800}
+.odir-empty,.odrop-hint{font-size:.74rem;color:var(--muted);text-align:center;padding:10px 4px;border:1px dashed var(--line);border-radius:9px}
+.obench{margin-top:16px;background:#fafbfc;border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.obench-h{font-weight:800;font-size:.82rem;margin-bottom:8px}
+.obench-body{display:flex;flex-wrap:wrap;gap:8px;min-height:46px;border-radius:9px;padding:2px;transition:background .12s}
+.obench-body .opers{flex:0 0 auto;min-width:184px}
+.deptexp{display:flex;flex-wrap:wrap;gap:6px;padding-top:6px}
+.dexp{font-size:.74rem;font-weight:600;border:1px solid #ccc;border-radius:7px;padding:3px 8px;background:#fff}.dexp b{font-weight:800}
+@media(max-width:900px){.oboard{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.oboard{grid-template-columns:1fr}}
 .today-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px;border-left:4px solid var(--navy)}
 .today-card.warn{border-left-color:var(--err)}
 .today-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:.88rem}
@@ -475,13 +500,13 @@ document.getElementById('staffBtn').addEventListener('click',()=>setView('staff'
 (async()=>{const {data}=await sb.auth.getSession();if(data&&data.session)afterAuth();})();
 
 // ---- 직원 관리 (owner 전용, 정식 화면) ----
-const RANKS=['대표','개발 디렉터','디자인 디렉터','기획 디렉터','마케팅 디렉터','운영 디렉터','엔지니어'];
-const RANK_DESC={'대표':'대표 · CEO','개발 디렉터':'Development','디자인 디렉터':'Design','기획 디렉터':'Planning','마케팅 디렉터':'Marketing','운영 디렉터':'Operations','엔지니어':'Engineer'};
-const RANK_COLOR={'대표':['#1f3f73','#fff'],'개발 디렉터':['#e0e9f7','#1f3f73'],'디자인 디렉터':['#efe9fb','#6a48c0'],'기획 디렉터':['#e7f0fb','#2266b8'],'마케팅 디렉터':['#fff2dd','#b9760a'],'운영 디렉터':['#e7f6ec','#1e8a4c'],'엔지니어':['#eceff3','#5b6675']};
+const RANKS=['대표','개발 디렉터','디자인 디렉터','기획 디렉터','마케팅 디렉터','운영 디렉터','크루'];
+const RANK_DESC={'대표':'대표 · CEO','개발 디렉터':'Development','디자인 디렉터':'Design','기획 디렉터':'Planning','마케팅 디렉터':'Marketing','운영 디렉터':'Operations','크루':'Crew'};
+const RANK_COLOR={'대표':['#1f3f73','#fff'],'개발 디렉터':['#e0e9f7','#1f3f73'],'디자인 디렉터':['#efe9fb','#6a48c0'],'기획 디렉터':['#e7f0fb','#2266b8'],'마케팅 디렉터':['#fff2dd','#b9760a'],'운영 디렉터':['#e7f6ec','#1e8a4c'],'크루':['#eceff3','#5b6675']};
 const DIRECTORS=['개발 디렉터','디자인 디렉터','기획 디렉터','마케팅 디렉터','운영 디렉터'];
 let staffData=[], staffMode='list', staffSel=null;
 function initials(n){n=(n||'').trim();return n?n[0].toUpperCase():'?';}
-function rankBadge(r){r=r||'엔지니어';const c=RANK_COLOR[r]||RANK_COLOR['엔지니어'];return `<span class="rk" style="background:${c[0]};color:${c[1]}">${esc(r)}</span>`;}
+function rankBadge(r){r=r||'크루';const c=RANK_COLOR[r]||RANK_COLOR['크루'];return `<span class="rk" style="background:${c[0]};color:${c[1]}">${esc(r)}</span>`;}
 function statusDot(s){const m={approved:['승인','#1e8a4c'],pending:['승인 대기','#b9760a'],rejected:['거부됨','#c0392b']};const x=m[s]||m.pending;return `<span class="sdot" style="color:${x[1]}"><i style="background:${x[1]}"></i>${x[0]}</span>`;}
 async function loadStaff(){
   const el=document.getElementById('staffView');
@@ -506,7 +531,9 @@ function renderStaff(){
   el.querySelectorAll('[data-reject]').forEach(b=>b.addEventListener('click',()=>setStaff(b.dataset.reject,{status:'rejected'})));
   const rk=el.querySelector('#staffRank'); if(rk)rk.addEventListener('change',()=>setStaff(rk.dataset.id,{rank:rk.value}));
   const nm=el.querySelector('#staffName'); if(nm)nm.addEventListener('blur',()=>{const v=nm.value.trim();if(v&&v!==(staffData.find(x=>x.id===nm.dataset.id)||{}).name)setStaff(nm.dataset.id,{name:v});});
+  const dp=el.querySelector('#staffDept'); if(dp)dp.addEventListener('change',()=>moveDept(dp.dataset.id,dp.value));
   el.querySelectorAll('.workrow[data-id]').forEach(w=>w.addEventListener('click',()=>openDetail(Number(w.dataset.id))));
+  if(staffMode==='org')wireOrg(el);
 }
 function staffMaster(){
   const list=staffData.length?staffData.map(s=>`
@@ -532,10 +559,12 @@ function staffDetail(s){
   </div>
   <div class="sd-grid">
     <div class="sd-fld"><label>이름</label><input id="staffName" data-id="${s.id}" value="${esc(s.name||'')}"></div>
-    <div class="sd-fld"><label>직급</label>${owner?`<div style="padding-top:6px">${rankBadge(s.rank)} <span class="dim" style="font-size:.76rem">(대표 고정)</span></div>`:`<select id="staffRank" data-id="${s.id}">${RANKS.map(r=>`<option ${((s.rank||'엔지니어')===r)?'selected':''}>${r}</option>`).join('')}</select>`}</div>
+    <div class="sd-fld"><label>직급</label>${owner?`<div style="padding-top:6px">${rankBadge(s.rank)} <span class="dim" style="font-size:.76rem">(대표 고정)</span></div>`:`<select id="staffRank" data-id="${s.id}">${RANKS.map(r=>`<option ${((s.rank||'크루')===r)?'selected':''}>${r}</option>`).join('')}</select>`}</div>
     <div class="sd-fld"><label>상태</label><div style="padding-top:6px">${statusDot(s.status)}</div></div>
-    <div class="sd-fld"><label>진행중 업무</label><div style="padding-top:6px"><b style="font-size:1.1rem;color:var(--navy)">${active}</b> 건</div></div>
+    ${owner?`<div class="sd-fld"><label>진행중 업무</label><div style="padding-top:6px"><b style="font-size:1.1rem;color:var(--navy)">${active}</b> 건</div></div>`
+      :`<div class="sd-fld"><label>소속 부서 ${s.dept_since?`<span class="dim" style="font-weight:400">· 이 부서 ${daysSince(s.dept_since)}일차</span>`:''}</label><select id="staffDept" data-id="${s.id}"><option value="">미배정</option>${DEPTS.map(d=>`<option ${((s.department||'')===d)?'selected':''}>${d}</option>`).join('')}</select></div>`}
   </div>
+  ${owner?'':`<div class="sd-fld" style="margin-top:12px"><label>부서 경험 (누적 재직일)</label><div class="deptexp">${(()=>{const t=deptTotals(s);const ks=Object.keys(t).filter(k=>t[k]>0);return ks.length?ks.map(k=>`<span class="dexp" style="border-color:${DEPT_COLOR[k]||'#ccc'};color:${DEPT_COLOR[k]||'#555'}">${k} <b>${t[k]}일</b></span>`).join(''):'<span class="dim">아직 부서 배치 기록이 없어요.</span>';})()}</div></div>`}
   <div class="sd-work">
     <div class="sd-worktitle">담당 프로젝트 <span class="dim">${myProjects.length}</span></div>
     ${projList}
@@ -548,23 +577,93 @@ function staffDetail(s){
     ${s.status==='rejected'?`<button class="btn-s" data-approve="${s.id}">복구(승인)</button>`:''}
   </div>`}`;
 }
-function orgBox(s){return `<div class="orgbox"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="orgbox-n">${esc(s.name||'')}</div>${rankBadge(s.rank)}</div></div>`;}
+// 부서(department)와 담당 디렉터/색 매핑
+const DEPTS=['개발','디자인','기획','마케팅','운영'];
+const DEPT_DIRECTOR={'개발':'개발 디렉터','디자인':'디자인 디렉터','기획':'기획 디렉터','마케팅':'마케팅 디렉터','운영':'운영 디렉터'};
+const DEPT_COLOR={'개발':'#1f3f73','디자인':'#6a48c0','기획':'#2266b8','마케팅':'#b9760a','운영':'#1e8a4c'};
+function daysSince(dstr){if(!dstr)return null;const a=new Date(dstr+'T00:00:00');const b=new Date();b.setHours(0,0,0,0);return Math.max(0,Math.round((b-a)/86400000));}
+// 부서별 누적 재직일수 (이력 + 현재)
+function deptTotals(s){
+  const t={};
+  (Array.isArray(s.dept_history)?s.dept_history:[]).forEach(h=>{
+    if(!h||!h.dept||!h.from)return;
+    const from=new Date(h.from+'T00:00:00');
+    const to=new Date((h.to||todayStr())+'T00:00:00');
+    t[h.dept]=(t[h.dept]||0)+Math.max(0,Math.round((to-from)/86400000));
+  });
+  if(s.department&&s.dept_since){t[s.department]=(t[s.department]||0)+(daysSince(s.dept_since)||0);}
+  return t;
+}
+function orgPersonCard(s,draggable,isDir){
+  const days=daysSince(s.dept_since);
+  const totals=deptTotals(s);
+  const brk=Object.entries(totals).filter(([,v])=>v>0).map(([k,v])=>`${k} ${v}일`).join(' · ');
+  const role=isDir?'디렉터':((s.rank||'크루')==='크루'?'크루':esc(s.rank||''));
+  const daysLine=days!=null
+    ? `<div class="opers-days">이 부서 <b>${days}일</b>${brk?` · <span class="dim">누적 ${brk}</span>`:''}</div>`
+    : (brk?`<div class="opers-days dim">누적 ${brk}</div>`:'');
+  return `<div class="opers${isDir?' odir':''}${draggable?' drg':''}" ${draggable?'draggable="true" ':''}data-sid="${s.id}">
+    <span class="avatar">${esc(initials(s.name))}</span>
+    <div class="opers-b">
+      <div class="opers-n">${esc(s.name||'(이름없음)')}<span class="opers-role">${role}</span></div>
+      ${daysLine}
+    </div>
+  </div>`;
+}
 function orgChart(){
-  const by=r=>staffData.filter(s=>(s.rank||'엔지니어')===r && s.status==='approved');
-  const boss=by('대표'), leads=DIRECTORS.flatMap(by), eng=by('엔지니어');
-  const tierHtml=(arr,empty)=>arr.length?`<div class="org-tier">${arr.map(orgBox).join('')}</div>`:`<div class="org-tier"><div class="dim">${empty}</div></div>`;
-  return `<div class="org">
-    ${tierHtml(boss,'대표 미지정')}
-    <div class="org-line"></div>
-    ${tierHtml(leads,'디렉터 미지정')}
-    <div class="org-line"></div>
-    ${tierHtml(eng,'엔지니어 없음')}
-  </div>
-  <p class="dim" style="margin-top:16px;font-size:.8rem">승인된 직원만 표시됩니다. 직급은 <b>직원 목록</b>에서 선택해 바꾸세요.</p>`;
+  const appr=staffData.filter(s=>s.status==='approved');
+  const boss=appr.filter(s=>(s.rank||'')==='대표');
+  const isDir=s=>DIRECTORS.includes(s.rank||'');
+  const crew=appr.filter(s=>!isDir(s)&&(s.rank||'')!=='대표');   // 팀원(크루)
+  const unassigned=crew.filter(s=>!s.department);
+  const cols=DEPTS.map(d=>{
+    const dir=appr.find(s=>s.rank===DEPT_DIRECTOR[d]);
+    const mem=crew.filter(s=>s.department===d);
+    return `<div class="ocol">
+      <div class="ocol-h" style="box-shadow:inset 0 3px 0 ${DEPT_COLOR[d]}"><span class="ocol-t">${d}</span><span class="ocol-c">${(dir?1:0)+mem.length}명</span></div>
+      <div class="ocol-body" data-drop data-dept="${d}">
+        ${dir?orgPersonCard(dir,false,true):'<div class="odir-empty">디렉터 미지정</div>'}
+        ${mem.length?mem.map(s=>orgPersonCard(s,true,false)).join(''):'<div class="odrop-hint">여기로 크루를 끌어다 놓으세요</div>'}
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="orgpage">
+    <div class="oboss">${boss.length?boss.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim">대표 미지정</div>'}</div>
+    <div class="ostem"></div>
+    <div class="oboard">${cols}</div>
+    <div class="obench">
+      <div class="obench-h">미배정 크루 <span class="dim">${unassigned.length}명</span> <span class="dim" style="font-weight:400">· 부서로 드래그해서 배치</span></div>
+      <div class="obench-body" data-drop data-dept="">${unassigned.length?unassigned.map(s=>orgPersonCard(s,true,false)).join(''):'<div class="dim" style="padding:8px">미배정 크루가 없어요.</div>'}</div>
+    </div>
+    <p class="dim" style="margin-top:14px;font-size:.8rem"><b>크루 카드를 다른 부서로 드래그</b>하면 소속이 바뀌고, 그 부서에서의 재직 시작일이 오늘로 기록돼요. 카드를 클릭하면 상세로 이동합니다. (모바일은 상세의 <b>소속 부서</b>에서 변경)</p>
+  </div>`;
+}
+function wireOrg(el){
+  let dragId=null;
+  el.querySelectorAll('.opers.drg').forEach(c=>{
+    c.addEventListener('dragstart',e=>{dragId=c.dataset.sid;e.dataTransfer.setData('text/plain',c.dataset.sid);e.dataTransfer.effectAllowed='move';c.classList.add('dragging');});
+    c.addEventListener('dragend',()=>c.classList.remove('dragging'));
+  });
+  el.querySelectorAll('[data-drop]').forEach(z=>{
+    z.addEventListener('dragover',e=>{e.preventDefault();e.dataTransfer.dropEffect='move';z.classList.add('over');});
+    z.addEventListener('dragleave',()=>z.classList.remove('over'));
+    z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');const id=e.dataTransfer.getData('text/plain')||dragId;if(id)moveDept(id,z.dataset.dept||'');});
+  });
+  el.querySelectorAll('.opers[data-sid]').forEach(c=>c.addEventListener('click',()=>{if(c.classList.contains('dragging'))return;staffSel=c.dataset.sid;staffMode='list';renderStaff();}));
+}
+// 부서 이동: 현재 부서를 이력에 마감 기록하고 새 부서로 (재직 시작일=오늘)
+async function moveDept(id,dept){
+  const s=staffData.find(x=>x.id===id); if(!s)return;
+  const cur=s.department||null, nd=dept||null;
+  if(cur===nd)return;
+  const today=todayStr();
+  const hist=Array.isArray(s.dept_history)?[...s.dept_history]:[];
+  if(cur)hist.push({dept:cur,from:s.dept_since||today,to:today});
+  await setStaff(id,{department:nd,dept_since:nd?today:null,dept_history:hist});
 }
 async function setStaff(id,patch){
   const {error}=await sb.from('staff').update(patch).eq('id',id);
-  if(error){alert('변경 실패: '+error.message+(patch.rank!==undefined?'\\n(rank 컬럼이 없으면 11_staff_rank.sql 을 실행하세요)':''));return;}
+  if(error){alert('변경 실패: '+error.message+(patch.rank!==undefined?'\\n(rank 컬럼이 없으면 11_staff_rank.sql 을 실행하세요)':'')+(patch.department!==undefined?'\\n(department 컬럼이 없으면 12_department.sql 을 실행하세요)':''));return;}
   const s=staffData.find(x=>x.id===id); if(s)Object.assign(s,patch);
   staffSel=id; renderStaff();
   if(patch.status!==undefined) loadAll();

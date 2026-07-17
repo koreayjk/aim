@@ -703,7 +703,7 @@ function orgChart(ro){
       <div class="obench-body" ${ro?'':'data-drop'} data-dept="">${unassigned.length?unassigned.map(s=>orgPersonCard(s,!ro,false)).join(''):'<div class="dim" style="padding:8px">미배정 크루가 없어요.</div>'}</div>
     </div>`;
   const foot=ro
-    ? '<p class="dim" style="margin-top:14px;font-size:.8rem">회사 조직도 · 보기 전용입니다. (편집은 대표만 가능)</p>'
+    ? ''
     : '<p class="dim" style="margin-top:14px;font-size:.8rem"><b>크루 카드를 다른 부서로 드래그</b>하면 소속이 바뀌고, 그 부서에서의 재직 시작일이 오늘로 기록돼요. 카드를 클릭하면 상세로 이동합니다. (모바일은 상세의 <b>소속 부서</b>에서 변경)</p>';
   return `<div class="orgpage">
     ${gov}

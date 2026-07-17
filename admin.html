@@ -192,7 +192,25 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .obench-body .opers{flex:0 0 auto;min-width:184px}
 .deptexp{display:flex;flex-wrap:wrap;gap:6px;padding-top:6px}
 .dexp{font-size:.74rem;font-weight:600;border:1px solid #ccc;border-radius:7px;padding:3px 8px;background:#fff}.dexp b{font-weight:800}
+/* 거버넌스(이사회/감사/자문) */
+.ogov{display:flex;gap:16px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.ogov-main{display:flex;flex-direction:column;align-items:center}
+.ogov-label{font-size:.7rem;font-weight:800;color:var(--muted);letter-spacing:.5px;margin-bottom:7px;text-transform:uppercase}
+.ogov-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.ogov-aside{border:1.5px dashed #c9d3e0;border-radius:12px;padding:8px 12px;background:#fbfbf9}
+.gcard{background:linear-gradient(#fff,#f2f6fd);border:1px solid #cdddf3;border-radius:12px;padding:8px 16px;text-align:center;min-width:122px;box-shadow:0 8px 18px -16px rgba(0,0,0,.5)}
+.ogov-aside .gcard{background:#fff;border-style:dashed}
+.gcard-n{font-weight:800;font-size:.9rem}
+.gcard-t{font-size:.73rem;color:var(--navy);font-weight:600;margin-top:1px}
+.goved{margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
+.goved-h{font-weight:800;font-size:.84rem;margin-bottom:10px}
+.goved-row{display:grid;grid-template-columns:1.1fr 1.3fr 1fr 1.15fr 34px;gap:8px;margin-bottom:8px;align-items:center}
+.goved-row input,.goved-row select{padding:6px 8px;border:1px solid var(--line);border-radius:8px;font-size:.82rem;background:#fcfcfa;min-width:0;box-sizing:border-box}
+.gm-del{border:1px solid var(--line);background:#fff;border-radius:8px;cursor:pointer;color:#c0392b;font-weight:700;padding:6px 0}
+.gm-del:hover{background:#fdeeea}
+.gm-add{margin-top:4px}
 @media(max-width:900px){.oboard{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.goved-row{grid-template-columns:1fr 1fr}.goved-row .gm-del{grid-column:span 2}}
 @media(max-width:560px){.oboard{grid-template-columns:1fr}}
 .today-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px;border-left:4px solid var(--navy)}
 .today-card.warn{border-left-color:var(--err)}
@@ -504,7 +522,7 @@ const RANKS=['대표','개발 디렉터','디자인 디렉터','기획 디렉터
 const RANK_DESC={'대표':'대표 · CEO','개발 디렉터':'Development','디자인 디렉터':'Design','기획 디렉터':'Planning','마케팅 디렉터':'Marketing','운영 디렉터':'Operations','크루':'Crew'};
 const RANK_COLOR={'대표':['#1f3f73','#fff'],'개발 디렉터':['#e0e9f7','#1f3f73'],'디자인 디렉터':['#efe9fb','#6a48c0'],'기획 디렉터':['#e7f0fb','#2266b8'],'마케팅 디렉터':['#fff2dd','#b9760a'],'운영 디렉터':['#e7f6ec','#1e8a4c'],'크루':['#eceff3','#5b6675']};
 const DIRECTORS=['개발 디렉터','디자인 디렉터','기획 디렉터','마케팅 디렉터','운영 디렉터'];
-let staffData=[], staffMode='list', staffSel=null;
+let staffData=[], staffMode='list', staffSel=null, orgMembers=[];
 function initials(n){n=(n||'').trim();return n?n[0].toUpperCase():'?';}
 function rankBadge(r){r=r||'크루';const c=RANK_COLOR[r]||RANK_COLOR['크루'];return `<span class="rk" style="background:${c[0]};color:${c[1]}">${esc(r)}</span>`;}
 function statusDot(s){const m={approved:['승인','#1e8a4c'],pending:['승인 대기','#b9760a'],rejected:['거부됨','#c0392b']};const x=m[s]||m.pending;return `<span class="sdot" style="color:${x[1]}"><i style="background:${x[1]}"></i>${x[0]}</span>`;}
@@ -515,6 +533,8 @@ async function loadStaff(){
   staffData=data||[];
   if(staffSel && !staffData.find(s=>s.id===staffSel)) staffSel=null;
   if(!staffSel){const fp=staffData.find(s=>s.status==='pending')||staffData[0];staffSel=fp?fp.id:null;}
+  const om=await sb.from('org_members').select('*').order('tier',{ascending:true}).order('sort',{ascending:true});
+  orgMembers=om.error?[]:(om.data||[]);
   renderStaff();
 }
 function renderStaff(){
@@ -610,12 +630,15 @@ function orgPersonCard(s,draggable,isDir){
     </div>
   </div>`;
 }
+function govCard(m){return `<div class="gcard"><div class="gcard-n">${esc(m.name||'')}</div><div class="gcard-t">${esc(m.title||'')}${m.scope?` · ${esc(m.scope)}`:''}</div></div>`;}
 function orgChart(){
   const appr=staffData.filter(s=>s.status==='approved');
   const boss=appr.filter(s=>(s.rank||'')==='대표');
   const isDir=s=>DIRECTORS.includes(s.rank||'');
   const crew=appr.filter(s=>!isDir(s)&&(s.rank||'')!=='대표');   // 팀원(크루)
   const unassigned=crew.filter(s=>!s.department);
+  const board=orgMembers.filter(m=>m.tier!=='advisory');
+  const advisory=orgMembers.filter(m=>m.tier==='advisory');
   const cols=DEPTS.map(d=>{
     const dir=appr.find(s=>s.rank===DEPT_DIRECTOR[d]);
     const mem=crew.filter(s=>s.department===d);
@@ -627,8 +650,32 @@ function orgChart(){
       </div>
     </div>`;
   }).join('');
+  const gov=(board.length||advisory.length)?`
+    <div class="ogov">
+      <div class="ogov-main">
+        <div class="ogov-label">이사회 · 대표단</div>
+        <div class="ogov-row">${board.length?board.map(govCard).join(''):'<div class="dim">등록된 대표단이 없어요.</div>'}</div>
+      </div>
+      ${advisory.length?`<div class="ogov-aside"><div class="ogov-label">감사 · 자문</div><div class="ogov-row">${advisory.map(govCard).join('')}</div></div>`:''}
+    </div>
+    <div class="ostem"></div>`:'';
+  const editor=`
+    <div class="goved">
+      <div class="goved-h">대표단 · 감사 · 자문 편집 <span class="dim" style="font-weight:400">· 로그인 없이 이름으로 관리</span></div>
+      <div class="goved-list">
+        ${orgMembers.map(m=>`<div class="goved-row" data-gid="${m.id}">
+          <input class="gm-f" data-k="name" value="${esc(m.name||'')}" placeholder="이름">
+          <input class="gm-f" data-k="title" value="${esc(m.title||'')}" placeholder="직책 (이사장/감사/고문…)">
+          <input class="gm-f" data-k="scope" value="${esc(m.scope||'')}" placeholder="본부/부가 (선택)">
+          <select class="gm-f" data-k="tier"><option value="board" ${m.tier!=='advisory'?'selected':''}>이사회·대표단</option><option value="advisory" ${m.tier==='advisory'?'selected':''}>감사·자문</option></select>
+          <button class="gm-del" title="삭제">✕</button>
+        </div>`).join('')||'<div class="dim" style="padding:6px 2px">아직 등록된 인원이 없어요. 아래 버튼으로 추가하세요.</div>'}
+      </div>
+      <button class="gm-add btn-s">＋ 인원 추가 (이사·감사·고문)</button>
+    </div>`;
   return `<div class="orgpage">
-    <div class="oboss">${boss.length?boss.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim">대표 미지정</div>'}</div>
+    ${gov}
+    <div class="oboss">${boss.length?boss.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim">대표(CEO) 미지정 · 직원 목록에서 직급을 대표로 지정</div>'}</div>
     <div class="ostem"></div>
     <div class="oboard">${cols}</div>
     <div class="obench">
@@ -636,6 +683,7 @@ function orgChart(){
       <div class="obench-body" data-drop data-dept="">${unassigned.length?unassigned.map(s=>orgPersonCard(s,true,false)).join(''):'<div class="dim" style="padding:8px">미배정 크루가 없어요.</div>'}</div>
     </div>
     <p class="dim" style="margin-top:14px;font-size:.8rem"><b>크루 카드를 다른 부서로 드래그</b>하면 소속이 바뀌고, 그 부서에서의 재직 시작일이 오늘로 기록돼요. 카드를 클릭하면 상세로 이동합니다. (모바일은 상세의 <b>소속 부서</b>에서 변경)</p>
+    ${editor}
   </div>`;
 }
 function wireOrg(el){
@@ -650,6 +698,35 @@ function wireOrg(el){
     z.addEventListener('drop',e=>{e.preventDefault();z.classList.remove('over');const id=e.dataTransfer.getData('text/plain')||dragId;if(id)moveDept(id,z.dataset.dept||'');});
   });
   el.querySelectorAll('.opers[data-sid]').forEach(c=>c.addEventListener('click',()=>{if(c.classList.contains('dragging'))return;staffSel=c.dataset.sid;staffMode='list';renderStaff();}));
+  // 거버넌스 편집기
+  const add=el.querySelector('.gm-add'); if(add)add.addEventListener('click',addOrgMember);
+  el.querySelectorAll('.goved-row').forEach(row=>{
+    const id=row.dataset.gid;
+    row.querySelectorAll('.gm-f').forEach(f=>{
+      const ev=f.tagName==='SELECT'?'change':'change';
+      f.addEventListener(ev,()=>updateOrgMember(id,{[f.dataset.k]:f.value.trim?f.value.trim():f.value}));
+    });
+    const del=row.querySelector('.gm-del'); if(del)del.addEventListener('click',()=>delOrgMember(id));
+  });
+}
+async function addOrgMember(){
+  const maxSort=orgMembers.reduce((a,m)=>Math.max(a,m.sort||0),0);
+  const {error}=await sb.from('org_members').insert({name:'새 인원',title:'',tier:'board',sort:maxSort+1});
+  if(error){alert('추가 실패: '+error.message+'\\n(org_members 테이블이 없으면 14_org_members.sql 을 실행하세요)');return;}
+  loadStaff();
+}
+async function updateOrgMember(id,patch){
+  const {error}=await sb.from('org_members').update(patch).eq('id',id);
+  if(error){alert('수정 실패: '+error.message);return;}
+  const m=orgMembers.find(x=>String(x.id)===String(id)); if(m)Object.assign(m,patch);
+  renderStaff();
+}
+async function delOrgMember(id){
+  const m=orgMembers.find(x=>String(x.id)===String(id));
+  if(!confirm(`'${m?m.name:'이 인원'}'을(를) 조직도에서 삭제할까요?`))return;
+  const {error}=await sb.from('org_members').delete().eq('id',id);
+  if(error){alert('삭제 실패: '+error.message);return;}
+  loadStaff();
 }
 // 부서 이동: 현재 부서를 이력에 마감 기록하고 새 부서로 (재직 시작일=오늘)
 async function moveDept(id,dept){

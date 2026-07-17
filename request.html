@@ -568,7 +568,7 @@ form.addEventListener('submit', async (e)=>{
   if(currentType==='website' && !currentMode){ msg.textContent="'어떻게 만들어 드릴까요?'에서 하나를 골라 주세요."; msg.className="msg err"; document.getElementById('modes').scrollIntoView({behavior:'smooth'}); return; }
   const f=form;
   const row={
-    status:'접수',
+    status:'접수·견적',
     request_type: TYPE_LABEL[currentType] || currentType,
     org_name: f.org_name.value.trim(),
     contact_name: f.contact_name.value.trim(),

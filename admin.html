@@ -524,11 +524,12 @@ document.getElementById('staffBtn').addEventListener('click',()=>setView('staff'
 (async()=>{const {data}=await sb.auth.getSession();if(data&&data.session)afterAuth();})();
 
 // ---- 직원 관리 (owner 전용, 정식 화면) ----
-const RANKS=['대표','프로젝트 매니저','디자인 디렉터','테크 디렉터','마케팅 디렉터','크루'];
-const RANK_DESC={'대표':'대표 · CEO','프로젝트 매니저':'Project Manager','디자인 디렉터':'Design','테크 디렉터':'Tech','마케팅 디렉터':'Marketing','크루':'Crew'};
-const RANK_COLOR={'대표':['#1f3f73','#fff'],'프로젝트 매니저':['#e7edf6','#33507e'],'디자인 디렉터':['#efe9fb','#6a48c0'],'테크 디렉터':['#e0e9f7','#1f3f73'],'마케팅 디렉터':['#fff2dd','#b9760a'],'크루':['#eceff3','#5b6675']};
+const RANKS=['대표','한국 PM','미국 PM','디자인 디렉터','테크 디렉터','마케팅 디렉터','크루'];
+const RANK_DESC={'대표':'대표 · CEO','한국 PM':'PM · Korea','미국 PM':'PM · USA','디자인 디렉터':'Design','테크 디렉터':'Tech','마케팅 디렉터':'Marketing','크루':'Crew'};
+const RANK_COLOR={'대표':['#1f3f73','#fff'],'한국 PM':['#e7edf6','#33507e'],'미국 PM':['#fdeeee','#b0433a'],'프로젝트 매니저':['#e7edf6','#33507e'],'디자인 디렉터':['#efe9fb','#6a48c0'],'테크 디렉터':['#e0e9f7','#1f3f73'],'마케팅 디렉터':['#fff2dd','#b9760a'],'크루':['#eceff3','#5b6675']};
 const DIRECTORS=['디자인 디렉터','테크 디렉터','마케팅 디렉터'];
-const PM_RANK='프로젝트 매니저';
+const PM_RANKS=['한국 PM','미국 PM','프로젝트 매니저'];
+const isPMrank=r=>PM_RANKS.includes(r||'');
 let staffData=[], staffMode='list', staffSel=null, orgMembers=[];
 function initials(n){n=(n||'').trim();return n?n[0].toUpperCase():'?';}
 function rankBadge(r){r=r||'크루';const c=RANK_COLOR[r]||RANK_COLOR['크루'];return `<span class="rk" style="background:${c[0]};color:${c[1]}">${esc(r)}</span>`;}
@@ -657,9 +658,9 @@ function renderOrgView(){
 function orgChart(ro){
   const appr=staffData.filter(s=>s.status==='approved');
   const boss=appr.filter(s=>(s.rank||'')==='대표');
-  const pm=appr.filter(s=>(s.rank||'')===PM_RANK);
+  const pm=appr.filter(s=>isPMrank(s.rank)).sort((a,b)=>RANKS.indexOf(a.rank)-RANKS.indexOf(b.rank));
   const isDir=s=>DIRECTORS.includes(s.rank||'');
-  const crew=appr.filter(s=>!isDir(s)&&(s.rank||'')!=='대표'&&(s.rank||'')!==PM_RANK);   // 팀원(크루)
+  const crew=appr.filter(s=>!isDir(s)&&(s.rank||'')!=='대표'&&!isPMrank(s.rank));   // 팀원(크루)
   const unassigned=crew.filter(s=>!s.department);
   const chair=orgMembers.filter(m=>m.tier==='chair');
   const boardM=orgMembers.filter(m=>m.tier!=='chair'&&m.tier!=='advisory');
@@ -715,7 +716,7 @@ function orgChart(ro){
     <div class="oboss">${boss.length?boss.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim">대표(CEO) 미지정 · 직원 목록에서 직급을 대표로 지정</div>'}</div>
     <div class="ostem"></div>
     <div class="otier-label">프로젝트 매니저 (PM)</div>
-    <div class="oboss">${pm.length?pm.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim" style="padding:6px 12px;border:1px dashed var(--line);border-radius:12px">프로젝트 매니저 미지정 · 직원 목록에서 직급을 프로젝트 매니저로 지정</div>'}</div>
+    <div class="oboss">${pm.length?pm.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim" style="padding:6px 12px;border:1px dashed var(--line);border-radius:12px">PM 미지정 · 직원 목록에서 직급을 한국 PM / 미국 PM으로 지정</div>'}</div>
     <div class="ostem"></div>
     <div class="oboard">${cols}</div>
     ${benchBlock}

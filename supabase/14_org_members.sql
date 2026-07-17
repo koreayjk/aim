@@ -27,9 +27,12 @@ insert into aim.org_members(name, title, scope, tier, sort)
 select v.name, v.title, v.scope, v.tier, v.sort
 from (values
   ('마이클 조 선교사', '이사장',   null,       'board', 0),
-  ('레베카 선교사',    '공동대표', null,       'board', 1),
+  ('레베카 선교사',    '부이사장', null,       'board', 1),
   ('클라라 선교사',    '이사',     '한국본부',  'board', 2),
   ('드보라 선교사',    '이사',     '필리핀본부','board', 3),
   ('줄리엣 선교사',    '이사',     '미국본부',  'board', 4)
 ) as v(name, title, scope, tier, sort)
 where not exists (select 1 from aim.org_members);
+
+-- 이미 '공동대표'로 등록돼 있으면 부이사장으로 변경 (재실행 안전)
+update aim.org_members set title = '부이사장' where name = '레베카 선교사' and title = '공동대표';

@@ -171,6 +171,17 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .today-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:.88rem}
 .today-row:last-child{border-bottom:none}
 .today-row .t{flex:1;font-weight:600}
+.todo-top{font-size:1.02rem;margin-bottom:14px}.todo-top b{color:var(--ink)}
+.todo{display:flex;flex-direction:column;gap:14px}
+.todo-sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 8px 8px}
+.todo-h{display:flex;align-items:center;gap:8px;font-size:.86rem;font-weight:800;color:var(--ink2);padding:11px 8px 8px}
+.todo-h span{margin-left:auto;background:#eef1f6;border-radius:20px;padding:1px 10px;font-size:.74rem;color:var(--muted)}
+.todo-h.over{color:var(--err)}.todo-h.soon{color:#b9760a}.todo-h.muted{color:var(--muted)}
+.todo-item{display:flex;align-items:center;gap:10px;padding:11px 9px;border-radius:10px;cursor:pointer;border-top:1px solid var(--line)}
+.todo-item:hover{background:#f4f6fa}
+.ti-t{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ti-badge{flex:0 0 auto;font-size:.68rem;font-weight:800;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.todo-item .dday{flex:0 0 auto;font-weight:800;font-size:.74rem;white-space:nowrap}.todo-item .badge{flex:0 0 auto}
 @media(max-width:760px){.staffwrap{grid-template-columns:1fr}.staff-list{max-height:none}}
 .rpt-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .rpt-title{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;color:var(--navy);min-width:130px;text-align:center}
@@ -849,9 +860,36 @@ function boardCard(r){
   </div>`;
 }
 function setBoardType(t){boardType=t;renderBoard();}
+function todoBadge(kind,stage){
+  if(kind==='task'){const c=STAGE_COLOR[stage]||['#eceff3','#5b6675'];return `<span class="ti-badge" style="background:${c[0]};color:${c[1]}">${esc(stage)}</span>`;}
+  return `<span class="badge st-${esc(stage||'접수·견적')}">${esc(stage||'접수·견적')}</span>`;
+}
+function renderMyTodos(el){
+  const meName=me&&me.name; const items=[];
+  rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{if((t.a||'')===meName&&effStage(t)!=='끝')items.push({r,label:t.t,stage:effStage(t),due:t.due||'',kind:'task'});});});
+  rows.forEach(r=>{if(r.assignee===meName&&(r.status||'')!=='완료')items.push({r,label:r.org_name||'(이름없음)',stage:r.status||'접수·견적',due:dueOf(r),kind:'proj'});});
+  const today=todayStr();
+  const bucket=due=>{if(!due)return 3;if(due<=today)return 0;const dd=ddayInfo(due);return (dd&&dd.tone==='soon')?1:2;};
+  items.forEach(it=>it.b=bucket(it.due));
+  items.sort((a,b)=>a.b!==b.b?a.b-b.b:(!a.due?1:!b.due?-1:(a.due<b.due?-1:1)));
+  const secs=[{k:0,t:'🔴 지남 · 오늘 마감',c:'over'},{k:1,t:'🟠 임박 (3일 이내)',c:'soon'},{k:2,t:'📌 예정',c:''},{k:3,t:'🗓 기한 없음',c:'muted'}];
+  let body='';
+  secs.forEach(sec=>{const list=items.filter(it=>it.b===sec.k);if(!list.length)return;
+    body+=`<div class="todo-sec"><div class="todo-h ${sec.c}">${sec.t}<span>${list.length}</span></div>`+
+      list.map(it=>{const dd=it.due?ddayInfo(it.due):null;return `<div class="todo-item" data-id="${it.r.id}">
+        ${todoBadge(it.kind,it.stage)}
+        <span class="ti-t">${esc(it.label)} <span class="dim" style="font-weight:400;font-size:.78rem">· ${esc(it.r.org_name)||''}${it.kind==='proj'?' · 프로젝트':''}</span></span>
+        ${dd?`<span class="dday ${dd.tone}">${dd.label}${it.due?' · '+it.due:''}</span>`:'<span class="dim" style="font-size:.76rem">기한 없음</span>'}
+      </div>`;}).join('')+'</div>';
+  });
+  if(!items.length) body='<div class="dim" style="padding:24px;text-align:center">나에게 배정된 진행중 업무가 없어요 🎉</div>';
+  el.innerHTML=`<div class="todo-top"><b>${esc(meName||'내')} 님의 할 일</b><span class="dim"> · 급한 순</span></div><div class="todo">${body}</div>`;
+  el.querySelectorAll('.todo-item[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
+}
 function renderBoard(){
-  const rows0=scopedRows();
   const el=document.getElementById('boardView');
+  if(scope==='mine'&&me&&me.name){ return renderMyTodos(el); }
+  const rows0=scopedRows();
   const rows = boardType==='전체'?rows0:rows0.filter(r=>(r.request_type||'홈페이지')===boardType);
   // 유형 필터 칩
   const chips='<div class="btype">'+BOARD_TYPES.map(t=>`<button class="${boardType===t?'on':''}" data-btype="${esc(t)}">${t}</button>`).join('')+'</div>';

@@ -195,7 +195,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .dexp{font-size:.74rem;font-weight:600;border:1px solid #ccc;border-radius:7px;padding:3px 8px;background:#fff}.dexp b{font-weight:800}
 /* 거버넌스(이사회/감사/자문) */
 .ogov{display:flex;gap:16px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
-.ogov-main{display:flex;flex-direction:column;align-items:center}
+.ogov-main{display:flex;flex-direction:column;align-items:stretch;flex:1 1 auto;min-width:0;max-width:640px}
+.ogov-tier{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.ogov-tierlabel{justify-self:end;font-size:.74rem;font-weight:800;color:var(--muted);letter-spacing:.3px;white-space:nowrap}
+.ogov-tier .ogov-row{justify-self:center}
 .ogov-label{font-size:.7rem;font-weight:800;color:var(--muted);letter-spacing:.5px;margin-bottom:7px;text-transform:uppercase}
 .ogov-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
 .ogov-aside{border:1.5px dashed #c9d3e0;border-radius:12px;padding:8px 12px;background:#fbfbf9}
@@ -212,7 +215,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .gm-add{margin-top:4px}
 @media(max-width:900px){.oboard{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.goved-row{grid-template-columns:1fr 1fr}.goved-row .gm-del{grid-column:span 2}}
-@media(max-width:560px){.oboard{grid-template-columns:1fr}}
+@media(max-width:560px){.oboard{grid-template-columns:1fr}.ogov-tier{grid-template-columns:1fr;justify-items:center}.ogov-tierlabel{justify-self:center}.ogov-tierpad{display:none}}
 .today-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px;border-left:4px solid var(--navy)}
 .today-card.warn{border-left-color:var(--err)}
 .today-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:.88rem}
@@ -673,9 +676,10 @@ function orgChart(ro){
       </div>
     </div>`;
   }).join('');
+  const tierRow=(label,cards)=>`<div class="ogov-tier"><div class="ogov-tierlabel">${label}</div><div class="ogov-row">${cards}</div><span class="ogov-tierpad"></span></div>`;
   const govMain=`<div class="ogov-main">
-      ${chair.length?`<div class="ogov-row">${chair.map(govCard).join('')}</div>`:''}
-      ${boardM.length?`${chair.length?'<div class="ostem"></div>':''}<div class="ogov-row">${boardM.map(govCard).join('')}</div>`:''}
+      ${chair.length?tierRow('이사장 · 부이사장',chair.map(govCard).join('')):''}
+      ${boardM.length?`${chair.length?'<div class="ostem"></div>':''}${tierRow('이사',boardM.map(govCard).join(''))}`:''}
     </div>`;
   const gov=(chair.length||boardM.length||advisory.length)?`
     <div class="ogov">

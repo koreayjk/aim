@@ -652,7 +652,7 @@ async function loadOrgView(){
 }
 function renderOrgView(){
   const el=document.getElementById('orgView'); if(!el)return;
-  el.innerHTML=`<div class="staff-head"><div><h2 style="margin:0">회사 조직도</h2><div class="dim" style="font-size:.84rem">이사회 · 대표 · 부서 · 크루 전체 구성 · 보기 전용</div></div></div>`+orgChart(true);
+  el.innerHTML=`<div class="staff-head"><div><h2 style="margin:0">회사 조직도</h2><div class="dim" style="font-size:.84rem">이사회 · 대표 · 부서 · 크루 전체 구성</div></div></div>`+orgChart(true);
 }
 function orgChart(ro){
   const appr=staffData.filter(s=>s.status==='approved');

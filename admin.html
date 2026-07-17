@@ -739,11 +739,35 @@ async function moveDept(id,dept){
   await setStaff(id,{department:nd,dept_since:nd?today:null,dept_history:hist});
 }
 async function setStaff(id,patch){
+  const s0=staffData.find(x=>x.id===id);
+  const oldName=s0?s0.name:null;
   const {error}=await sb.from('staff').update(patch).eq('id',id);
   if(error){alert('변경 실패: '+error.message+(patch.rank!==undefined?'\\n(rank 컬럼이 없으면 11_staff_rank.sql 을 실행하세요)':'')+(patch.department!==undefined?'\\n(department 컬럼이 없으면 12_department.sql 을 실행하세요)':''));return;}
-  const s=staffData.find(x=>x.id===id); if(s)Object.assign(s,patch);
+  if(s0)Object.assign(s0,patch);
   staffSel=id; renderStaff();
+  // 이름을 바꾸면 기존 프로젝트 담당자·할일 담당까지 자동 반영
+  if(patch.name!==undefined && oldName && patch.name && patch.name!==oldName){
+    await renameAssignee(oldName,patch.name);
+  }
   if(patch.status!==undefined) loadAll();
+}
+// 직원 이름 변경 시, 모든 프로젝트의 담당자(assignee) + 할일 담당(checklist.a)을 새 이름으로 일괄 변경
+async function renameAssignee(oldName,newName){
+  if(!oldName||oldName===newName)return;
+  let n=0;
+  // 1) 프로젝트 담당자
+  const up=await sb.from('requests').update({assignee:newName}).eq('assignee',oldName).select('id');
+  if(up.error){alert('담당자 이름 반영 실패: '+up.error.message);}
+  else n+=(up.data||[]).length;
+  // 2) 할일(체크리스트) 담당자 — jsonb라 해당 행만 개별 갱신
+  const affected=rows.filter(r=>Array.isArray(r.checklist)&&r.checklist.some(t=>(t&&t.a||'')===oldName));
+  for(const r of affected){
+    const cl=r.checklist.map(t=>((t&&t.a||'')===oldName?Object.assign({},t,{a:newName}):t));
+    const u2=await sb.from('requests').update({checklist:cl}).eq('id',r.id);
+    if(!u2.error){r.checklist=cl;}
+  }
+  await loadAll();
+  if(n||affected.length){/* 조용히 반영 */}
 }
 
 async function loadAll(){

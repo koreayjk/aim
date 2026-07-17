@@ -134,6 +134,37 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .wl-bar{height:9px;background:#eceff3;border-radius:9px;overflow:hidden}
 .wl-bar>i{display:block;height:100%;border-radius:9px;transition:width .3s}
 .wl-sub{font-size:.76rem;color:var(--muted);margin-top:5px}
+.side-foot .btn-s.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.staff-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.staffwrap{display:grid;grid-template-columns:322px 1fr;gap:16px;align-items:start}
+.staff-list{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;max-height:72vh;overflow:auto}
+.stcard{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:none;background:transparent;padding:10px 11px;border-radius:12px;cursor:pointer;margin-bottom:2px}
+.stcard:hover{background:#f4f6fa}.stcard.on{background:var(--soft)}
+.stcard-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.stcard-n{font-weight:700;font-size:.9rem;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.avatar{flex:0 0 auto;width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1rem}
+.avatar.lg{width:56px;height:56px;font-size:1.5rem}
+.rk{font-size:.68rem;font-weight:800;border-radius:20px;padding:2px 9px;white-space:nowrap}
+.sdot{display:inline-flex;align-items:center;gap:5px;font-size:.78rem;font-weight:700}
+.sdot i{width:8px;height:8px;border-radius:50%;display:inline-block}
+.staff-detail{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;min-width:0}
+.sd-top{display:flex;align-items:center;gap:14px;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:18px}
+.sd-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.sd-fld label{display:block;font-size:.74rem;font-weight:700;color:var(--navy);margin-bottom:5px;letter-spacing:.3px}
+.sd-fld input,.sd-fld select{width:100%;font-size:.92rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fcfcfa}
+.sd-fld input:focus,.sd-fld select:focus{outline:none;border-color:var(--navy);background:#fff}
+.sd-actions{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.org{display:flex;flex-direction:column;align-items:center;padding:12px 0}
+.org-tier{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.org-line{width:2px;height:26px;background:var(--line)}
+.orgbox{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px;box-shadow:0 10px 22px -18px rgba(0,0,0,.5);min-width:154px}
+.orgbox-n{font-weight:700;font-size:.9rem}
+.today-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:16px;border-left:4px solid var(--navy)}
+.today-card.warn{border-left-color:var(--err)}
+.today-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer;font-size:.88rem}
+.today-row:last-child{border-bottom:none}
+.today-row .t{flex:1;font-weight:600}
+@media(max-width:760px){.staffwrap{grid-template-columns:1fr}.staff-list{max-height:none}}
 .rpt-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .rpt-title{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;color:var(--navy);min-width:130px;text-align:center}
 /* 알림 벨 */
@@ -302,6 +333,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
   <div id="insightsView" style="display:none"></div>
   <div id="reportView" style="display:none"></div>
   <div id="teamView" style="display:none"></div>
+  <div id="staffView" style="display:none"></div>
   <div id="flowView" style="display:none">
     <iframe id="flowFrame" class="flowframe" title="IM Flow · 프로젝트 관리" loading="lazy"></iframe>
   </div>
@@ -322,8 +354,12 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
       <div class="fld"><label>이메일</label><input id="a_email"></div>
     </div>
     <div class="frow">
+      <div class="fld"><label>작업 유형</label><select id="a_type"><option>홈페이지</option><option>어플</option><option>프로그램</option><option>홍보물</option></select></div>
       <div class="fld"><label>분야/업종</label><input id="a_field"></div>
+    </div>
+    <div class="frow">
       <div class="fld"><label>제작 방식</label><select id="a_mode"><option value="new">새로 제작</option><option value="similar">참고 제작</option><option value="keep">기존 그대로</option></select></div>
+      <div class="fld"></div>
     </div>
     <div class="fld" style="margin-bottom:16px"><label>메모 / 요청 내용</label><textarea id="a_notes" placeholder="통화 내용, 요청사항 등"></textarea></div>
     <div class="mfoot" style="margin-top:0;border:none;padding-top:0">
@@ -418,44 +454,92 @@ document.getElementById('em').addEventListener('keydown',e=>{if(e.key==='Enter')
 document.getElementById('nm').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuth();});
 document.getElementById('logoutTop').addEventListener('click',logout);
 document.getElementById('pendLogout').addEventListener('click',logout);
-document.getElementById('staffBtn').addEventListener('click',openStaff);
+document.getElementById('staffBtn').addEventListener('click',()=>setView('staff'));
 (async()=>{const {data}=await sb.auth.getSession();if(data&&data.session)afterAuth();})();
 
-// ---- 직원 관리 (owner 전용) ----
-function staffRow(s){
-  const st = s.status==='approved'?'<span class="badge st-확정">승인</span>'
-          : s.status==='rejected'?'<span class="badge st-대기">거부</span>'
-          : '<span class="badge st-제작중">대기</span>';
-  return `<div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)">
-    <div style="flex:1;min-width:0"><b>${esc(s.name||'(이름없음)')}</b> ${s.role==='owner'?'<span class="badge st-견적발송">관리자</span>':''}
-      <div class="dim" style="font-size:.8rem">${esc(s.email||'')}</div></div>
-    ${st}
-    ${s.role!=='owner'?`<div style="display:flex;gap:6px">
-      ${s.status!=='approved'?`<button class="btn-s" data-approve="${s.id}">승인</button>`:''}
-      ${s.status!=='rejected'?`<button class="btn-s" data-reject="${s.id}">거부</button>`:''}
-    </div>`:''}
-  </div>`;
-}
-async function openStaff(){
+// ---- 직원 관리 (owner 전용, 정식 화면) ----
+const RANKS=['대표','개발 디렉터','디자인 디렉터','기획 디렉터','마케팅 디렉터','운영 디렉터','엔지니어'];
+const RANK_DESC={'대표':'대표 · CEO','개발 디렉터':'Development','디자인 디렉터':'Design','기획 디렉터':'Planning','마케팅 디렉터':'Marketing','운영 디렉터':'Operations','엔지니어':'Engineer'};
+const RANK_COLOR={'대표':['#1f3f73','#fff'],'개발 디렉터':['#e0e9f7','#1f3f73'],'디자인 디렉터':['#efe9fb','#6a48c0'],'기획 디렉터':['#e7f0fb','#2266b8'],'마케팅 디렉터':['#fff2dd','#b9760a'],'운영 디렉터':['#e7f6ec','#1e8a4c'],'엔지니어':['#eceff3','#5b6675']};
+const DIRECTORS=['개발 디렉터','디자인 디렉터','기획 디렉터','마케팅 디렉터','운영 디렉터'];
+let staffData=[], staffMode='list', staffSel=null;
+function initials(n){n=(n||'').trim();return n?n[0].toUpperCase():'?';}
+function rankBadge(r){r=r||'엔지니어';const c=RANK_COLOR[r]||RANK_COLOR['엔지니어'];return `<span class="rk" style="background:${c[0]};color:${c[1]}">${esc(r)}</span>`;}
+function statusDot(s){const m={approved:['승인','#1e8a4c'],pending:['승인 대기','#b9760a'],rejected:['거부됨','#c0392b']};const x=m[s]||m.pending;return `<span class="sdot" style="color:${x[1]}"><i style="background:${x[1]}"></i>${x[0]}</span>`;}
+async function loadStaff(){
+  const el=document.getElementById('staffView');
   const {data,error}=await sb.from('staff').select('*').order('created_at',{ascending:true});
-  if(error){alert('직원 목록 오류: '+error.message);return;}
-  const list=data||[]; const pend=list.filter(s=>s.status==='pending').length;
-  let host=document.getElementById('staffModal');
-  if(!host){host=document.createElement('div');host.id='staffModal';host.className='modal';document.body.appendChild(host);
-    host.addEventListener('click',e=>{if(e.target===host)host.classList.remove('show');});}
-  host.innerHTML=`<div class="sheet" style="max-width:600px"><div class="mhead">
-    <div><h2>직원 관리</h2><div class="sub">승인 대기 ${pend}명 · 전체 ${list.length}명</div></div>
-    <button class="x" id="stX">&times;</button></div>
-    <div class="mbody">${list.length?list.map(staffRow).join(''):'<p class="dim">아직 가입한 직원이 없습니다.</p>'}</div></div>`;
-  host.classList.add('show');
-  document.getElementById('stX').addEventListener('click',()=>host.classList.remove('show'));
-  host.querySelectorAll('[data-approve]').forEach(b=>b.addEventListener('click',()=>setStaff(b.dataset.approve,{status:'approved'})));
-  host.querySelectorAll('[data-reject]').forEach(b=>b.addEventListener('click',()=>setStaff(b.dataset.reject,{status:'rejected'})));
+  if(error){el.innerHTML='<p class="dim" style="padding:20px">직원 목록 오류: '+esc(error.message)+'</p>';return;}
+  staffData=data||[];
+  if(staffSel && !staffData.find(s=>s.id===staffSel)) staffSel=null;
+  if(!staffSel){const fp=staffData.find(s=>s.status==='pending')||staffData[0];staffSel=fp?fp.id:null;}
+  renderStaff();
+}
+function renderStaff(){
+  const el=document.getElementById('staffView'); if(!el)return;
+  const pend=staffData.filter(s=>s.status==='pending').length, appr=staffData.filter(s=>s.status==='approved').length;
+  const head=`<div class="staff-head">
+    <div><h2 style="margin:0">직원 관리</h2><div class="dim" style="font-size:.84rem">재직 ${appr}명 · 승인 대기 ${pend}명 · 전체 ${staffData.length}명</div></div>
+    <div class="tabs"><button class="${staffMode==='list'?'on':''}" data-smode="list">직원 목록</button><button class="${staffMode==='org'?'on':''}" data-smode="org">조직도</button></div>
+  </div>`;
+  el.innerHTML=head+(staffMode==='org'?orgChart():staffMaster());
+  el.querySelectorAll('[data-smode]').forEach(b=>b.addEventListener('click',()=>{staffMode=b.dataset.smode;renderStaff();}));
+  el.querySelectorAll('[data-staff]').forEach(c=>c.addEventListener('click',()=>{staffSel=c.dataset.staff;renderStaff();}));
+  el.querySelectorAll('[data-approve]').forEach(b=>b.addEventListener('click',()=>setStaff(b.dataset.approve,{status:'approved'})));
+  el.querySelectorAll('[data-reject]').forEach(b=>b.addEventListener('click',()=>setStaff(b.dataset.reject,{status:'rejected'})));
+  const rk=el.querySelector('#staffRank'); if(rk)rk.addEventListener('change',()=>setStaff(rk.dataset.id,{rank:rk.value}));
+  const nm=el.querySelector('#staffName'); if(nm)nm.addEventListener('blur',()=>{const v=nm.value.trim();if(v&&v!==(staffData.find(x=>x.id===nm.dataset.id)||{}).name)setStaff(nm.dataset.id,{name:v});});
+}
+function staffMaster(){
+  const list=staffData.length?staffData.map(s=>`
+    <button class="stcard ${s.id===staffSel?'on':''}" data-staff="${s.id}">
+      <span class="avatar">${esc(initials(s.name))}</span>
+      <span class="stcard-b"><span class="stcard-n">${esc(s.name||'(이름없음)')} ${rankBadge(s.rank)}</span><span class="dim" style="font-size:.75rem">${esc(s.email||'')}</span></span>
+      <span class="stcard-s">${statusDot(s.status)}</span>
+    </button>`).join(''):'<p class="dim" style="padding:16px">아직 가입한 직원이 없습니다.</p>';
+  const sel=staffData.find(s=>s.id===staffSel);
+  return `<div class="staffwrap"><div class="staff-list">${list}</div><div class="staff-detail">${sel?staffDetail(sel):'<div class="dim" style="padding:40px;text-align:center">왼쪽에서 직원을 선택하세요.</div>'}</div></div>`;
+}
+function staffDetail(s){
+  const active=rows.filter(r=>r.assignee===s.name && (r.status||'')!=='완료').length;
+  const owner=s.role==='owner';
+  return `<div class="sd-top">
+    <span class="avatar lg">${esc(initials(s.name))}</span>
+    <div style="min-width:0"><h3 style="margin:0">${esc(s.name||'(이름없음)')}</h3><div class="dim">${esc(s.email||'')}</div></div>
+    ${owner?'<span class="badge st-확정" style="margin-left:auto">관리자</span>':''}
+  </div>
+  <div class="sd-grid">
+    <div class="sd-fld"><label>이름</label><input id="staffName" data-id="${s.id}" value="${esc(s.name||'')}"></div>
+    <div class="sd-fld"><label>직급</label>${owner?`<div style="padding-top:6px">${rankBadge(s.rank)} <span class="dim" style="font-size:.76rem">(대표 고정)</span></div>`:`<select id="staffRank" data-id="${s.id}">${RANKS.map(r=>`<option ${((s.rank||'엔지니어')===r)?'selected':''}>${r}</option>`).join('')}</select>`}</div>
+    <div class="sd-fld"><label>상태</label><div style="padding-top:6px">${statusDot(s.status)}</div></div>
+    <div class="sd-fld"><label>진행중 업무</label><div style="padding-top:6px"><b style="font-size:1.1rem;color:var(--navy)">${active}</b> 건</div></div>
+  </div>
+  ${owner?'':`<div class="sd-actions">
+    ${s.status!=='approved'?`<button class="btn-p" data-approve="${s.id}">승인</button>`:''}
+    ${s.status==='approved'?`<button class="btn-s" data-reject="${s.id}">접근 정지</button>`:''}
+    ${s.status==='rejected'?`<button class="btn-s" data-approve="${s.id}">복구(승인)</button>`:''}
+  </div>`}`;
+}
+function orgBox(s){return `<div class="orgbox"><span class="avatar">${esc(initials(s.name))}</span><div style="min-width:0"><div class="orgbox-n">${esc(s.name||'')}</div>${rankBadge(s.rank)}</div></div>`;}
+function orgChart(){
+  const by=r=>staffData.filter(s=>(s.rank||'엔지니어')===r && s.status==='approved');
+  const boss=by('대표'), leads=DIRECTORS.flatMap(by), eng=by('엔지니어');
+  const tierHtml=(arr,empty)=>arr.length?`<div class="org-tier">${arr.map(orgBox).join('')}</div>`:`<div class="org-tier"><div class="dim">${empty}</div></div>`;
+  return `<div class="org">
+    ${tierHtml(boss,'대표 미지정')}
+    <div class="org-line"></div>
+    ${tierHtml(leads,'디렉터 미지정')}
+    <div class="org-line"></div>
+    ${tierHtml(eng,'엔지니어 없음')}
+  </div>
+  <p class="dim" style="margin-top:16px;font-size:.8rem">승인된 직원만 표시됩니다. 직급은 <b>직원 목록</b>에서 선택해 바꾸세요.</p>`;
 }
 async function setStaff(id,patch){
   const {error}=await sb.from('staff').update(patch).eq('id',id);
-  if(error){alert('변경 실패: '+error.message);return;}
-  openStaff();
+  if(error){alert('변경 실패: '+error.message+(patch.rank!==undefined?'\\n(rank 컬럼이 없으면 11_staff_rank.sql 을 실행하세요)':''));return;}
+  const s=staffData.find(x=>x.id===id); if(s)Object.assign(s,patch);
+  staffSel=id; renderStaff();
+  if(patch.status!==undefined) loadAll();
 }
 
 async function loadAll(){
@@ -551,13 +635,16 @@ function setView(v){view=v;
   document.getElementById('insightsView').style.display=v==='insights'?'block':'none';
   document.getElementById('reportView').style.display=v==='report'?'block':'none';
   document.getElementById('teamView').style.display=v==='team'?'block':'none';
+  document.getElementById('staffView').style.display=v==='staff'?'block':'none';
   document.getElementById('flowView').style.display=v==='flow'?'block':'none';
-  const sm=document.getElementById('summary'); if(sm) sm.style.display=(v==='flow'||v==='insights'||v==='report'||v==='team')?'none':'';
+  document.getElementById('staffBtn').classList.toggle('on',v==='staff');
+  const sm=document.getElementById('summary'); if(sm) sm.style.display=(v==='list'||v==='board')?'':'none';
   const sr=document.getElementById('scopeRow'); if(sr) sr.style.display=(v==='list'||v==='board')?'':'none';
   if(v==='flow'){ const fr=document.getElementById('flowFrame'); if(fr&&!fr.getAttribute('src')) fr.setAttribute('src','imflow.html?storageKey=tcs_imflow&header=0'); }
+  else if(v==='staff'){ loadStaff(); }
   else render();
 }
-function render(){ if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='team')renderTeam(); else if(view==='flow'){} else renderList(); }
+function render(){ if(view==='staff')renderStaff(); else if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='team')renderTeam(); else if(view==='flow'){} else renderList(); }
 // ---- 팀 현황 (직원 업무 부하, owner 전용) ----
 function renderTeam(){
   const el=document.getElementById('teamView');
@@ -577,7 +664,16 @@ function renderTeam(){
   const busiest=stat.length?stat[0].n:'-';
   function level(s){ if(s.active>=5||s.overdue>=3) return['과중','#c0392b','#fdecec']; if(s.active>=3||s.overdue>=1) return['보통','#b9760a','#fff2dd']; return['여유','#1e8a4c','#e7f6ec']; }
   const kpi=(l,v,t)=>`<div class="scard ${t||''}"><div class="n" style="font-size:1.35rem">${v}</div><div class="l">${l}</div></div>`;
+  const today=todayStr();
+  const dueByToday=rows.filter(r=>{const d=dueOf(r);return d&&d<=today;});
+  const notDone=dueByToday.filter(r=>(r.status||'')!=='완료').sort((a,b)=>dueOf(a)<dueOf(b)?-1:1);
+  const doneCnt=dueByToday.length-notDone.length;
+  const todayCard=`<div class="today-card ${notDone.length?'warn':''}">
+    <h3 style="margin:0 0 ${notDone.length?'12px':'0'}">📌 오늘까지 마감 현황 <span class="dim" style="font-weight:500;font-size:.8rem">· 완료 ${doneCnt} · 미완료 ${notDone.length}</span></h3>
+    ${notDone.length?notDone.map(r=>{const dd=ddayInfo(dueOf(r));return `<div class="today-row" data-id="${r.id}"><span class="t">${esc(r.org_name)||'(이름없음)'}</span><span class="dim">${r.assignee?esc(r.assignee)+' · ':''}${esc(r.status||'')}</span><span class="dday ${dd?dd.tone:''}" style="font-weight:800">${dd?dd.label:''} · ${dueOf(r)}</span></div>`;}).join(''):'<div class="dim">오늘까지 마감이 모두 처리됐어요 ✅</div>'}
+  </div>`;
   el.innerHTML=`
+    ${todayCard}
     <div class="summary" style="margin:0 0 16px">
       ${kpi('진행중 전체', totalActive+'건')}
       ${kpi('미지정', unassigned+'건', unassigned?'warn':'')}
@@ -597,6 +693,7 @@ function renderTeam(){
         </div>`;}).join(''):'<p class="dim">아직 배정된 업무가 없어요. 의뢰 상세에서 담당자를 지정해보세요.</p>'}
       ${unassigned?`<div class="wl"><div class="wl-top"><div class="wl-name" style="color:var(--muted)">미지정</div><div class="wl-nums">${unassigned}건</div></div><div class="wl-bar"><i style="width:${Math.round(unassigned/Math.max(maxLoad,unassigned)*100)}%;background:#b6bfcf"></i></div></div>`:''}
     </div>`;
+  el.querySelectorAll('.today-row[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
 }
 // ---- 월간 리포트 + 결산 ----
 function pad2(n){return String(n).padStart(2,'0');}
@@ -805,6 +902,7 @@ function openDetail(id){
       <button class="x" id="mX">&times;</button>
     </div>
     <div class="mbody">
+      <div class="fld" style="margin-bottom:14px"><label>작업 유형</label><select id="f_type">${['홈페이지','어플','프로그램','홍보물'].map(t=>`<option ${((r.request_type||'홈페이지')===t)?'selected':''}>${t}</option>`).join('')}</select></div>
       <div class="statusbar">${pipelineOf(r).map(s=>`<button class="${(r.status||'접수·견적')===s?'on':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>
       <div class="fld" style="margin-bottom:14px"><label>담당자</label>
         <div class="assignwrap"><select id="f_assignee">${assigneeOptions(r.assignee)}</select></div>
@@ -866,6 +964,7 @@ function openDetail(id){
 
 function bindDetail(r){
   document.getElementById('mX').addEventListener('click',closeModal);
+  document.getElementById('f_type').addEventListener('change',async e=>{await saveField(r.id,{request_type:e.target.value});openDetail(r.id);});
   sheet.querySelectorAll('.statusbar button').forEach(b=>b.addEventListener('click',()=>changeStatus(r.id,b.dataset.s,true)));
   const sel=document.getElementById('f_assignee');
   sel.addEventListener('change',()=>saveField(r.id,{assignee:sel.value||null}));
@@ -940,6 +1039,7 @@ document.getElementById('addSave').addEventListener('click',async()=>{
   if(!org){err.textContent="단체/사업체명을 입력하세요.";return;}
   const assignee=document.getElementById('a_assignee').value.trim();
   const row={status:'접수·견적',source:'manual',mode:document.getElementById('a_mode').value,org_name:org,assignee:assignee||null,
+    request_type:document.getElementById('a_type').value,
     phone:document.getElementById('a_phone').value.trim(),email:document.getElementById('a_email').value.trim(),
     field:document.getElementById('a_field').value.trim(),notes:document.getElementById('a_notes').value.trim()};
   const {error}=await sb.from('requests').insert([row]);

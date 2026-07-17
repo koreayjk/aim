@@ -154,6 +154,13 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .sd-fld input,.sd-fld select{width:100%;font-size:.92rem;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fcfcfa}
 .sd-fld input:focus,.sd-fld select:focus{outline:none;border-color:var(--navy);background:#fff}
 .sd-actions{display:flex;gap:8px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.sd-work{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.sd-worktitle{font-size:.78rem;font-weight:700;color:var(--navy);margin-bottom:6px;letter-spacing:.3px}
+.workrow{display:flex;align-items:center;gap:9px;padding:9px 8px;border-radius:9px;cursor:pointer;font-size:.88rem}
+.workrow:hover{background:#f4f6fa}
+.workrow .t{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.workrow .badge,.workrow .rk{flex:0 0 auto}
+.workrow .dday{flex:0 0 auto;font-weight:800;font-size:.74rem}
 .org{display:flex;flex-direction:column;align-items:center;padding:12px 0}
 .org-tier{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
 .org-line{width:2px;height:26px;background:var(--line)}
@@ -489,6 +496,7 @@ function renderStaff(){
   el.querySelectorAll('[data-reject]').forEach(b=>b.addEventListener('click',()=>setStaff(b.dataset.reject,{status:'rejected'})));
   const rk=el.querySelector('#staffRank'); if(rk)rk.addEventListener('change',()=>setStaff(rk.dataset.id,{rank:rk.value}));
   const nm=el.querySelector('#staffName'); if(nm)nm.addEventListener('blur',()=>{const v=nm.value.trim();if(v&&v!==(staffData.find(x=>x.id===nm.dataset.id)||{}).name)setStaff(nm.dataset.id,{name:v});});
+  el.querySelectorAll('.workrow[data-id]').forEach(w=>w.addEventListener('click',()=>openDetail(Number(w.dataset.id))));
 }
 function staffMaster(){
   const list=staffData.length?staffData.map(s=>`
@@ -501,8 +509,12 @@ function staffMaster(){
   return `<div class="staffwrap"><div class="staff-list">${list}</div><div class="staff-detail">${sel?staffDetail(sel):'<div class="dim" style="padding:40px;text-align:center">왼쪽에서 직원을 선택하세요.</div>'}</div></div>`;
 }
 function staffDetail(s){
-  const active=rows.filter(r=>r.assignee===s.name && (r.status||'')!=='완료').length;
+  const myProjects=rows.filter(r=>r.assignee===s.name && (r.status||'')!=='완료');
+  const myTasks=[]; rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{if((t.a||'')===s.name && effStage(t)!=='끝') myTasks.push({r,t});});});
+  const active=myProjects.length;
   const owner=s.role==='owner';
+  const projList=myProjects.length?myProjects.map(r=>{const dd=ddayInfo(dueOf(r));return `<div class="workrow" data-id="${r.id}"><span class="badge st-${esc(r.status||'접수·견적')}">${esc(r.status||'접수·견적')}</span><span class="t">${esc(r.org_name)||'(이름없음)'} <span class="dim" style="font-weight:400;font-size:.76rem">· ${esc(r.request_type||'')}</span></span>${dd?`<span class="dday ${dd.tone}">${dd.label}</span>`:''}</div>`;}).join(''):'<div class="dim" style="padding:8px 2px">담당 프로젝트가 없어요.</div>';
+  const taskList=myTasks.length?myTasks.map(({r,t})=>{const es=effStage(t),c=STAGE_COLOR[es]||['#eee','#555'];const dd=t.due?ddayInfo(t.due):null;return `<div class="workrow" data-id="${r.id}"><span class="rk" style="background:${c[0]};color:${c[1]}">${es}</span><span class="t">${esc(t.t)} <span class="dim" style="font-weight:400;font-size:.76rem">· ${esc(r.org_name)||''}</span></span>${t.due?`<span class="dday ${dd?dd.tone:''}">${t.due}</span>`:''}</div>`;}).join(''):'<div class="dim" style="padding:8px 2px">배정된 할일이 없어요.</div>';
   return `<div class="sd-top">
     <span class="avatar lg">${esc(initials(s.name))}</span>
     <div style="min-width:0"><h3 style="margin:0">${esc(s.name||'(이름없음)')}</h3><div class="dim">${esc(s.email||'')}</div></div>
@@ -513,6 +525,12 @@ function staffDetail(s){
     <div class="sd-fld"><label>직급</label>${owner?`<div style="padding-top:6px">${rankBadge(s.rank)} <span class="dim" style="font-size:.76rem">(대표 고정)</span></div>`:`<select id="staffRank" data-id="${s.id}">${RANKS.map(r=>`<option ${((s.rank||'엔지니어')===r)?'selected':''}>${r}</option>`).join('')}</select>`}</div>
     <div class="sd-fld"><label>상태</label><div style="padding-top:6px">${statusDot(s.status)}</div></div>
     <div class="sd-fld"><label>진행중 업무</label><div style="padding-top:6px"><b style="font-size:1.1rem;color:var(--navy)">${active}</b> 건</div></div>
+  </div>
+  <div class="sd-work">
+    <div class="sd-worktitle">담당 프로젝트 <span class="dim">${myProjects.length}</span></div>
+    ${projList}
+    <div class="sd-worktitle" style="margin-top:16px">배정된 할일 <span class="dim">${myTasks.length}</span></div>
+    ${taskList}
   </div>
   ${owner?'':`<div class="sd-actions">
     ${s.status!=='approved'?`<button class="btn-p" data-approve="${s.id}">승인</button>`:''}

@@ -327,7 +327,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
       <button id="tabInsights">분석</button>
       <button id="tabReport">월간 리포트</button>
       <button id="tabTeam" style="display:none">팀 현황</button>
-      <button id="tabFlow">프로젝트 관리</button>
     </nav>
     <div class="side-foot">
       <button class="btn-s" id="staffBtn" style="display:none">직원 관리</button>
@@ -355,9 +354,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
   <div id="reportView" style="display:none"></div>
   <div id="teamView" style="display:none"></div>
   <div id="staffView" style="display:none"></div>
-  <div id="flowView" style="display:none">
-    <iframe id="flowFrame" class="flowframe" title="IM Flow · 프로젝트 관리" loading="lazy"></iframe>
-  </div>
   </main>
 </div>
 
@@ -647,7 +643,6 @@ document.getElementById('tabBoard').addEventListener('click',()=>setView('board'
 document.getElementById('tabInsights').addEventListener('click',()=>setView('insights'));
 document.getElementById('tabReport').addEventListener('click',()=>setView('report'));
 document.getElementById('tabTeam').addEventListener('click',()=>setView('team'));
-document.getElementById('tabFlow').addEventListener('click',()=>setView('flow'));
 document.getElementById('scAll').addEventListener('click',()=>setScope('all'));
 document.getElementById('scMine').addEventListener('click',()=>setScope('mine'));
 function setScope(s){scope=s;
@@ -661,22 +656,19 @@ function setView(v){view=v;
   document.getElementById('tabInsights').classList.toggle('on',v==='insights');
   document.getElementById('tabReport').classList.toggle('on',v==='report');
   document.getElementById('tabTeam').classList.toggle('on',v==='team');
-  document.getElementById('tabFlow').classList.toggle('on',v==='flow');
   document.getElementById('listView').style.display=v==='list'?'block':'none';
   document.getElementById('boardView').style.display=v==='board'?'block':'none';
   document.getElementById('insightsView').style.display=v==='insights'?'block':'none';
   document.getElementById('reportView').style.display=v==='report'?'block':'none';
   document.getElementById('teamView').style.display=v==='team'?'block':'none';
   document.getElementById('staffView').style.display=v==='staff'?'block':'none';
-  document.getElementById('flowView').style.display=v==='flow'?'block':'none';
   document.getElementById('staffBtn').classList.toggle('on',v==='staff');
   const sm=document.getElementById('summary'); if(sm) sm.style.display=(v==='list'||v==='board')?'':'none';
   const sr=document.getElementById('scopeRow'); if(sr) sr.style.display=(v==='list'||v==='board')?'':'none';
-  if(v==='flow'){ const fr=document.getElementById('flowFrame'); if(fr&&!fr.getAttribute('src')) fr.setAttribute('src','imflow.html?storageKey=tcs_imflow&header=0'); }
-  else if(v==='staff'){ loadStaff(); }
+  if(v==='staff'){ loadStaff(); }
   else render();
 }
-function render(){ if(view==='staff')renderStaff(); else if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='team')renderTeam(); else if(view==='flow'){} else renderList(); }
+function render(){ if(view==='staff')renderStaff(); else if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='team')renderTeam(); else renderList(); }
 // ---- 팀 현황 (직원 업무 부하, owner 전용) ----
 function renderTeam(){
   const el=document.getElementById('teamView');

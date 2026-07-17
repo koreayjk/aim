@@ -70,6 +70,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .st-제작완료{background:#e7f6ec;color:#1e8a4c}.st-컨펌{background:#efe9fb;color:#6a48c0}.st-확정{background:#1f3f73;color:#fff}
 .st-접수{background:#eceff3;color:#5b6675}.st-견적{background:#e0e9f7;color:#1f3f73}.st-완료{background:#1f3f73;color:#fff}
 .st-접수·견적{background:#eceff3;color:#5b6675}.st-디자인{background:#efe9fb;color:#6a48c0}.st-개발{background:#e0e9f7;color:#1f3f73}.st-검수{background:#fff2dd;color:#b9760a}
+.st-진행중{background:#e0e9f7;color:#1f3f73}.st-기획{background:#e7f0fb;color:#2266b8}.st-시안{background:#efe9fb;color:#6a48c0}.st-수정{background:#fff2dd;color:#b9760a}.st-테스트{background:#e7f6ec;color:#1e8a4c}.st-인쇄·납품{background:#e7f0fb;color:#2266b8}
+.btype{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:30px;padding:3px;margin-bottom:12px}
+.btype button{border:none;background:transparent;color:var(--muted);font-weight:700;font-size:.83rem;padding:7px 15px;border-radius:24px;cursor:pointer}
+.btype button.on{background:var(--navy);color:#fff}
 .src{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:6px}
 .src-web{background:var(--soft);color:var(--navy)}.src-manual{background:#fdeede;color:#a86412}
 .listwrap{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
@@ -335,15 +339,25 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 // 통합 Supabase 프로젝트 내에서 aim 전용 스키마를 사용해 다른 사이트와 데이터를 분리합니다.
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'aim' } });
 
-const BOARD_COLS=["접수·견적","디자인","개발","검수"];
-const STATUSES=[...BOARD_COLS,"완료"];
+const PIPELINES={
+  '홈페이지':['접수·견적','디자인','개발','검수','완료'],
+  '어플':['접수·견적','기획','디자인','개발','테스트','완료'],
+  '프로그램':['접수·견적','기획','개발','테스트','완료'],
+  '홍보물':['접수·견적','시안','수정','인쇄·납품','완료']
+};
+const BOARD_TYPES=['전체','홈페이지','어플','프로그램','홍보물'];
+const MACRO_ACTIVE=['접수·견적','진행중','검수'];
+const STATUSES=[...new Set(Object.values(PIPELINES).flat())]; // 전체 단계 집합 (CSS/기타용)
+function pipelineOf(r){return PIPELINES[r&&r.request_type]||PIPELINES['홈페이지'];}
+function activeStages(type){const pl=PIPELINES[type]||PIPELINES['홈페이지'];return pl.slice(0,-1);}
+function macroStatus(r){const s=r.status||'접수·견적';if(s==='접수·견적')return '접수·견적';if(s==='완료')return '완료';const pl=pipelineOf(r);return s===pl[pl.length-2]?'검수':'진행중';}
 function dueOf(r){const sd=r.stage_due; if(sd&&sd[r.status])return sd[r.status]; return r.due_date||'';}
 const TASK_STAGES=['해야함','하는중','검토','끝'];
 const STAGE_COLOR={'해야함':'#94a3b8','하는중':'#1f3f73','검토':'#d99a2b','끝':'#1e8a4c'};
 const STAGE_MAP={'준비':'해야함','진행':'하는중','검토':'검토','완료':'끝'};
 function effStage(c){ if(c.d) return '끝'; const s=c.s||''; return TASK_STAGES.includes(s)?s:(STAGE_MAP[s]||'해야함'); }
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
-let rows=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false;
+let rows=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false, boardType='전체';
 const DONE_CAP=5;
 function scopedRows(){ return (scope==='mine' && me && me.name) ? rows.filter(r=>r.assignee===me.name) : rows; }
 
@@ -460,7 +474,7 @@ function inThisWeek(d){if(!d)return false;const due=new Date(d+'T00:00:00');cons
 function renderSummary(){
   const rows=scopedRows();
   const total=rows.length;
-  const making=rows.filter(r=>['디자인','개발','검수'].includes(r.status)).length;
+  const making=rows.filter(r=>{const m=macroStatus(r);return m==='진행중'||m==='검수';}).length;
   const wk=rows.filter(r=>inThisWeek(dueOf(r))&&r.status!=='완료').length;
   const done=rows.filter(r=>r.status==='완료').length;
   document.getElementById('summary').innerHTML=`
@@ -552,7 +566,7 @@ function renderTeam(){
   const openTasksOf=n=>{let c=0;rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{if((t.a||'')===n && effStage(t)!=='끝')c++;});});return c;};
   const stat=names.map(n=>{
     const active=rows.filter(r=>r.assignee===n && (r.status||'')!=='완료');
-    const byS={}; STATUSES.forEach(s=>byS[s]=active.filter(r=>(r.status||'접수·견적')===s).length);
+    const byS={}; MACRO_ACTIVE.forEach(m=>byS[m]=active.filter(r=>macroStatus(r)===m).length);
     const overdue=active.filter(r=>{const d=ddayInfo(dueOf(r));return d&&(d.tone==='over'||d.tone==='soon');}).length;
     const tasks=openTasksOf(n);
     return {n,active:active.length,byS,overdue,tasks,load:active.length+tasks*0.4};
@@ -579,7 +593,7 @@ function renderTeam(){
             <div class="wl-nums">진행 <b>${s.active}</b> · 할일 <b>${s.tasks}</b>${s.overdue?` · <span style="color:var(--err);font-weight:700">마감임박 ${s.overdue}</span>`:''}</div>
           </div>
           <div class="wl-bar"><i style="width:${Math.round(s.load/maxLoad*100)}%;background:${col}"></i></div>
-          <div class="wl-sub">접수·견적 ${s.byS['접수·견적']||0} · 디자인 ${s.byS['디자인']||0} · 개발 ${s.byS['개발']||0} · 검수 ${s.byS['검수']||0}</div>
+          <div class="wl-sub">접수·견적 ${s.byS['접수·견적']||0} · 진행중 ${s.byS['진행중']||0} · 검수 ${s.byS['검수']||0}</div>
         </div>`;}).join(''):'<p class="dim">아직 배정된 업무가 없어요. 의뢰 상세에서 담당자를 지정해보세요.</p>'}
       ${unassigned?`<div class="wl"><div class="wl-top"><div class="wl-name" style="color:var(--muted)">미지정</div><div class="wl-nums">${unassigned}건</div></div><div class="wl-bar"><i style="width:${Math.round(unassigned/Math.max(maxLoad,unassigned)*100)}%;background:#b6bfcf"></i></div></div>`:''}
     </div>`;
@@ -650,7 +664,7 @@ function renderInsights(){
       <circle cx="60" cy="60" r="${R}" fill="none" stroke="#1f3f73" stroke-width="12" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}" transform="rotate(-90 60 60)"/>
     </svg><div class="donutc"><b>${pct}%</b><span>할일 완료</span></div></div>
     <p class="dim" style="font-size:.8rem">전체 ${tt}개 중 ${td}개 완료</p></div>`;
-  const stC=STATUSES.map(s=>({s,n:all.filter(r=>(r.status||'접수·견적')===s).length}));
+  const stC=[...MACRO_ACTIVE,'완료'].map(s=>({s,n:all.filter(r=>(s==='완료'?(r.status||'')==='완료':macroStatus(r)===s)).length}));
   const maxSt=Math.max(1,...stC.map(c=>c.n));
   const statusCard=`<div class="ins-card"><h3>상태별 의뢰</h3>${stC.map(c=>`<div class="insbar"><div class="insbar-l"><span class="badge st-${c.s}">${c.s}</span><span>${c.n}건</span></div><div class="insbar-t"><i style="width:${c.n/maxSt*100}%"></i></div></div>`).join('')}</div>`;
   const active=all.filter(r=>(r.status||'')!=='완료'); const byA={};
@@ -719,10 +733,14 @@ function boardCard(r){
     ${p.total?`<div class="cbar-lab"><span>할일</span><span>${p.done}/${p.total} · ${p.pct}%</span></div><div class="cbar"><i style="width:${p.pct}%"></i></div>`:`<div class="cbar-lab" style="opacity:.55"><span>할일</span><span>없음</span></div>`}
   </div>`;
 }
+function setBoardType(t){boardType=t;renderBoard();}
 function renderBoard(){
-  const rows=scopedRows();
+  const rows0=scopedRows();
   const el=document.getElementById('boardView');
-  // 다가오는 마감 (확정 제외, 임박·지남 우선)
+  const rows = boardType==='전체'?rows0:rows0.filter(r=>(r.request_type||'홈페이지')===boardType);
+  // 유형 필터 칩
+  const chips='<div class="btype">'+BOARD_TYPES.map(t=>`<button class="${boardType===t?'on':''}" data-btype="${esc(t)}">${t}</button>`).join('')+'</div>';
+  // 다가오는 마감
   const up=rows.filter(r=>dueOf(r)&&(r.status||'')!=='완료')
     .map(r=>({r,dd:ddayInfo(dueOf(r))}))
     .filter(x=>x.dd&&x.dd.tone!=='normal')
@@ -731,17 +749,25 @@ function renderBoard(){
     ? '<div class="updue-h">📅 다가오는 마감</div><div class="updue">'+
       up.map(x=>`<div class="u" data-id="${x.r.id}"><span>${esc(x.r.org_name)||'(이름없음)'}</span><span class="dday ${x.dd.tone}">${x.dd.label}</span></div>`).join('')+'</div>'
     : '';
-  const cols=BOARD_COLS.map(st=>{
-    const items=rows.filter(r=>(r.status||'접수·견적')===st);
-    return `<div class="col" data-st="${st}"><h3>${st}<span class="c">${items.length}</span></h3>${items.map(boardCard).join('')}</div>`;
-  }).join('');
+  // 활성 칼럼 (완료 제외)
+  const active=rows.filter(r=>(r.status||'접수·견적')!=='완료');
+  let colDefs;
+  if(boardType==='전체'){
+    colDefs=MACRO_ACTIVE.map(m=>({label:m,st:null,items:active.filter(r=>macroStatus(r)===m)}));
+  } else {
+    const stages=activeStages(boardType); const idx={}; stages.forEach((s,i)=>idx[s]=i);
+    colDefs=stages.map(s=>({label:s,st:s,items:[]}));
+    active.forEach(r=>{ const s=r.status; const t=(idx[s]!=null)?s:(stages[1]||stages[0]); colDefs[idx[t]].items.push(r); });
+  }
+  const cols=colDefs.map(c=>`<div class="col"${c.st?` data-st="${esc(c.st)}"`:''}><h3>${c.label}<span class="c">${c.items.length}</span></h3>${c.items.map(boardCard).join('')}</div>`).join('');
   const doneAll=rows.filter(r=>(r.status||'')==='완료').sort((a,b)=>(b.done_at||b.created_at||'').localeCompare(a.done_at||a.created_at||''));
   const dTotal=doneAll.length, dShown=showAllDone?doneAll:doneAll.slice(0,12);
   const doneStrip=`<div class="donebar" data-st="완료">
     <div class="donebar-h"><span>✅ 완료 <b>${dTotal}</b></span>${dTotal>12?`<button class="donemore" data-more="${showAllDone?0:1}">${showAllDone?'접기':'+ '+(dTotal-12)+'건 더'}</button>`:''}</div>
     <div class="donebar-list">${dTotal?dShown.map(r=>`<button class="donechip" data-id="${r.id}">${esc(r.org_name)||'(이름없음)'}<span class="dim">${r.done_at||''}</span></button>`).join(''):'<span class="dim">완료된 프로젝트가 없어요.</span>'}</div>
   </div>`;
-  el.innerHTML=upHtml+'<div class="board">'+cols+'</div>'+doneStrip;
+  el.innerHTML=chips+upHtml+'<div class="board" style="grid-template-columns:repeat('+colDefs.length+',minmax(0,1fr))">'+cols+'</div>'+doneStrip;
+  el.querySelectorAll('.btype button').forEach(b=>b.addEventListener('click',()=>setBoardType(b.dataset.btype)));
   el.querySelectorAll('[data-more]').forEach(b=>b.addEventListener('click',()=>{showAllDone=b.dataset.more==='1';renderBoard();}));
   el.querySelectorAll('.updue .u, .donechip').forEach(u=>u.addEventListener('click',()=>openDetail(Number(u.dataset.id))));
   let dragId=null;
@@ -750,7 +776,7 @@ function renderBoard(){
     c.addEventListener('dragstart',e=>{dragId=Number(c.dataset.id);c.dataset.dragging='1';e.dataTransfer.effectAllowed='move';});
     c.addEventListener('dragend',()=>{setTimeout(()=>{delete c.dataset.dragging;},60);});
   });
-  el.querySelectorAll('.col, .donebar').forEach(col=>{
+  el.querySelectorAll('.col[data-st], .donebar').forEach(col=>{
     col.addEventListener('dragover',e=>{e.preventDefault();col.classList.add('drag');});
     col.addEventListener('dragleave',()=>col.classList.remove('drag'));
     col.addEventListener('drop',async e=>{e.preventDefault();col.classList.remove('drag');if(dragId==null)return;await changeStatus(dragId,col.dataset.st);dragId=null;});
@@ -779,12 +805,12 @@ function openDetail(id){
       <button class="x" id="mX">&times;</button>
     </div>
     <div class="mbody">
-      <div class="statusbar">${STATUSES.map(s=>`<button class="${(r.status||'접수·견적')===s?'on':''}" data-s="${s}">${s}</button>`).join('')}</div>
+      <div class="statusbar">${pipelineOf(r).map(s=>`<button class="${(r.status||'접수·견적')===s?'on':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>
       <div class="fld" style="margin-bottom:14px"><label>담당자</label>
         <div class="assignwrap"><select id="f_assignee">${assigneeOptions(r.assignee)}</select></div>
       </div>
       <div class="fld" style="margin-bottom:16px"><label>단계별 마감일 <span class="dim" style="font-weight:400;font-size:.74rem">· 완료 = 최종 마감</span></label>
-        <div class="sdue-grid">${STATUSES.map(s=>`<label class="sdue-item"><span>${s==='완료'?'완료(최종)':esc(s)}</span><input type="date" class="sdue" data-stage="${esc(s)}" value="${(r.stage_due&&r.stage_due[s])||''}"></label>`).join('')}</div>
+        <div class="sdue-grid">${pipelineOf(r).map(s=>`<label class="sdue-item"><span>${s==='완료'?'완료(최종)':esc(s)}</span><input type="date" class="sdue" data-stage="${esc(s)}" value="${(r.stage_due&&r.stage_due[s])||''}"></label>`).join('')}</div>
       </div>
       <div class="frow">
         <div class="fld"><label>금액 (원)</label><input type="number" id="f_amount" value="${r.amount??''}" placeholder="예: 1500000"></div>

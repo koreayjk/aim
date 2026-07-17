@@ -674,8 +674,8 @@ function orgChart(ro){
     </div>`;
   }).join('');
   const govMain=`<div class="ogov-main">
-      ${chair.length?`<div class="ogov-label">이사장 · 부이사장</div><div class="ogov-row">${chair.map(govCard).join('')}</div>`:''}
-      ${boardM.length?`${chair.length?'<div class="ostem"></div>':''}<div class="ogov-label">이사</div><div class="ogov-row">${boardM.map(govCard).join('')}</div>`:''}
+      ${chair.length?`<div class="ogov-row">${chair.map(govCard).join('')}</div>`:''}
+      ${boardM.length?`${chair.length?'<div class="ostem"></div>':''}<div class="ogov-row">${boardM.map(govCard).join('')}</div>`:''}
     </div>`;
   const gov=(chair.length||boardM.length||advisory.length)?`
     <div class="ogov">

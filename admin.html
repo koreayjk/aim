@@ -260,6 +260,45 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .cal-dot{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--navy)}
 .cal-cell.sel .cal-dot{background:#fff}
 @media(max-width:780px){.daylog{grid-template-columns:1fr}.daylog-cal{order:-1}}
+/* 직원 교육 */
+.tprog{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.tprog-i{font-size:.78rem;font-weight:700;border:1.5px solid var(--line);border-radius:9px;padding:4px 10px;background:#fff}
+.tprog-i.warn{border-color:var(--err);color:var(--err);background:#fdeeea}
+.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:14px}
+.tcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:0 10px 22px -20px rgba(0,0,0,.5);transition:transform .08s}
+.tcard:hover{transform:translateY(-2px)}
+.tthumb{position:relative;aspect-ratio:16/9;background:#0d1b2a}
+.tthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.tthumb-x{display:flex;align-items:center;justify-content:center;height:100%;color:#9fb3c8;font-size:1.6rem}
+.tdone-badge{position:absolute;top:8px;right:8px;background:#1e8a4c;color:#fff;font-size:.7rem;font-weight:800;padding:2px 8px;border-radius:8px}
+.tcard-b{padding:10px 12px}
+.tcard-top{display:flex;gap:6px;align-items:center;margin-bottom:5px}
+.tcat{color:#fff;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:7px}
+.treq{font-size:.66rem;font-weight:800;color:#b9760a;background:#fff2dd;padding:2px 7px;border-radius:7px}
+.tcard-t{font-weight:700;font-size:.92rem;line-height:1.35;margin-bottom:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.tcard-m{font-size:.75rem}
+.tform{background:#fafbfc;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;display:flex;flex-direction:column;gap:9px}
+.tform-h{font-weight:800;font-size:.9rem}
+.tform input,.tform select,.tform textarea{padding:8px 10px;border:1px solid var(--line);border-radius:9px;font-size:.88rem;background:#fff;font-family:inherit;box-sizing:border-box;width:100%}
+.tform-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.tform-row select{flex:1;min-width:120px}
+.tform-chk{display:flex;align-items:center;gap:6px;font-size:.85rem;font-weight:600;white-space:nowrap}
+.tform-act{display:flex;gap:8px}
+.tdet{max-width:840px;margin:0 auto}
+.tback{margin-bottom:12px}
+.tdet-head{margin-bottom:12px}
+.tvid{position:relative;padding-top:56.25%;border-radius:14px;overflow:hidden;background:#000}
+.tvid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.tdesc{color:var(--ink);font-size:.92rem;line-height:1.6;white-space:pre-wrap;margin:14px 0}
+.tdet-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.tnote-form{background:#fafbfc;border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0 16px}
+.tnote-form textarea{width:100%;box-sizing:border-box;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:.9rem;font-family:inherit;resize:vertical}
+.tnote-form-b{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+.tstars{font-size:1.15rem;color:#e0a90a;cursor:pointer;letter-spacing:2px;user-select:none}
+.tnote{padding:10px 4px;border-bottom:1px dashed var(--line)}
+.tnote-h{display:flex;align-items:center;gap:8px;font-size:.82rem;margin-bottom:3px}
+.tnote-r{color:#e0a90a;font-size:.82rem}
+.tnote-t{font-size:.92rem;line-height:1.5;white-space:pre-wrap}
 .todo-sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 8px 8px}
 .todo-h{display:flex;align-items:center;gap:8px;font-size:.86rem;font-weight:800;color:var(--ink2);padding:11px 8px 8px}
 .todo-h span{margin-left:auto;background:#eef1f6;border-radius:20px;padding:1px 10px;font-size:.74rem;color:var(--muted)}
@@ -411,6 +450,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
       <button id="tabInsights">분석</button>
       <button id="tabReport">월간 리포트</button>
       <button id="tabOrg">조직도</button>
+      <button id="tabTrain">직원 교육</button>
       <button id="tabTeam" style="display:none">팀 현황</button>
     </nav>
     <div class="side-foot">
@@ -438,6 +478,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
   <div id="insightsView" style="display:none"></div>
   <div id="reportView" style="display:none"></div>
   <div id="orgView" style="display:none"></div>
+  <div id="trainView" style="display:none"></div>
   <div id="teamView" style="display:none"></div>
   <div id="staffView" style="display:none"></div>
   </main>
@@ -498,6 +539,7 @@ function effStage(c){ if(c.d) return '끝'; const s=c.s||''; return TASK_STAGES.
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
 let rows=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false, boardType='전체';
 let logDate=null, logMonth=null;   // 일별 활동(캘린더) 선택 상태
+let trainings=[], trainCat='전체', trainSel=null, trainAdding=false;   // 직원 교육
 const DONE_CAP=5;
 function scopedRows(){ return (scope==='mine' && me && me.name) ? rows.filter(r=>r.assignee===me.name) : rows; }
 
@@ -954,6 +996,7 @@ document.getElementById('tabBoard').addEventListener('click',()=>setView('board'
 document.getElementById('tabInsights').addEventListener('click',()=>setView('insights'));
 document.getElementById('tabReport').addEventListener('click',()=>setView('report'));
 document.getElementById('tabOrg').addEventListener('click',()=>setView('org'));
+document.getElementById('tabTrain').addEventListener('click',()=>setView('train'));
 document.getElementById('tabTeam').addEventListener('click',()=>setView('team'));
 document.getElementById('scAll').addEventListener('click',()=>setScope('all'));
 document.getElementById('scMine').addEventListener('click',()=>setScope('mine'));
@@ -968,12 +1011,14 @@ function setView(v){view=v;
   document.getElementById('tabInsights').classList.toggle('on',v==='insights');
   document.getElementById('tabReport').classList.toggle('on',v==='report');
   document.getElementById('tabOrg').classList.toggle('on',v==='org');
+  document.getElementById('tabTrain').classList.toggle('on',v==='train');
   document.getElementById('tabTeam').classList.toggle('on',v==='team');
   document.getElementById('listView').style.display=v==='list'?'block':'none';
   document.getElementById('boardView').style.display=v==='board'?'block':'none';
   document.getElementById('insightsView').style.display=v==='insights'?'block':'none';
   document.getElementById('reportView').style.display=v==='report'?'block':'none';
   document.getElementById('orgView').style.display=v==='org'?'block':'none';
+  document.getElementById('trainView').style.display=v==='train'?'block':'none';
   document.getElementById('teamView').style.display=v==='team'?'block':'none';
   document.getElementById('staffView').style.display=v==='staff'?'block':'none';
   document.getElementById('staffBtn').classList.toggle('on',v==='staff');
@@ -981,9 +1026,10 @@ function setView(v){view=v;
   const sr=document.getElementById('scopeRow'); if(sr) sr.style.display=(v==='list'||v==='board')?'':'none';
   if(v==='staff'){ loadStaff(); }
   else if(v==='org'){ loadOrgView(); }
+  else if(v==='train'){ loadTrainings(); }
   else render();
 }
-function render(){ if(view==='staff')renderStaff(); else if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='team')renderTeam(); else if(view==='org')renderOrgView(); else renderList(); }
+function render(){ if(view==='staff')renderStaff(); else if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='team')renderTeam(); else if(view==='org')renderOrgView(); else if(view==='train')renderTraining(); else renderList(); }
 // ---- 팀 현황 (직원 업무 부하, owner 전용) ----
 function renderTeam(){
   const el=document.getElementById('teamView');
@@ -1265,6 +1311,148 @@ function renderMyTodos(el){
     +`<div class="todo" style="margin-top:20px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>급한 할 일</b><span class="dim"> · 마감 급한 순</span></div>${body}</div>`;
   wireDayLog(el,meName,()=>renderMyTodos(el));
   el.querySelectorAll('.todo-item[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
+}
+// ===== 직원 교육 (트레이닝) =====
+const TRAIN_CATS=['디자인','테크','마케팅','공통'];
+const TRAIN_COLOR={'디자인':'#6a48c0','테크':'#1f3f73','마케팅':'#b9760a','공통':'#5b6675'};
+function ytId(u){if(!u)return'';const m=String(u).match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/)([\w-]{11})/);return m?m[1]:'';}
+function isOwner(){return !!(me&&me.role==='owner');}
+function myDone(t){const n=me&&me.name;return Array.isArray(t.done_by)&&t.done_by.some(d=>d&&d.name===n);}
+async function loadTrainings(){
+  const el=document.getElementById('trainView');
+  if(el && !trainings.length) el.innerHTML='<p class="dim" style="padding:20px">교육 자료 불러오는 중…</p>';
+  const {data,error}=await sb.from('trainings').select('*').order('created_at',{ascending:false});
+  if(error){el.innerHTML='<p class="dim" style="padding:20px">교육 목록 오류: '+esc(error.message)+'<br><span style="font-size:.8rem">(trainings 테이블이 없으면 18_trainings.sql 을 실행하세요)</span></p>';return;}
+  trainings=data||[];
+  if(trainSel && !trainings.find(t=>t.id===trainSel)) trainSel=null;
+  renderTraining();
+}
+function renderTraining(){
+  const el=document.getElementById('trainView'); if(!el)return;
+  if(trainSel){const t=trainings.find(x=>x.id===trainSel); if(t){el.innerHTML=trainDetail(t);wireTrainDetail(el,t);return;} trainSel=null;}
+  el.innerHTML=trainList(); wireTrainList(el);
+}
+function trainList(){
+  const cats=['전체',...TRAIN_CATS];
+  const prog=TRAIN_CATS.map(c=>{const list=trainings.filter(t=>t.category===c);return{c,done:list.filter(myDone).length,total:list.length};}).filter(p=>p.total);
+  const reqTot=trainings.filter(t=>t.required).length, reqDone=trainings.filter(t=>t.required&&myDone(t)).length;
+  const progHTML=`<div class="tprog">
+     ${prog.map(p=>`<span class="tprog-i" style="border-color:${TRAIN_COLOR[p.c]}"><b style="color:${TRAIN_COLOR[p.c]}">${p.c}</b> ${p.done}/${p.total}</span>`).join('')||'<span class="dim">아직 등록된 교육이 없어요.</span>'}
+     ${reqTot?`<span class="tprog-i ${reqDone<reqTot?'warn':''}">필수 ${reqDone}/${reqTot} ${reqDone<reqTot?'⚠':'✅'}</span>`:''}
+   </div>`;
+  const chips='<div class="btype">'+cats.map(c=>`<button class="${trainCat===c?'on':''}" data-tcat="${esc(c)}">${c}</button>`).join('')+'</div>';
+  const list=(trainCat==='전체'?trainings:trainings.filter(t=>t.category===trainCat));
+  const addBtn=isOwner()?'<button class="btn-p" id="trainAdd">＋ 교육 추가</button>':'';
+  const form=(isOwner()&&trainAdding)?trainForm():'';
+  const cards=list.length?list.map(t=>{
+    const id=ytId(t.url), done=myDone(t), cnt=Array.isArray(t.done_by)?t.done_by.length:0, nc=Array.isArray(t.notes)?t.notes.length:0;
+    return `<div class="tcard" data-tid="${t.id}">
+      <div class="tthumb">${id?`<img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt="" loading="lazy">`:'<div class="tthumb-x">▶</div>'}${done?'<span class="tdone-badge">✓ 완료</span>':''}</div>
+      <div class="tcard-b">
+        <div class="tcard-top"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span>${t.required?'<span class="treq">필수</span>':''}</div>
+        <div class="tcard-t">${esc(t.title||'')}</div>
+        <div class="tcard-m dim">👥 ${cnt}명 완료 · 💬 ${nc}</div>
+      </div>
+    </div>`;}).join(''):'<div class="dim" style="padding:24px;text-align:center;grid-column:1/-1">이 분야의 교육이 아직 없어요.</div>';
+  return `<div class="staff-head"><div><h2 style="margin:0">직원 교육</h2><div class="dim" style="font-size:.84rem">영상 보고 느낀점을 남겨보세요 · 분야별 학습</div></div>${addBtn}</div>
+    ${progHTML}${chips}${form}<div class="tgrid">${cards}</div>`;
+}
+function trainForm(t){t=t||{};
+  return `<div class="tform">
+    <div class="tform-h">${t.id?'교육 수정':'새 교육 추가'}</div>
+    <input id="tf_title" placeholder="제목" value="${esc(t.title||'')}">
+    <input id="tf_url" placeholder="유튜브 링크 (https://youtu.be/...)" value="${esc(t.url||'')}">
+    <div class="tform-row">
+      <select id="tf_cat">${TRAIN_CATS.map(c=>`<option ${((t.category||'공통')===c)?'selected':''}>${c}</option>`).join('')}</select>
+      <label class="tform-chk"><input type="checkbox" id="tf_req" ${t.required?'checked':''}> 필수 교육</label>
+    </div>
+    <textarea id="tf_desc" placeholder="설명 (선택)" rows="2">${esc(t.description||'')}</textarea>
+    <div class="tform-act"><button class="btn-p" id="tf_save">${t.id?'저장':'추가'}</button><button class="btn-s" id="tf_cancel">취소</button></div>
+  </div>`;
+}
+function trainDetail(t){
+  const id=ytId(t.url), done=myDone(t);
+  const cnt=Array.isArray(t.done_by)?t.done_by:[], notes=Array.isArray(t.notes)?t.notes:[];
+  const stars=n=>{n=n||0;return '★'.repeat(n)+'☆'.repeat(5-n);};
+  const noteHTML=notes.length?notes.slice().reverse().map(n=>`<div class="tnote"><div class="tnote-h"><b>${esc(n.who||'익명')}</b>${n.rating?`<span class="tnote-r">${stars(n.rating)}</span>`:''}<span class="dim">${(n.at||'').slice(0,10)}</span></div><div class="tnote-t">${esc(n.text||'')}</div></div>`).join(''):'<div class="dim" style="padding:8px 2px">아직 느낀점이 없어요. 첫 느낀점을 남겨보세요!</div>';
+  const doneNames=cnt.map(d=>esc(d.name)).join(', ');
+  return `<div class="tdet">
+    <button class="btn-s tback" id="trBack">‹ 목록</button>
+    <div class="tdet-head"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span>${t.required?'<span class="treq">필수</span>':''}<h2 style="margin:6px 0 0">${esc(t.title||'')}</h2></div>
+    <div class="tvid">${id?`<iframe src="https://www.youtube-nocookie.com/embed/${id}" title="video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`:`<a href="${esc(t.url)}" target="_blank" class="dim">${esc(t.url)}</a>`}</div>
+    ${t.description?`<p class="tdesc">${esc(t.description)}</p>`:''}
+    <div class="tdet-bar">
+      <button class="btn-${done?'s':'p'}" id="trDone">${done?'✓ 완료함 (취소)':'완료 표시'}</button>
+      <span class="dim">👥 ${cnt.length}명 완료${doneNames?` · ${doneNames}`:''}</span>
+      ${isOwner()?'<span style="margin-left:auto"><button class="btn-s" id="trEdit">수정</button> <button class="btn-s" id="trDel" style="color:#c0392b">삭제</button></span>':''}
+    </div>
+    ${(isOwner()&&trainAdding)?trainForm(t):''}
+    <div class="tnotes">
+      <div class="sd-worktitle">느낀점 · 배운점 <span class="dim">${notes.length}</span></div>
+      <div class="tnote-form">
+        <textarea id="tn_text" placeholder="이 영상에서 느낀 점이나 배운 점을 적어보세요" rows="2"></textarea>
+        <div class="tnote-form-b"><span class="tstars" id="tn_stars" data-v="0">${[1,2,3,4,5].map(i=>`<span data-s="${i}">☆</span>`).join('')}</span><button class="btn-p" id="tn_add">남기기</button></div>
+      </div>
+      ${noteHTML}
+    </div>
+  </div>`;
+}
+function wireTrainForm(el,t){
+  const save=el.querySelector('#tf_save'); if(save)save.addEventListener('click',()=>saveTraining(t?t.id:null));
+  const cancel=el.querySelector('#tf_cancel'); if(cancel)cancel.addEventListener('click',()=>{trainAdding=false;renderTraining();});
+}
+function wireTrainList(el){
+  el.querySelectorAll('[data-tcat]').forEach(b=>b.addEventListener('click',()=>{trainCat=b.dataset.tcat;trainAdding=false;renderTraining();}));
+  el.querySelectorAll('.tcard[data-tid]').forEach(c=>c.addEventListener('click',()=>{trainSel=Number(c.dataset.tid);renderTraining();}));
+  const add=el.querySelector('#trainAdd'); if(add)add.addEventListener('click',()=>{trainAdding=true;renderTraining();});
+  wireTrainForm(el,null);
+}
+function wireTrainDetail(el,t){
+  const back=el.querySelector('#trBack'); if(back)back.addEventListener('click',()=>{trainSel=null;trainAdding=false;renderTraining();});
+  const dn=el.querySelector('#trDone'); if(dn)dn.addEventListener('click',()=>toggleTrainDone(t.id));
+  const ed=el.querySelector('#trEdit'); if(ed)ed.addEventListener('click',()=>{trainAdding=!trainAdding;renderTraining();});
+  const dl=el.querySelector('#trDel'); if(dl)dl.addEventListener('click',()=>delTraining(t.id));
+  const na=el.querySelector('#tn_add'); if(na)na.addEventListener('click',()=>addTrainNote(t.id));
+  const st=el.querySelector('#tn_stars'); if(st)st.querySelectorAll('[data-s]').forEach(s=>s.addEventListener('click',()=>{const v=Number(s.dataset.s);st.dataset.v=v;st.querySelectorAll('[data-s]').forEach(x=>x.textContent=Number(x.dataset.s)<=v?'★':'☆');}));
+  wireTrainForm(el,t);
+}
+async function saveTraining(id){
+  const title=(document.getElementById('tf_title').value||'').trim();
+  const url=(document.getElementById('tf_url').value||'').trim();
+  const category=document.getElementById('tf_cat').value;
+  const required=document.getElementById('tf_req').checked;
+  const description=(document.getElementById('tf_desc').value||'').trim();
+  if(!title||!url){alert('제목과 유튜브 링크를 입력하세요.');return;}
+  const patch={title,url,category,required,description};
+  const res=id?await sb.from('trainings').update(patch).eq('id',id):await sb.from('trainings').insert(patch);
+  if(res.error){alert('저장 실패: '+res.error.message);return;}
+  trainAdding=false; loadTrainings();
+}
+async function delTraining(id){
+  if(!confirm('이 교육을 삭제할까요? (댓글·완료 기록도 함께 삭제)'))return;
+  const {error}=await sb.from('trainings').delete().eq('id',id);
+  if(error){alert('삭제 실패: '+error.message);return;}
+  trainSel=null; loadTrainings();
+}
+async function toggleTrainDone(id){
+  const t=trainings.find(x=>x.id===id); if(!t)return;
+  const n=me&&me.name; if(!n){alert('로그인 정보가 없어요.');return;}
+  let db=Array.isArray(t.done_by)?[...t.done_by]:[];
+  if(db.some(d=>d.name===n)) db=db.filter(d=>d.name!==n); else db.push({name:n,at:todayStr()});
+  const {error}=await sb.from('trainings').update({done_by:db}).eq('id',id);
+  if(error){alert('저장 실패: '+error.message);return;}
+  t.done_by=db; renderTraining();
+}
+async function addTrainNote(id){
+  const t=trainings.find(x=>x.id===id); if(!t)return;
+  const ta=document.getElementById('tn_text'); const text=(ta.value||'').trim();
+  if(!text){alert('내용을 입력하세요.');return;}
+  const stEl=document.getElementById('tn_stars'); const rating=stEl?Number(stEl.dataset.v||0):0;
+  const notes=Array.isArray(t.notes)?[...t.notes]:[];
+  notes.push({who:(me&&me.name)||'익명',text,at:new Date().toISOString(),rating});
+  const {error}=await sb.from('trainings').update({notes}).eq('id',id);
+  if(error){alert('저장 실패: '+error.message);return;}
+  t.notes=notes; renderTraining();
 }
 function renderBoard(){
   const el=document.getElementById('boardView');

@@ -601,11 +601,11 @@ document.getElementById('staffBtn').addEventListener('click',()=>setView('staff'
 (async()=>{const {data}=await sb.auth.getSession();if(data&&data.session)afterAuth();})();
 
 // ---- 직원 관리 (owner 전용, 정식 화면) ----
-const RANKS=['대표','한국 PM','미국 PM','디자인 디렉터','테크 디렉터','마케팅 디렉터','크루'];
-const RANK_DESC={'대표':'대표 · CEO','한국 PM':'PM · Korea','미국 PM':'PM · USA','디자인 디렉터':'Design','테크 디렉터':'Tech','마케팅 디렉터':'Marketing','크루':'Crew'};
-const RANK_COLOR={'대표':['#1f3f73','#fff'],'한국 PM':['#e7edf6','#33507e'],'미국 PM':['#fdeeee','#b0433a'],'프로젝트 매니저':['#e7edf6','#33507e'],'디자인 디렉터':['#efe9fb','#6a48c0'],'테크 디렉터':['#e0e9f7','#1f3f73'],'마케팅 디렉터':['#fff2dd','#b9760a'],'크루':['#eceff3','#5b6675']};
+const RANKS=['대표','한국 PM','글로벌 PM','디자인 디렉터','테크 디렉터','마케팅 디렉터','크루'];
+const RANK_DESC={'대표':'대표 · CEO','한국 PM':'PM · Korea','글로벌 PM':'PM · Global','디자인 디렉터':'Design','테크 디렉터':'Tech','마케팅 디렉터':'Marketing','크루':'Crew'};
+const RANK_COLOR={'대표':['#1f3f73','#fff'],'한국 PM':['#e7edf6','#33507e'],'글로벌 PM':['#e3f3ee','#1e7d6b'],'미국 PM':['#fdeeee','#b0433a'],'프로젝트 매니저':['#e7edf6','#33507e'],'디자인 디렉터':['#efe9fb','#6a48c0'],'테크 디렉터':['#e0e9f7','#1f3f73'],'마케팅 디렉터':['#fff2dd','#b9760a'],'크루':['#eceff3','#5b6675']};
 const DIRECTORS=['디자인 디렉터','테크 디렉터','마케팅 디렉터'];
-const PM_RANKS=['한국 PM','미국 PM','프로젝트 매니저'];
+const PM_RANKS=['한국 PM','글로벌 PM','미국 PM','프로젝트 매니저'];
 const isPMrank=r=>PM_RANKS.includes(r||'');
 let staffData=[], staffMode='list', staffSel=null, orgMembers=[];
 function initials(n){n=(n||'').trim();return n?n[0].toUpperCase():'?';}
@@ -758,14 +758,14 @@ function orgChart(ro){
       </div>
     </div>`;
   }).join('');
-  const pmSlots=['한국 PM','미국 PM'].map(r=>{
+  const pmSlots=['한국 PM','글로벌 PM'].map(r=>{
     const hold=pmAll.filter(s=>s.rank===r);
     return `<div class="opm-slot" ${ro?'':'data-drop'} data-pm="${r}">
-      <div class="opm-slot-h" style="color:${r==='한국 PM'?'#33507e':'#b0433a'}">${r}</div>
+      <div class="opm-slot-h" style="color:${r==='한국 PM'?'#33507e':'#1e7d6b'}">${r}</div>
       ${hold.length?hold.map(s=>orgPersonCard(s,!ro,false)).join(''):`<div class="odrop-hint">${ro?'미지정':'여기로 드래그'}</div>`}
     </div>`;
   }).join('');
-  const pmLegacy=pmAll.filter(s=>!['한국 PM','미국 PM'].includes(s.rank));
+  const pmLegacy=pmAll.filter(s=>!['한국 PM','글로벌 PM'].includes(s.rank));
   const tierRow=(label,cards)=>`<div class="ogov-tier"><div class="ogov-tierlabel">${label}</div><div class="ogov-row">${cards}</div><span class="ogov-tierpad"></span></div>`;
   const govMain=`<div class="ogov-main">
       ${chair.length?tierRow('이사장 · 부이사장',chair.map(govCard).join('')):''}
@@ -798,14 +798,14 @@ function orgChart(ro){
     </div>`;
   const foot=ro
     ? ''
-    : '<p class="dim" style="margin-top:14px;font-size:.8rem"><b>크루·디렉터·PM 카드를 드래그</b>해서 부서/PM 자리로 옮길 수 있어요. 부서에 드롭한 <b>디렉터</b>는 그 부서 디렉터가 되고, <b>PM 자리</b>에 드롭하면 한국/미국 PM이 됩니다. 카드를 클릭하면 상세로 이동해요.</p>';
+    : '<p class="dim" style="margin-top:14px;font-size:.8rem"><b>크루·디렉터·PM 카드를 드래그</b>해서 부서/PM 자리로 옮길 수 있어요. 부서에 드롭한 <b>디렉터</b>는 그 부서 디렉터가 되고, <b>PM 자리</b>에 드롭하면 한국/글로벌 PM이 됩니다. 카드를 클릭하면 상세로 이동해요.</p>';
   return `<div class="orgpage">
     ${gov}
     <div class="otier-label">대표 (CEO)</div>
     <div class="oboss">${(ceoM.length||boss.length)?(ceoM.map(govCard).join('')+boss.map(s=>orgPersonCard(s,false,false)).join('')):'<div class="dim">대표(CEO) 미지정 · 편집기에서 대표 추가 또는 직급을 대표로 지정</div>'}</div>
     <div class="ostem"></div>
     <div class="otier-label">프로젝트 매니저 (PM)</div>
-    <div class="opm-row">${pmSlots}${pmLegacy.length?`<div class="opm-slot" ${ro?'':'data-drop'} data-pm="한국 PM"><div class="opm-slot-h dim">기타 PM</div>${pmLegacy.map(s=>orgPersonCard(s,!ro,false)).join('')}</div>`:''}</div>
+    <div class="opm-row">${pmSlots}${pmLegacy.length?`<div class="opm-slot" ${ro?'':'data-drop'} data-pm="글로벌 PM"><div class="opm-slot-h dim">기타 PM</div>${pmLegacy.map(s=>orgPersonCard(s,!ro,false)).join('')}</div>`:''}</div>
     <div class="ostem"></div>
     <div class="oboard">${cols}</div>
     ${benchBlock}

@@ -312,6 +312,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .ti-t{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ti-badge{flex:0 0 auto;font-size:.68rem;font-weight:800;border-radius:20px;padding:2px 9px;white-space:nowrap}
 .todo-item .dday{flex:0 0 auto;font-weight:800;font-size:.74rem;white-space:nowrap}.todo-item .badge{flex:0 0 auto}
+.todo-item .mystage{flex:0 0 auto;width:82px;font-size:.78rem;font-weight:700;padding:6px 4px;border:1px solid var(--line);border-radius:7px;background:#fbfcfe;color:var(--ink2);cursor:pointer}
+.todo-item .mystage:focus{outline:none;border-color:var(--navy)}
 @media(max-width:760px){.staffwrap{grid-template-columns:1fr}.staff-list{max-height:none}}
 .rpt-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px}
 .rpt-title{font-family:'Fraunces',serif;font-size:1.25rem;font-weight:600;color:var(--navy);min-width:130px;text-align:center}
@@ -1279,7 +1281,7 @@ function wireDayLog(el,name,rerender){
 }
 function renderMyTodos(el){
   const meName=me&&me.name; const items=[];
-  rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{if((t.a||'')===meName&&effStage(t)!=='끝')items.push({r,label:t.t,stage:effStage(t),due:t.due||'',kind:'task'});});});
+  rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach((t,ti)=>{if((t.a||'')===meName&&effStage(t)!=='끝')items.push({r,ti,label:t.t,stage:effStage(t),due:t.due||'',kind:'task'});});});
   rows.forEach(r=>{if(r.assignee===meName&&(r.status||'')!=='완료')items.push({r,label:r.org_name||'(이름없음)',stage:r.status||'접수·견적',due:dueOf(r),kind:'proj'});});
   const today=todayStr();
   const bucket=due=>{if(!due)return 3;if(due<=today)return 0;const dd=ddayInfo(due);return (dd&&dd.tone==='soon')?1:2;};
@@ -1289,8 +1291,11 @@ function renderMyTodos(el){
   let body='';
   secs.forEach(sec=>{const list=items.filter(it=>it.b===sec.k);if(!list.length)return;
     body+=`<div class="todo-sec"><div class="todo-h ${sec.c}">${sec.t}<span>${list.length}</span></div>`+
-      list.map(it=>{const dd=it.due?ddayInfo(it.due):null;return `<div class="todo-item" data-id="${it.r.id}">
-        ${todoBadge(it.kind,it.stage)}
+      list.map(it=>{const dd=it.due?ddayInfo(it.due):null;const ctrl=it.kind==='task'
+          ?`<select class="mystage" data-id="${it.r.id}" data-ti="${it.ti}" style="border-left:3px solid ${STAGE_COLOR[it.stage]||'#ccc'}">${TASK_STAGES.map(s=>`<option ${it.stage===s?'selected':''}>${s}</option>`).join('')}</select>`
+          :todoBadge(it.kind,it.stage);
+        return `<div class="todo-item" data-id="${it.r.id}">
+        ${ctrl}
         <span class="ti-t">${esc(it.label)} <span class="dim" style="font-weight:400;font-size:.78rem">· ${esc(it.r.org_name)||''}${it.kind==='proj'?' · 프로젝트':''}</span></span>
         ${dd?`<span class="dday ${dd.tone}">${dd.label}${it.due?' · '+it.due:''}</span>`:'<span class="dim" style="font-size:.76rem">기한 없음</span>'}
       </div>`;}).join('')+'</div>';
@@ -1301,6 +1306,20 @@ function renderMyTodos(el){
     +`<div class="todo" style="margin-top:20px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>급한 할 일</b><span class="dim"> · 마감 급한 순</span></div>${body}</div>`;
   wireDayLog(el,meName,()=>renderMyTodos(el));
   el.querySelectorAll('.todo-item[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
+  el.querySelectorAll('.mystage').forEach(sel=>{
+    sel.addEventListener('click',e=>e.stopPropagation());
+    sel.addEventListener('change',e=>{e.stopPropagation();setTaskStage(Number(sel.dataset.id),Number(sel.dataset.ti),sel.value);});
+  });
+}
+// 목록에서 바로 작업 단계 변경 (팝업 없이)
+async function setTaskStage(rid,ti,stage){
+  const r=rows.find(x=>x.id===rid); if(!r||!Array.isArray(r.checklist)||!r.checklist[ti])return;
+  const cl=r.checklist.map(x=>({...x}));
+  cl[ti].s=stage; delete cl[ti].d;
+  if(stage==='끝'){ if(!cl[ti].doneAt)cl[ti].doneAt=todayStr(); } else { delete cl[ti].doneAt; }
+  const {error}=await sb.from('requests').update({checklist:cl}).eq('id',rid);
+  if(error){alert('상태 변경 실패: '+error.message);return;}
+  r.checklist=cl; render();
 }
 // ===== 직원 교육 (트레이닝) =====
 const TRAIN_CATS=['디자인','테크','마케팅','공통'];

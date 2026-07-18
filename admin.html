@@ -665,12 +665,11 @@ function staffDetail(s){
   </div>
   <div class="sd-grid">
     <div class="sd-fld"><label>이름</label><input id="staffName" data-id="${s.id}" value="${esc(s.name||'')}"></div>
-    <div class="sd-fld"><label>직급</label>${owner?`<div style="padding-top:6px">${rankBadge(s.rank)} <span class="dim" style="font-size:.76rem">(대표 고정)</span></div>`:`<select id="staffRank" data-id="${s.id}">${RANKS.map(r=>`<option ${((s.rank||'크루')===r)?'selected':''}>${r}</option>`).join('')}</select>`}</div>
-    <div class="sd-fld"><label>상태</label><div style="padding-top:6px">${statusDot(s.status)}</div></div>
-    ${owner?`<div class="sd-fld"><label>진행중 업무</label><div style="padding-top:6px"><b style="font-size:1.1rem;color:var(--navy)">${active}</b> 건</div></div>`
-      :`<div class="sd-fld"><label>소속 부서 ${s.dept_since?`<span class="dim" style="font-weight:400">· 이 부서 ${daysSince(s.dept_since)}일차</span>`:''}</label><select id="staffDept" data-id="${s.id}"><option value="">미배정</option>${DEPTS.map(d=>`<option ${((s.department||'')===d)?'selected':''}>${d}</option>`).join('')}</select></div>`}
+    <div class="sd-fld"><label>직급</label><select id="staffRank" data-id="${s.id}">${RANKS.map(r=>`<option ${((s.rank||'크루')===r)?'selected':''}>${r}</option>`).join('')}</select></div>
+    <div class="sd-fld"><label>상태</label><div style="padding-top:6px">${statusDot(s.status)}${owner?' <span class="dim" style="font-size:.74rem">· 관리자 권한</span>':''}</div></div>
+    <div class="sd-fld"><label>소속 부서 ${s.dept_since?`<span class="dim" style="font-weight:400">· 이 부서 ${daysSince(s.dept_since)}일차</span>`:''}</label><select id="staffDept" data-id="${s.id}"><option value="">미배정</option>${DEPTS.map(d=>`<option ${((s.department||'')===d)?'selected':''}>${d}</option>`).join('')}</select></div>
   </div>
-  ${owner?'':`<div class="sd-fld" style="margin-top:12px"><label>부서 경험 (누적 재직일)</label><div class="deptexp">${(()=>{const t=deptTotals(s);const ks=Object.keys(t).filter(k=>t[k]>0);return ks.length?ks.map(k=>`<span class="dexp" style="border-color:${DEPT_COLOR[k]||'#ccc'};color:${DEPT_COLOR[k]||'#555'}">${k} <b>${t[k]}일</b></span>`).join(''):'<span class="dim">아직 부서 배치 기록이 없어요.</span>';})()}</div></div>`}
+  <div class="sd-fld" style="margin-top:12px"><label>부서 경험 (누적 재직일)</label><div class="deptexp">${(()=>{const t=deptTotals(s);const ks=Object.keys(t).filter(k=>t[k]>0);return ks.length?ks.map(k=>`<span class="dexp" style="border-color:${DEPT_COLOR[k]||'#ccc'};color:${DEPT_COLOR[k]||'#555'}">${k} <b>${t[k]}일</b></span>`).join(''):'<span class="dim">아직 부서 배치 기록이 없어요.</span>';})()}</div></div>
   <div class="sd-work">
     <div class="sd-worktitle">담당 프로젝트 <span class="dim">${myProjects.length}</span></div>
     ${projList}
@@ -745,7 +744,8 @@ function orgChart(ro){
   const members=appr.filter(s=>(s.rank||'')!=='대표'&&!isPMrank(s.rank));   // 디렉터 + 크루 (부서로 배치)
   const unassigned=members.filter(s=>!s.department);
   const chair=orgMembers.filter(m=>m.tier==='chair');
-  const boardM=orgMembers.filter(m=>m.tier!=='chair'&&m.tier!=='advisory');
+  const boardM=orgMembers.filter(m=>m.tier!=='chair'&&m.tier!=='advisory'&&m.tier!=='ceo');
+  const ceoM=orgMembers.filter(m=>m.tier==='ceo');
   const advisory=orgMembers.filter(m=>m.tier==='advisory');
   const cols=DEPTS.map(d=>{
     const inD=members.filter(s=>s.department===d);
@@ -785,7 +785,7 @@ function orgChart(ro){
           <input class="gm-f" data-k="name" value="${esc(m.name||'')}" placeholder="이름">
           <input class="gm-f" data-k="title" value="${esc(m.title||'')}" placeholder="직책 (이사장/이사/감사/고문…)">
           <input class="gm-f" data-k="scope" value="${esc(m.scope||'')}" placeholder="본부/부가 (선택)">
-          <select class="gm-f" data-k="tier"><option value="chair" ${m.tier==='chair'?'selected':''}>이사장·부이사장</option><option value="board" ${(m.tier!=='chair'&&m.tier!=='advisory')?'selected':''}>이사</option><option value="advisory" ${m.tier==='advisory'?'selected':''}>감사·자문</option></select>
+          <select class="gm-f" data-k="tier"><option value="chair" ${m.tier==='chair'?'selected':''}>이사장·부이사장</option><option value="board" ${(m.tier!=='chair'&&m.tier!=='advisory'&&m.tier!=='ceo')?'selected':''}>이사</option><option value="ceo" ${m.tier==='ceo'?'selected':''}>대표(CEO)</option><option value="advisory" ${m.tier==='advisory'?'selected':''}>감사·자문</option></select>
           <button class="gm-del" title="삭제">✕</button>
         </div>`).join('')||'<div class="dim" style="padding:6px 2px">아직 등록된 인원이 없어요. 아래 버튼으로 추가하세요.</div>'}
       </div>
@@ -802,7 +802,7 @@ function orgChart(ro){
   return `<div class="orgpage">
     ${gov}
     <div class="otier-label">대표 (CEO)</div>
-    <div class="oboss">${boss.length?boss.map(s=>orgPersonCard(s,false,false)).join(''):'<div class="dim">대표(CEO) 미지정 · 직원 목록에서 직급을 대표로 지정</div>'}</div>
+    <div class="oboss">${(ceoM.length||boss.length)?(ceoM.map(govCard).join('')+boss.map(s=>orgPersonCard(s,false,false)).join('')):'<div class="dim">대표(CEO) 미지정 · 편집기에서 대표 추가 또는 직급을 대표로 지정</div>'}</div>
     <div class="ostem"></div>
     <div class="otier-label">프로젝트 매니저 (PM)</div>
     <div class="opm-row">${pmSlots}${pmLegacy.length?`<div class="opm-slot" ${ro?'':'data-drop'} data-pm="한국 PM"><div class="opm-slot-h dim">기타 PM</div>${pmLegacy.map(s=>orgPersonCard(s,!ro,false)).join('')}</div>`:''}</div>

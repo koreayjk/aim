@@ -451,7 +451,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
       <button id="tabReport">월간 리포트</button>
       <button id="tabOrg">조직도</button>
       <button id="tabTrain">직원 교육</button>
-      <button id="tabTeam" style="display:none">팀 현황</button>
     </nav>
     <div class="side-foot">
       <button class="btn-s" id="staffBtn" style="display:none">직원 관리</button>
@@ -479,7 +478,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
   <div id="reportView" style="display:none"></div>
   <div id="orgView" style="display:none"></div>
   <div id="trainView" style="display:none"></div>
-  <div id="teamView" style="display:none"></div>
   <div id="staffView" style="display:none"></div>
   </main>
 </div>
@@ -569,7 +567,6 @@ async function afterAuth(){
   await loadMe();
   if(me && me.status==='approved'){
     document.getElementById('staffBtn').style.display = me.role==='owner'?'inline-flex':'none';
-    document.getElementById('tabTeam').style.display = me.role==='owner'?'block':'none';
     showAuth(); openApp();
   } else if(me && me.status==='rejected'){
     showPending('접근이 거부된 계정입니다.<br>관리자에게 문의해 주세요.');
@@ -997,7 +994,6 @@ document.getElementById('tabInsights').addEventListener('click',()=>setView('ins
 document.getElementById('tabReport').addEventListener('click',()=>setView('report'));
 document.getElementById('tabOrg').addEventListener('click',()=>setView('org'));
 document.getElementById('tabTrain').addEventListener('click',()=>setView('train'));
-document.getElementById('tabTeam').addEventListener('click',()=>setView('team'));
 document.getElementById('scAll').addEventListener('click',()=>setScope('all'));
 document.getElementById('scMine').addEventListener('click',()=>setScope('mine'));
 function setScope(s){scope=s;
@@ -1012,14 +1008,12 @@ function setView(v){view=v;
   document.getElementById('tabReport').classList.toggle('on',v==='report');
   document.getElementById('tabOrg').classList.toggle('on',v==='org');
   document.getElementById('tabTrain').classList.toggle('on',v==='train');
-  document.getElementById('tabTeam').classList.toggle('on',v==='team');
   document.getElementById('listView').style.display=v==='list'?'block':'none';
   document.getElementById('boardView').style.display=v==='board'?'block':'none';
   document.getElementById('insightsView').style.display=v==='insights'?'block':'none';
   document.getElementById('reportView').style.display=v==='report'?'block':'none';
   document.getElementById('orgView').style.display=v==='org'?'block':'none';
   document.getElementById('trainView').style.display=v==='train'?'block':'none';
-  document.getElementById('teamView').style.display=v==='team'?'block':'none';
   document.getElementById('staffView').style.display=v==='staff'?'block':'none';
   document.getElementById('staffBtn').classList.toggle('on',v==='staff');
   const ab=document.getElementById('addBtn'); if(ab) ab.style.display=(v==='list')?'inline-flex':'none';
@@ -1030,57 +1024,7 @@ function setView(v){view=v;
   else if(v==='train'){ loadTrainings(); }
   else render();
 }
-function render(){ if(view==='staff')renderStaff(); else if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='team')renderTeam(); else if(view==='org')renderOrgView(); else if(view==='train')renderTraining(); else renderList(); }
-// ---- 팀 현황 (직원 업무 부하, owner 전용) ----
-function renderTeam(){
-  const el=document.getElementById('teamView');
-  const names=assignees.slice();
-  rows.forEach(r=>{ if(r.assignee && !names.includes(r.assignee)) names.push(r.assignee); });
-  const openTasksOf=n=>{let c=0;rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{if((t.a||'')===n && effStage(t)!=='끝')c++;});});return c;};
-  const stat=names.map(n=>{
-    const active=rows.filter(r=>r.assignee===n && (r.status||'')!=='완료');
-    const byS={}; MACRO_ACTIVE.forEach(m=>byS[m]=active.filter(r=>macroStatus(r)===m).length);
-    const overdue=active.filter(r=>{const d=ddayInfo(dueOf(r));return d&&(d.tone==='over'||d.tone==='soon');}).length;
-    const tasks=openTasksOf(n);
-    return {n,active:active.length,byS,overdue,tasks,load:active.length+tasks*0.4};
-  }).sort((a,b)=>b.load-a.load);
-  const maxLoad=Math.max(1,...stat.map(s=>s.load));
-  const unassigned=rows.filter(r=>!r.assignee && (r.status||'')!=='완료').length;
-  const totalActive=rows.filter(r=>(r.status||'')!=='완료').length;
-  const busiest=stat.length?stat[0].n:'-';
-  function level(s){ if(s.active>=5||s.overdue>=3) return['과중','#c0392b','#fdecec']; if(s.active>=3||s.overdue>=1) return['보통','#b9760a','#fff2dd']; return['여유','#1e8a4c','#e7f6ec']; }
-  const kpi=(l,v,t)=>`<div class="scard ${t||''}"><div class="n" style="font-size:1.35rem">${v}</div><div class="l">${l}</div></div>`;
-  const today=todayStr();
-  const dueByToday=rows.filter(r=>{const d=dueOf(r);return d&&d<=today;});
-  const notDone=dueByToday.filter(r=>(r.status||'')!=='완료').sort((a,b)=>dueOf(a)<dueOf(b)?-1:1);
-  const doneCnt=dueByToday.length-notDone.length;
-  const todayCard=`<div class="today-card ${notDone.length?'warn':''}">
-    <h3 style="margin:0 0 ${notDone.length?'12px':'0'}">📌 오늘까지 마감 현황 <span class="dim" style="font-weight:500;font-size:.8rem">· 완료 ${doneCnt} · 미완료 ${notDone.length}</span></h3>
-    ${notDone.length?notDone.map(r=>{const dd=ddayInfo(dueOf(r));return `<div class="today-row" data-id="${r.id}"><span class="t">${esc(r.org_name)||'(이름없음)'}</span><span class="dim">${r.assignee?esc(r.assignee)+' · ':''}${esc(r.status||'')}</span><span class="dday ${dd?dd.tone:''}" style="font-weight:800">${dd?dd.label:''} · ${dueOf(r)}</span></div>`;}).join(''):'<div class="dim">오늘까지 마감이 모두 처리됐어요 ✅</div>'}
-  </div>`;
-  el.innerHTML=`
-    ${todayCard}
-    <div class="summary" style="margin:0 0 16px">
-      ${kpi('진행중 전체', totalActive+'건')}
-      ${kpi('미지정', unassigned+'건', unassigned?'warn':'')}
-      ${kpi('직원 수', stat.length+'명')}
-      ${kpi('가장 바쁨', esc(busiest))}
-    </div>
-    <div class="ins-card">
-      <h3>직원별 업무 부하 <span class="dim" style="font-weight:500;font-size:.78rem">· 진행중 프로젝트 + 미완료 할일 기준</span></h3>
-      ${stat.length?stat.map(s=>{const[lb,col,bg]=level(s);return `
-        <div class="wl">
-          <div class="wl-top">
-            <div class="wl-name">${esc(s.n)} <span class="wl-tag" style="color:${col};background:${bg}">${lb}</span></div>
-            <div class="wl-nums">진행 <b>${s.active}</b> · 할일 <b>${s.tasks}</b>${s.overdue?` · <span style="color:var(--err);font-weight:700">마감임박 ${s.overdue}</span>`:''}</div>
-          </div>
-          <div class="wl-bar"><i style="width:${Math.round(s.load/maxLoad*100)}%;background:${col}"></i></div>
-          <div class="wl-sub">접수·견적 ${s.byS['접수·견적']||0} · 진행중 ${s.byS['진행중']||0} · 검수 ${s.byS['검수']||0}</div>
-        </div>`;}).join(''):'<p class="dim">아직 배정된 업무가 없어요. 의뢰 상세에서 담당자를 지정해보세요.</p>'}
-      ${unassigned?`<div class="wl"><div class="wl-top"><div class="wl-name" style="color:var(--muted)">미지정</div><div class="wl-nums">${unassigned}건</div></div><div class="wl-bar"><i style="width:${Math.round(unassigned/Math.max(maxLoad,unassigned)*100)}%;background:#b6bfcf"></i></div></div>`:''}
-    </div>`;
-  el.querySelectorAll('.today-row[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
-}
+function render(){ if(view==='staff')renderStaff(); else if(view==='board')renderBoard(); else if(view==='insights')renderInsights(); else if(view==='report')renderReport(); else if(view==='org')renderOrgView(); else if(view==='train')renderTraining(); else renderList(); }
 // ---- 월간 리포트 + 결산 ----
 function pad2(n){return String(n).padStart(2,'0');}
 function thisMonth(){const d=new Date();return d.getFullYear()+'-'+pad2(d.getMonth()+1);}
@@ -1150,15 +1094,48 @@ function renderInsights(){
   const stC=[...MACRO_ACTIVE,'완료'].map(s=>({s,n:all.filter(r=>(s==='완료'?(r.status||'')==='완료':macroStatus(r)===s)).length}));
   const maxSt=Math.max(1,...stC.map(c=>c.n));
   const statusCard=`<div class="ins-card"><h3>상태별 의뢰</h3>${stC.map(c=>`<div class="insbar"><div class="insbar-l"><span class="badge st-${c.s}">${c.s}</span><span>${c.n}건</span></div><div class="insbar-t"><i style="width:${c.n/maxSt*100}%"></i></div></div>`).join('')}</div>`;
-  const active=all.filter(r=>(r.status||'')!=='완료'); const byA={};
-  active.forEach(r=>{const a=r.assignee||'미지정';byA[a]=(byA[a]||0)+1;});
-  const aList=Object.entries(byA).sort((a,b)=>b[1]-a[1]); const maxA=Math.max(1,...aList.map(x=>x[1]));
-  const workCard=`<div class="ins-card"><h3>담당자별 진행 중 업무</h3>${aList.length?aList.map(([a,n])=>`<div class="insbar"><div class="insbar-l"><span>${esc(a)}</span><span>${n}건</span></div><div class="insbar-t"><i style="width:${n/maxA*100}%;background:#3a6db0"></i></div></div>`).join(''):'<p class="dim">진행 중 업무가 없어요.</p>'}</div>`;
+  // 직원별 업무 부하 (구 팀 현황 통합)
+  const names=assignees.slice();
+  all.forEach(r=>{ if(r.assignee && !names.includes(r.assignee)) names.push(r.assignee); });
+  const openTasksOf=n=>{let c=0;all.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{if((t.a||'')===n && effStage(t)!=='끝')c++;});});return c;};
+  const stat=names.map(n=>{
+    const act=all.filter(r=>r.assignee===n && (r.status||'')!=='완료');
+    const byS={}; MACRO_ACTIVE.forEach(m=>byS[m]=act.filter(r=>macroStatus(r)===m).length);
+    const overdueN=act.filter(r=>{const d=ddayInfo(dueOf(r));return d&&(d.tone==='over'||d.tone==='soon');}).length;
+    const tasks=openTasksOf(n);
+    return {n,active:act.length,byS,overdue:overdueN,tasks,load:act.length+tasks*0.4};
+  }).sort((a,b)=>b.load-a.load);
+  const maxLoad=Math.max(1,...stat.map(s=>s.load));
+  const unassigned=all.filter(r=>!r.assignee && (r.status||'')!=='완료').length;
+  const totalActive=all.filter(r=>(r.status||'')!=='완료').length;
+  const busiest=stat.length?stat[0].n:'-';
+  const lvl=s=>{ if(s.active>=5||s.overdue>=3) return['과중','#c0392b','#fdecec']; if(s.active>=3||s.overdue>=1) return['보통','#b9760a','#fff2dd']; return['여유','#1e8a4c','#e7f6ec']; };
+  const workCard=`<div class="ins-card ins-wide"><h3>직원별 업무 부하 <span class="dim" style="font-weight:500;font-size:.78rem">· 진행중 프로젝트 + 미완료 할일 기준</span></h3>
+    ${stat.length?stat.map(s=>{const[lb,col,bg]=lvl(s);return `
+      <div class="wl">
+        <div class="wl-top"><div class="wl-name">${esc(s.n)} <span class="wl-tag" style="color:${col};background:${bg}">${lb}</span></div>
+        <div class="wl-nums">진행 <b>${s.active}</b> · 할일 <b>${s.tasks}</b>${s.overdue?` · <span style="color:var(--err);font-weight:700">마감임박 ${s.overdue}</span>`:''}</div></div>
+        <div class="wl-bar"><i style="width:${Math.round(s.load/maxLoad*100)}%;background:${col}"></i></div>
+        <div class="wl-sub">접수·견적 ${s.byS['접수·견적']||0} · 진행중 ${s.byS['진행중']||0} · 검수 ${s.byS['검수']||0}</div>
+      </div>`;}).join(''):'<p class="dim">아직 배정된 업무가 없어요. 의뢰 상세에서 담당자를 지정해보세요.</p>'}
+    ${unassigned?`<div class="wl"><div class="wl-top"><div class="wl-name" style="color:var(--muted)">미지정</div><div class="wl-nums">${unassigned}건</div></div><div class="wl-bar"><i style="width:${Math.round(unassigned/Math.max(maxLoad,unassigned)*100)}%;background:#b6bfcf"></i></div></div>`:''}
+  </div>`;
   const up=all.filter(r=>dueOf(r)&&(r.status||'')!=='완료').map(r=>({r,dd:ddayInfo(dueOf(r))})).filter(x=>x.dd).sort((a,b)=>dueOf(a.r)<dueOf(b.r)?-1:1).slice(0,10);
   const overdue=all.filter(r=>{const d=ddayInfo(dueOf(r));return d&&d.tone==='over'&&(r.status||'')!=='완료';}).length;
   const upCard=`<div class="ins-card ins-wide"><h3>다가오는 마감 ${overdue?`<span class="dday over" style="font-weight:800">지연 ${overdue}</span>`:''}</h3>${up.length?up.map(x=>`<div class="insrow" data-id="${x.r.id}"><span class="t">${esc(x.r.org_name)||'(이름없음)'}</span><span class="dim">${x.r.assignee?esc(x.r.assignee)+' · ':''}${x.r.due_date}</span><span class="dday ${x.dd.tone}">${x.dd.label}</span></div>`).join(''):'<p class="dim">예정된 마감이 없어요.</p>'}</div>`;
-  el.innerHTML=`<div class="insgrid">${donut}${statusCard}${workCard}${upCard}</div>`;
-  el.querySelectorAll('.insrow[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
+  // 오늘까지 마감 현황 + KPI
+  const today=todayStr();
+  const dueByToday=all.filter(r=>{const d=dueOf(r);return d&&d<=today;});
+  const notDone=dueByToday.filter(r=>(r.status||'')!=='완료').sort((a,b)=>dueOf(a)<dueOf(b)?-1:1);
+  const doneCnt=dueByToday.length-notDone.length;
+  const todayCard=`<div class="today-card ${notDone.length?'warn':''}">
+    <h3 style="margin:0 0 ${notDone.length?'12px':'0'}">📌 오늘까지 마감 현황 <span class="dim" style="font-weight:500;font-size:.8rem">· 완료 ${doneCnt} · 미완료 ${notDone.length}</span></h3>
+    ${notDone.length?notDone.map(r=>{const dd=ddayInfo(dueOf(r));return `<div class="today-row" data-id="${r.id}"><span class="t">${esc(r.org_name)||'(이름없음)'}</span><span class="dim">${r.assignee?esc(r.assignee)+' · ':''}${esc(r.status||'')}</span><span class="dday ${dd?dd.tone:''}" style="font-weight:800">${dd?dd.label:''} · ${dueOf(r)}</span></div>`;}).join(''):'<div class="dim">오늘까지 마감이 모두 처리됐어요 ✅</div>'}
+  </div>`;
+  const kpi=(l,v,t)=>`<div class="scard ${t||''}"><div class="n" style="font-size:1.35rem">${v}</div><div class="l">${l}</div></div>`;
+  const kpis=`<div class="summary" style="margin:0 0 16px">${kpi('진행중 전체',totalActive+'건')}${kpi('미지정',unassigned+'건',unassigned?'warn':'')}${kpi('직원 수',stat.length+'명')}${kpi('가장 바쁨',esc(busiest))}</div>`;
+  el.innerHTML=`${todayCard}${kpis}<div class="insgrid">${donut}${statusCard}${workCard}${upCard}</div>`;
+  el.querySelectorAll('.insrow[data-id],.today-row[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
 }
 function fmtDate(s){if(!s)return"";const d=new Date(s);return d.toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function ddayInfo(due){

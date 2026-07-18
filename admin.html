@@ -273,7 +273,18 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .tcard:hover{transform:translateY(-2px)}
 .tthumb{position:relative;aspect-ratio:16/9;background:#0d1b2a}
 .tthumb img{width:100%;height:100%;object-fit:cover;display:block}
-.tthumb-x{display:flex;align-items:center;justify-content:center;height:100%;color:#9fb3c8;font-size:1.6rem}
+.tthumb-x{display:flex;align-items:center;justify-content:center;height:100%;color:#9fb3c8;font-size:2rem}
+.tthumb-book{background:linear-gradient(135deg,#243b5e,#3a2f5e)}.tthumb-book .tthumb-x{color:#e8ddc8}
+.tthumb-article{background:linear-gradient(135deg,#1e3a3a,#25405a)}.tthumb-article .tthumb-x{color:#bfe0d8}
+.tkind{margin-left:auto;font-size:.8rem}
+.tbook{display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,#f3f0fb,#eef3f7);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+.tbook-ic{font-size:2.6rem;flex:0 0 auto}
+.tbook-t{font-weight:800;font-size:1.05rem}
+.tbook-link{display:inline-block;margin-top:8px;font-size:.82rem;font-weight:700;color:var(--navy);text-decoration:none;border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 11px}
+.tbook-link:hover{background:var(--soft)}
+.tceo{margin-top:14px;background:#fff8ec;border:1px solid #f0dfba;border-left:4px solid #d9a441;border-radius:12px;padding:12px 16px}
+.tceo-h{font-size:.76rem;font-weight:800;color:#9a6b12;margin-bottom:4px}
+.tceo-t{font-size:.92rem;line-height:1.6;white-space:pre-wrap;color:var(--ink)}
 .tdone-badge{position:absolute;top:8px;right:8px;background:#1e8a4c;color:#fff;font-size:.7rem;font-weight:800;padding:2px 8px;border-radius:8px}
 .tcard-b{padding:10px 12px}
 .tcard-top{display:flex;gap:6px;align-items:center;margin-bottom:5px}
@@ -1358,8 +1369,12 @@ async function setTaskStage(rid,ti,stage){
   r.checklist=cl; render();
 }
 // ===== 직원 교육 (트레이닝) =====
-const TRAIN_CATS=['디자인','테크','마케팅','공통'];
-const TRAIN_COLOR={'디자인':'#6a48c0','테크':'#1f3f73','마케팅':'#b9760a','공통':'#5b6675'};
+const TRAIN_CATS=['디자인','테크','마케팅','철학·인문','크리에이티브','리더십·마인드셋','공통'];
+const TRAIN_COLOR={'디자인':'#6a48c0','테크':'#1f3f73','마케팅':'#b9760a','철학·인문':'#2f6f6a','크리에이티브':'#c0397b','리더십·마인드셋':'#5b4b8a','공통':'#5b6675'};
+const TRAIN_KINDS=[['video','📺 영상'],['book','📖 도서'],['article','🔗 아티클']];
+function kindOf(t){return t.kind||'video';}
+function kindIcon(k){return k==='book'?'📖':k==='article'?'🔗':'📺';}
+function doneLabel(t){return kindOf(t)==='book'?'완독':'완료';}
 function ytId(u){if(!u)return'';const m=String(u).match(/(?:youtu\.be\/|[?&]v=|embed\/|shorts\/)([\w-]{11})/);return m?m[1]:'';}
 function isOwner(){return !!(me&&me.role==='owner');}
 function myDone(t){const n=me&&me.name;return Array.isArray(t.done_by)&&t.done_by.some(d=>d&&d.name===n);}
@@ -1390,52 +1405,66 @@ function trainList(){
   const addBtn=isOwner()?'<button class="btn-p" id="trainAdd">＋ 교육 추가</button>':'';
   const form=(isOwner()&&trainAdding)?trainForm():'';
   const cards=list.length?list.map(t=>{
-    const id=ytId(t.url), done=myDone(t), cnt=Array.isArray(t.done_by)?t.done_by.length:0, nc=Array.isArray(t.notes)?t.notes.length:0;
+    const k=kindOf(t), id=k==='video'?ytId(t.url):'', done=myDone(t), cnt=Array.isArray(t.done_by)?t.done_by.length:0, nc=Array.isArray(t.notes)?t.notes.length:0;
+    const badge=done?`<span class="tdone-badge">✓ ${doneLabel(t)}</span>`:'';
+    const thumb=k==='video'
+      ? `<div class="tthumb">${id?`<img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt="" loading="lazy">`:'<div class="tthumb-x">▶</div>'}${badge}</div>`
+      : `<div class="tthumb tthumb-${k}"><div class="tthumb-x">${k==='book'?'📖':'🔗'}</div>${badge}</div>`;
     return `<div class="tcard" data-tid="${t.id}">
-      <div class="tthumb">${id?`<img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" alt="" loading="lazy">`:'<div class="tthumb-x">▶</div>'}${done?'<span class="tdone-badge">✓ 완료</span>':''}</div>
+      ${thumb}
       <div class="tcard-b">
-        <div class="tcard-top"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span>${t.required?'<span class="treq">필수</span>':''}</div>
+        <div class="tcard-top"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span>${t.required?'<span class="treq">필수</span>':''}<span class="tkind">${kindIcon(k)}</span></div>
         <div class="tcard-t">${esc(t.title||'')}</div>
-        <div class="tcard-m dim">👥 ${cnt}명 완료 · 💬 ${nc}</div>
+        ${k==='book'&&t.author?`<div class="dim" style="font-size:.76rem;margin:-2px 0 5px">✍ ${esc(t.author)}</div>`:''}
+        <div class="tcard-m dim">👥 ${cnt}명 ${doneLabel(t)} · 💬 ${nc}</div>
       </div>
-    </div>`;}).join(''):'<div class="dim" style="padding:24px;text-align:center;grid-column:1/-1">이 분야의 교육이 아직 없어요.</div>';
-  return `<div class="staff-head"><div><h2 style="margin:0">직원 교육</h2><div class="dim" style="font-size:.84rem">영상 보고 느낀점을 남겨보세요 · 분야별 학습</div></div>${addBtn}</div>
+    </div>`;}).join(''):'<div class="dim" style="padding:24px;text-align:center;grid-column:1/-1">이 분야의 자료가 아직 없어요.</div>';
+  return `<div class="staff-head"><div><h2 style="margin:0">직원 교육 · 성장</h2><div class="dim" style="font-size:.84rem">영상·도서로 배우고 느낀점을 남겨요 · 실무 + 성장</div></div>${addBtn}</div>
     ${progHTML}${chips}${form}<div class="tgrid">${cards}</div>`;
 }
 function trainForm(t){t=t||{};
   return `<div class="tform">
-    <div class="tform-h">${t.id?'교육 수정':'새 교육 추가'}</div>
-    <input id="tf_title" placeholder="제목" value="${esc(t.title||'')}">
-    <input id="tf_url" placeholder="유튜브 링크 (https://youtu.be/...)" value="${esc(t.url||'')}">
+    <div class="tform-h">${t.id?'수정':'새 교육 · 도서 추가'}</div>
     <div class="tform-row">
+      <select id="tf_kind">${TRAIN_KINDS.map(([v,l])=>`<option value="${v}" ${((t.kind||'video')===v)?'selected':''}>${l}</option>`).join('')}</select>
       <select id="tf_cat">${TRAIN_CATS.map(c=>`<option ${((t.category||'공통')===c)?'selected':''}>${c}</option>`).join('')}</select>
-      <label class="tform-chk"><input type="checkbox" id="tf_req" ${t.required?'checked':''}> 필수 교육</label>
+      <label class="tform-chk"><input type="checkbox" id="tf_req" ${t.required?'checked':''}> 필수</label>
     </div>
-    <textarea id="tf_desc" placeholder="설명 (선택)" rows="2">${esc(t.description||'')}</textarea>
+    <input id="tf_title" placeholder="제목 (책 제목 / 영상 제목)" value="${esc(t.title||'')}">
+    <input id="tf_author" placeholder="저자 (도서일 때)" value="${esc(t.author||'')}">
+    <input id="tf_url" placeholder="링크 — 영상: 유튜브 / 도서: 소개·구매(선택) / 아티클: URL" value="${esc(t.url||'')}">
+    <textarea id="tf_desc" placeholder="설명 / 추천 이유 (선택)" rows="2">${esc(t.description||'')}</textarea>
+    <textarea id="tf_ceo" placeholder="💬 대표 한마디 — 왜 이걸 보게 하나요? (선택)" rows="2">${esc(t.ceo_msg||'')}</textarea>
     <div class="tform-act"><button class="btn-p" id="tf_save">${t.id?'저장':'추가'}</button><button class="btn-s" id="tf_cancel">취소</button></div>
   </div>`;
 }
 function trainDetail(t){
-  const id=ytId(t.url), done=myDone(t);
+  const k=kindOf(t), id=k==='video'?ytId(t.url):'', done=myDone(t);
   const cnt=Array.isArray(t.done_by)?t.done_by:[], notes=Array.isArray(t.notes)?t.notes:[];
   const stars=n=>{n=n||0;return '★'.repeat(n)+'☆'.repeat(5-n);};
   const noteHTML=notes.length?notes.slice().reverse().map(n=>`<div class="tnote"><div class="tnote-h"><b>${esc(n.who||'익명')}</b>${n.rating?`<span class="tnote-r">${stars(n.rating)}</span>`:''}<span class="dim">${(n.at||'').slice(0,10)}</span></div><div class="tnote-t">${esc(n.text||'')}</div></div>`).join(''):'<div class="dim" style="padding:8px 2px">아직 느낀점이 없어요. 첫 느낀점을 남겨보세요!</div>';
   const doneNames=cnt.map(d=>esc(d.name)).join(', ');
+  const media = k==='video'
+    ? `<div class="tvid">${id?`<iframe src="https://www.youtube-nocookie.com/embed/${id}" title="video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`:`<a href="${esc(t.url)}" target="_blank" class="dim">${esc(t.url)}</a>`}</div>`
+    : `<div class="tbook"><div class="tbook-ic">${k==='book'?'📖':'🔗'}</div><div style="min-width:0"><div class="tbook-t">${esc(t.title||'')}</div>${t.author?`<div class="dim">✍ ${esc(t.author)}</div>`:''}${t.url?`<a class="tbook-link" href="${esc(t.url)}" target="_blank">${k==='book'?'📗 책 정보 보기':'🔗 링크 열기'}</a>`:''}</div></div>`;
+  const ceo = t.ceo_msg?`<div class="tceo"><div class="tceo-h">💬 대표 한마디</div><div class="tceo-t">${esc(t.ceo_msg)}</div></div>`:'';
+  const notePh = k==='book'?'이 책에서 느낀 점이나 배운 점을 적어보세요 (독후감)':'이 자료에서 느낀 점이나 배운 점을 적어보세요';
   return `<div class="tdet">
     <button class="btn-s tback" id="trBack">‹ 목록</button>
-    <div class="tdet-head"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span>${t.required?'<span class="treq">필수</span>':''}<h2 style="margin:6px 0 0">${esc(t.title||'')}</h2></div>
-    <div class="tvid">${id?`<iframe src="https://www.youtube-nocookie.com/embed/${id}" title="video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`:`<a href="${esc(t.url)}" target="_blank" class="dim">${esc(t.url)}</a>`}</div>
+    <div class="tdet-head"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span><span class="tkind">${kindIcon(k)}</span>${t.required?'<span class="treq">필수</span>':''}<h2 style="margin:6px 0 0">${esc(t.title||'')}</h2></div>
+    ${media}
+    ${ceo}
     ${t.description?`<p class="tdesc">${esc(t.description)}</p>`:''}
     <div class="tdet-bar">
-      <button class="btn-${done?'s':'p'}" id="trDone">${done?'✓ 완료함 (취소)':'완료 표시'}</button>
-      <span class="dim">👥 ${cnt.length}명 완료${doneNames?` · ${doneNames}`:''}</span>
+      <button class="btn-${done?'s':'p'}" id="trDone">${done?`✓ ${doneLabel(t)}함 (취소)`:`${doneLabel(t)} 표시`}</button>
+      <span class="dim">👥 ${cnt.length}명 ${doneLabel(t)}${doneNames?` · ${doneNames}`:''}</span>
       ${isOwner()?'<span style="margin-left:auto"><button class="btn-s" id="trEdit">수정</button> <button class="btn-s" id="trDel" style="color:#c0392b">삭제</button></span>':''}
     </div>
     ${(isOwner()&&trainAdding)?trainForm(t):''}
     <div class="tnotes">
       <div class="sd-worktitle">느낀점 · 배운점 <span class="dim">${notes.length}</span></div>
       <div class="tnote-form">
-        <textarea id="tn_text" placeholder="이 영상에서 느낀 점이나 배운 점을 적어보세요" rows="2"></textarea>
+        <textarea id="tn_text" placeholder="${notePh}" rows="2"></textarea>
         <div class="tnote-form-b"><span class="tstars" id="tn_stars" data-v="0">${[1,2,3,4,5].map(i=>`<span data-s="${i}">☆</span>`).join('')}</span><button class="btn-p" id="tn_add">남기기</button></div>
       </div>
       ${noteHTML}
@@ -1465,12 +1494,16 @@ async function saveTraining(id){
   const title=(document.getElementById('tf_title').value||'').trim();
   const url=(document.getElementById('tf_url').value||'').trim();
   const category=document.getElementById('tf_cat').value;
+  const kind=document.getElementById('tf_kind').value;
+  const author=(document.getElementById('tf_author').value||'').trim();
+  const ceo_msg=(document.getElementById('tf_ceo').value||'').trim();
   const required=document.getElementById('tf_req').checked;
   const description=(document.getElementById('tf_desc').value||'').trim();
-  if(!title||!url){alert('제목과 유튜브 링크를 입력하세요.');return;}
-  const patch={title,url,category,required,description};
+  if(!title){alert('제목을 입력하세요.');return;}
+  if(kind!=='book'&&!url){alert('링크(영상/아티클 URL)를 입력하세요.');return;}
+  const patch={title,url,category,kind,author,ceo_msg,required,description};
   const res=id?await sb.from('trainings').update(patch).eq('id',id):await sb.from('trainings').insert(patch);
-  if(res.error){alert('저장 실패: '+res.error.message);return;}
+  if(res.error){alert('저장 실패: '+res.error.message+'\\n(kind/author/ceo_msg 컬럼이 없으면 23_training_growth.sql 을 실행하세요)');return;}
   trainAdding=false; loadTrainings();
 }
 async function delTraining(id){

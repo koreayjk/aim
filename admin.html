@@ -140,7 +140,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .side-foot .btn-s.on{background:var(--navy);color:#fff;border-color:var(--navy)}
 .staff-head{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}
 .staffwrap{display:grid;grid-template-columns:322px 1fr;gap:16px;align-items:start}
-.staff-list{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;max-height:72vh;overflow:auto}
+.staff-list{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px}
+.staff-filter{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.staff-filter button{border:1px solid var(--line);background:#fff;border-radius:16px;padding:5px 11px;font-size:.78rem;font-weight:700;color:var(--ink2);cursor:pointer}
+.staff-filter button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+.staff-grouphead{font-size:.72rem;font-weight:800;color:var(--muted);letter-spacing:.4px;padding:10px 8px 4px}
 .stcard{display:flex;align-items:center;gap:11px;width:100%;text-align:left;border:none;background:transparent;padding:10px 11px;border-radius:12px;cursor:pointer;margin-bottom:2px}
 .stcard:hover{background:#f4f6fa}.stcard.on{background:var(--soft)}
 .stcard-b{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
@@ -607,7 +611,7 @@ const RANK_COLOR={'대표':['#1f3f73','#fff'],'한국 PM':['#e7edf6','#33507e'],
 const DIRECTORS=['디자인 디렉터','테크 디렉터','마케팅 디렉터'];
 const PM_RANKS=['한국 PM','글로벌 PM','미국 PM','프로젝트 매니저'];
 const isPMrank=r=>PM_RANKS.includes(r||'');
-let staffData=[], staffMode='list', staffSel=null, orgMembers=[];
+let staffData=[], staffMode='list', staffSel=null, orgMembers=[], staffFilter='전체';
 function initials(n){n=(n||'').trim();return n?n[0].toUpperCase():'?';}
 function rankBadge(r){r=r||'크루';const c=RANK_COLOR[r]||RANK_COLOR['크루'];return `<span class="rk" style="background:${c[0]};color:${c[1]}">${esc(r)}</span>`;}
 function statusDot(s){const m={approved:['승인','#1e8a4c'],pending:['승인 대기','#b9760a'],rejected:['거부됨','#c0392b']};const x=m[s]||m.pending;return `<span class="sdot" style="color:${x[1]}"><i style="background:${x[1]}"></i>${x[0]}</span>`;}
@@ -631,6 +635,7 @@ function renderStaff(){
   </div>`;
   el.innerHTML=head+(staffMode==='org'?orgChart():staffMaster());
   el.querySelectorAll('[data-smode]').forEach(b=>b.addEventListener('click',()=>{staffMode=b.dataset.smode;renderStaff();}));
+  el.querySelectorAll('[data-sfilter]').forEach(b=>b.addEventListener('click',()=>{staffFilter=b.dataset.sfilter;renderStaff();}));
   el.querySelectorAll('[data-staff]').forEach(c=>c.addEventListener('click',()=>{staffSel=c.dataset.staff;renderStaff();}));
   el.querySelectorAll('[data-approve]').forEach(b=>b.addEventListener('click',()=>setStaff(b.dataset.approve,{status:'approved'})));
   el.querySelectorAll('[data-reject]').forEach(b=>b.addEventListener('click',()=>setStaff(b.dataset.reject,{status:'rejected'})));
@@ -641,15 +646,22 @@ function renderStaff(){
   if(staffMode==='org')wireOrg(el);
   if(staffMode==='list'){const sel=staffData.find(s=>s.id===staffSel); if(sel)wireDayLog(el,sel.name,()=>renderStaff());}
 }
+function staffTeam(s){ if(isPMrank(s.rank)||s.rank==='대표') return 'PM'; return s.department||'미배정'; }
 function staffMaster(){
-  const list=staffData.length?staffData.map(s=>`
-    <button class="stcard ${s.id===staffSel?'on':''}" data-staff="${s.id}">
-      <span class="avatar">${esc(initials(s.name))}</span>
-      <span class="stcard-b"><span class="stcard-n">${esc(s.name||'(이름없음)')} ${rankBadge(s.rank)}</span><span class="dim" style="font-size:.75rem">${esc(s.email||'')}</span></span>
-      <span class="stcard-s">${statusDot(s.status)}</span>
-    </button>`).join(''):'<p class="dim" style="padding:16px">아직 가입한 직원이 없습니다.</p>';
+  const chipCats=['전체','PM',...DEPTS,'미배정'];
+  const groupOrder=['PM',...DEPTS,'미배정'];
+  const card=s=>`<button class="stcard ${s.id===staffSel?'on':''}" data-staff="${s.id}"><span class="avatar">${esc(initials(s.name))}</span><span class="stcard-b"><span class="stcard-n">${esc(s.name||'(이름없음)')} ${rankBadge(s.rank)}</span><span class="dim" style="font-size:.75rem">${esc(s.email||'')}</span></span><span class="stcard-s">${statusDot(s.status)}</span></button>`;
+  const chips='<div class="staff-filter">'+chipCats.map(c=>{const n=c==='전체'?staffData.length:staffData.filter(s=>staffTeam(s)===c).length;return `<button class="${staffFilter===c?'on':''}" data-sfilter="${esc(c)}">${c}${n?` ${n}`:''}</button>`;}).join('')+'</div>';
+  let listHTML;
+  if(!staffData.length){ listHTML='<p class="dim" style="padding:16px">아직 가입한 직원이 없습니다.</p>'; }
+  else if(staffFilter==='전체'){
+    listHTML=groupOrder.map(c=>{const g=staffData.filter(s=>staffTeam(s)===c);return g.length?`<div class="staff-grouphead">${c==='PM'?'대표 · PM':c} <span style="color:var(--muted)">${g.length}</span></div>`+g.map(card).join(''):'';}).join('');
+  } else {
+    const g=staffData.filter(s=>staffTeam(s)===staffFilter);
+    listHTML=g.length?g.map(card).join(''):'<p class="dim" style="padding:16px">해당 팀에 직원이 없어요.</p>';
+  }
   const sel=staffData.find(s=>s.id===staffSel);
-  return `<div class="staffwrap"><div class="staff-list">${list}</div><div class="staff-detail">${sel?staffDetail(sel):'<div class="dim" style="padding:40px;text-align:center">왼쪽에서 직원을 선택하세요.</div>'}</div></div>`;
+  return `<div class="staffwrap"><div class="staff-list">${chips}${listHTML}</div><div class="staff-detail">${sel?staffDetail(sel):'<div class="dim" style="padding:40px;text-align:center">왼쪽에서 직원을 선택하세요.</div>'}</div></div>`;
 }
 function staffDetail(s){
   const myProjects=rows.filter(r=>r.assignee===s.name && (r.status||'')!=='완료');

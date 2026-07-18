@@ -226,6 +226,40 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .today-row .t{flex:1;font-weight:600}
 .todo-top{font-size:1.02rem;margin-bottom:14px}.todo-top b{color:var(--ink)}
 .todo{display:flex;flex-direction:column;gap:14px}
+/* 일별 활동 (캘린더 + 그날 한일/할일) */
+.daylog{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+.daylog-main{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 14px;min-width:0}
+.dayhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.dayhead-d{font-weight:800;font-size:.98rem}
+.dtag{font-size:.7rem;font-weight:700;background:var(--soft);color:var(--navy);padding:2px 8px;border-radius:8px;margin-left:4px}
+.dnav{border:1px solid var(--line);background:#fff;border-radius:9px;padding:6px 11px;font-size:.82rem;font-weight:700;color:var(--navy);cursor:pointer}
+.dnav:hover{background:#f4f6fa}
+.daysec{margin-top:8px}
+.daysec-h{font-size:.78rem;font-weight:800;color:var(--muted);margin:8px 0 4px;display:flex;gap:6px;align-items:center}
+.daysec-h span{background:var(--soft);color:var(--navy);border-radius:8px;padding:0 7px;font-size:.72rem}
+.day-row{display:flex;align-items:center;gap:9px;padding:7px 4px;border-bottom:1px dashed var(--line);cursor:pointer;font-size:.9rem}
+.day-row:hover{background:#fafbf8}
+.day-k{flex:0 0 auto;color:var(--muted);font-weight:800}
+.day-k.done{color:#1e8a4c}
+.day-t{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.day-row.done .day-t{text-decoration:line-through;color:var(--muted)}
+.day-sub{flex:1;font-size:.76rem;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.day-empty{padding:7px 4px;font-size:.84rem}
+.daylog-cal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;font-weight:800;font-size:.86rem;margin-bottom:8px}
+.cal-nav{border:1px solid var(--line);background:#fff;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:1rem;line-height:1;color:var(--navy)}
+.cal-nav:hover{background:#f4f6fa}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{text-align:center;font-size:.68rem;font-weight:700;color:var(--muted);padding:3px 0}
+.cal-dow.sun{color:#c0392b}.cal-dow.sat{color:#2266b8}
+.cal-cell{position:relative;text-align:center;padding:7px 0;font-size:.8rem;border-radius:8px;cursor:pointer;color:var(--ink)}
+.cal-cell.empty{cursor:default}
+.cal-cell:not(.empty):hover{background:#f0f3f8}
+.cal-cell.today{font-weight:800;box-shadow:inset 0 0 0 1px var(--line)}
+.cal-cell.sel{background:var(--navy);color:#fff;font-weight:800}
+.cal-dot{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:var(--navy)}
+.cal-cell.sel .cal-dot{background:#fff}
+@media(max-width:780px){.daylog{grid-template-columns:1fr}.daylog-cal{order:-1}}
 .todo-sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 8px 8px}
 .todo-h{display:flex;align-items:center;gap:8px;font-size:.86rem;font-weight:800;color:var(--ink2);padding:11px 8px 8px}
 .todo-h span{margin-left:auto;background:#eef1f6;border-radius:20px;padding:1px 10px;font-size:.74rem;color:var(--muted)}
@@ -463,6 +497,7 @@ const STAGE_MAP={'준비':'해야함','진행':'하는중','검토':'검토','�
 function effStage(c){ if(c.d) return '끝'; const s=c.s||''; return TASK_STAGES.includes(s)?s:(STAGE_MAP[s]||'해야함'); }
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
 let rows=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false, boardType='전체';
+let logDate=null, logMonth=null;   // 일별 활동(캘린더) 선택 상태
 const DONE_CAP=5;
 function scopedRows(){ return (scope==='mine' && me && me.name) ? rows.filter(r=>r.assignee===me.name) : rows; }
 
@@ -565,6 +600,7 @@ function renderStaff(){
   const dp=el.querySelector('#staffDept'); if(dp)dp.addEventListener('change',()=>moveDept(dp.dataset.id,dp.value));
   el.querySelectorAll('.workrow[data-id]').forEach(w=>w.addEventListener('click',()=>openDetail(Number(w.dataset.id))));
   if(staffMode==='org')wireOrg(el);
+  if(staffMode==='list'){const sel=staffData.find(s=>s.id===staffSel); if(sel)wireDayLog(el,sel.name,()=>renderStaff());}
 }
 function staffMaster(){
   const list=staffData.length?staffData.map(s=>`
@@ -601,6 +637,10 @@ function staffDetail(s){
     ${projList}
     <div class="sd-worktitle" style="margin-top:16px">배정된 할일 <span class="dim">${myTasks.length}</span></div>
     ${taskList}
+  </div>
+  <div class="sd-work">
+    <div class="sd-worktitle">일별 활동 <span class="dim">· 날짜를 누르면 그날 한 일/할 일이 보여요</span></div>
+    ${dayLogBlock(s.name)}
   </div>
   ${owner?'':`<div class="sd-actions">
     ${s.status!=='approved'?`<button class="btn-p" data-approve="${s.id}">승인</button>`:''}
@@ -1134,6 +1174,73 @@ function todoBadge(kind,stage){
   if(kind==='task'){const c=STAGE_COLOR[stage]||['#eceff3','#5b6675'];return `<span class="ti-badge" style="background:${c[0]};color:${c[1]}">${esc(stage)}</span>`;}
   return `<span class="badge st-${esc(stage||'접수·견적')}">${esc(stage||'접수·견적')}</span>`;
 }
+// ===== 일별 활동(캘린더) =====
+function ensureLog(){ if(!logDate){logDate=todayStr();logMonth=logDate.slice(0,7);} }
+function shiftDate(dstr,delta){const d=new Date(dstr+'T00:00:00');d.setDate(d.getDate()+delta);return d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+// 특정 직원이 특정 날짜에 '한 일'(완료) + '할 일'(마감)
+function dayActivity(name,date){
+  const done=[],todo=[];
+  rows.forEach(r=>{
+    (Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{
+      if((t.a||'')!==name)return;
+      if(t.doneAt===date) done.push({r,label:t.t,kind:'task'});
+      else if(t.due===date && effStage(t)!=='끝') todo.push({r,label:t.t,kind:'task'});
+    });
+    if(r.assignee===name){
+      if(r.done_at===date) done.push({r,label:r.org_name||'(이름없음)',kind:'proj'});
+      else if(dueOf(r)===date && (r.status||'')!=='완료') todo.push({r,label:r.org_name||'(이름없음)',kind:'proj'});
+    }
+  });
+  return {done,todo};
+}
+// 한 달 안에서 활동이 있는 날짜 집합 (캘린더 점 표시용)
+function monthActivity(name,ym){
+  const set=new Set(); const mk=d=>{if(d&&String(d).slice(0,7)===ym)set.add(d);};
+  rows.forEach(r=>{
+    (Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{if((t.a||'')!==name)return;mk(t.doneAt);if(effStage(t)!=='끝')mk(t.due);});
+    if(r.assignee===name){mk(r.done_at);if((r.status||'')!=='완료')mk(dueOf(r));}
+  });
+  return set;
+}
+function calendarHTML(name){
+  const [y,m]=logMonth.split('-').map(Number);
+  const startDow=new Date(y,m-1,1).getDay();
+  const daysIn=new Date(y,m,0).getDate();
+  const act=monthActivity(name,logMonth), today=todayStr();
+  let cells='';
+  for(let i=0;i<startDow;i++) cells+='<div class="cal-cell empty"></div>';
+  for(let d=1;d<=daysIn;d++){
+    const ds=logMonth+'-'+pad2(d), cls=['cal-cell'];
+    if(ds===logDate)cls.push('sel'); if(ds===today)cls.push('today');
+    cells+=`<div class="${cls.join(' ')}" data-cal="${ds}">${d}${act.has(ds)?'<i class="cal-dot"></i>':''}</div>`;
+  }
+  const dows=['일','월','화','수','목','금','토'].map((w,i)=>`<div class="cal-dow${i===0?' sun':i===6?' sat':''}">${w}</div>`).join('');
+  return `<div class="cal">
+    <div class="cal-head"><button class="cal-nav" data-calnav="-1">‹</button><span>${y}. ${pad2(m)}</span><button class="cal-nav" data-calnav="1">›</button></div>
+    <div class="cal-grid">${dows}${cells}</div></div>`;
+}
+function dayListHTML(name){
+  const {done,todo}=dayActivity(name,logDate), today=todayStr();
+  const rel=logDate===today?'오늘':logDate===shiftDate(today,-1)?'어제':logDate===shiftDate(today,1)?'내일':'';
+  const wd=['일','월','화','수','목','금','토'][new Date(logDate+'T00:00:00').getDay()];
+  const row=(it,isDone)=>`<div class="day-row${isDone?' done':''}" data-id="${it.r.id}"><span class="day-k${isDone?' done':''}">${isDone?'✓':'○'}</span><span class="day-t">${esc(it.label)}</span><span class="dim day-sub">${esc(it.r.org_name)||''}${it.kind==='proj'?' · 프로젝트':''}</span></div>`;
+  const doneHTML=done.length?done.map(it=>row(it,true)).join(''):'<div class="dim day-empty">이 날 완료한 일이 없어요.</div>';
+  const todoHTML=todo.length?todo.map(it=>row(it,false)).join(''):'<div class="dim day-empty">이 날 예정된 일이 없어요.</div>';
+  return `<div class="dayhead">
+      <button class="dnav" data-dnav="-1">‹ 어제</button>
+      <div class="dayhead-d">${logDate.slice(5).replace('-','.')} (${wd})${rel?` <span class="dtag">${rel}</span>`:''}</div>
+      <button class="dnav" data-dnav="1">내일 ›</button>
+    </div>
+    <div class="daysec"><div class="daysec-h">✅ 한 일 <span>${done.length}</span></div>${doneHTML}</div>
+    <div class="daysec"><div class="daysec-h">📌 할 일 <span>${todo.length}</span></div>${todoHTML}</div>`;
+}
+function dayLogBlock(name){ ensureLog(); return `<div class="daylog"><div class="daylog-main">${dayListHTML(name)}</div><div class="daylog-cal">${calendarHTML(name)}</div></div>`; }
+function wireDayLog(el,name,rerender){
+  el.querySelectorAll('[data-cal]').forEach(c=>c.addEventListener('click',()=>{logDate=c.dataset.cal;logMonth=logDate.slice(0,7);rerender();}));
+  el.querySelectorAll('[data-calnav]').forEach(b=>b.addEventListener('click',()=>{let[y,m]=logMonth.split('-').map(Number);m+=Number(b.dataset.calnav);if(m<1){m=12;y--;}if(m>12){m=1;y++;}logMonth=y+'-'+pad2(m);rerender();}));
+  el.querySelectorAll('[data-dnav]').forEach(b=>b.addEventListener('click',()=>{logDate=shiftDate(logDate,Number(b.dataset.dnav));logMonth=logDate.slice(0,7);rerender();}));
+  el.querySelectorAll('.daylog .day-row[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
+}
 function renderMyTodos(el){
   const meName=me&&me.name; const items=[];
   rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach(t=>{if((t.a||'')===meName&&effStage(t)!=='끝')items.push({r,label:t.t,stage:effStage(t),due:t.due||'',kind:'task'});});});
@@ -1153,7 +1260,10 @@ function renderMyTodos(el){
       </div>`;}).join('')+'</div>';
   });
   if(!items.length) body='<div class="dim" style="padding:24px;text-align:center">나에게 배정된 진행중 업무가 없어요 🎉</div>';
-  el.innerHTML=`<div class="todo-top"><b>${esc(meName||'내')} 님의 할 일</b><span class="dim"> · 급한 순</span></div><div class="todo">${body}</div>`;
+  el.innerHTML=`<div class="todo-top"><b>${esc(meName||'내')} 님의 작업</b></div>`
+    +dayLogBlock(meName)
+    +`<div class="todo" style="margin-top:20px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>급한 할 일</b><span class="dim"> · 마감 급한 순</span></div>${body}</div>`;
+  wireDayLog(el,meName,()=>renderMyTodos(el));
   el.querySelectorAll('.todo-item[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
 }
 function renderBoard(){
@@ -1305,7 +1415,7 @@ function bindDetail(r){
   document.getElementById('f_site').addEventListener('blur',e=>saveField(r.id,{site_url:e.target.value.trim()}));
   document.getElementById('f_notes').addEventListener('blur',e=>saveField(r.id,{notes:e.target.value}));
   // imflow 단계형 작업 보드
-  sheet.querySelectorAll('.tasklist .tstage').forEach(s=>s.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));const i=Number(s.dataset.i);cl[i].s=s.value;delete cl[i].d;saveChecklist(r.id,cl);}));
+  sheet.querySelectorAll('.tasklist .tstage').forEach(s=>s.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));const i=Number(s.dataset.i);cl[i].s=s.value;delete cl[i].d;if(s.value==='끝'){if(!cl[i].doneAt)cl[i].doneAt=todayStr();}else{delete cl[i].doneAt;}saveChecklist(r.id,cl);}));
   sheet.querySelectorAll('.tasklist .tdue').forEach(d=>d.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));const i=Number(d.dataset.i);if(d.value)cl[i].due=d.value;else delete cl[i].due;saveChecklist(r.id,cl);}));
   sheet.querySelectorAll('.tasklist .ta').forEach(s=>s.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));cl[Number(s.dataset.i)].a=s.value;saveChecklist(r.id,cl);}));
   sheet.querySelectorAll('.tasklist .rm').forEach(b=>b.addEventListener('click',()=>{const cl=r.checklist.map(x=>({...x}));cl.splice(Number(b.dataset.i),1);saveChecklist(r.id,cl);}));

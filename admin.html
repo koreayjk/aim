@@ -1141,7 +1141,7 @@ async function addComment(id,text){
 }
 
 function renderList(){
-  const rows=scopedRows();
+  const rows=scopedRows().slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
   const el=document.getElementById('listView');
   if(!rows.length){el.innerHTML='<div class="listwrap"><div class="empty">'+(scope==='mine'?'나에게 배정된 의뢰가 없습니다.':'아직 들어온 의뢰가 없습니다.')+'</div></div>';return;}
   el.innerHTML='<div class="listwrap">'+

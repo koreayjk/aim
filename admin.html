@@ -1196,8 +1196,9 @@ async function addComment(id,text){
   r.comments=list; openDetail(id);
 }
 
+function receiptDate(r){ return (r.stage_due&&r.stage_due['접수·견적'])||String(r.created_at||'').slice(0,10); }
 function renderList(){
-  const rows=scopedRows().slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+  const rows=scopedRows().slice().sort((a,b)=>{const d=receiptDate(b).localeCompare(receiptDate(a));return d!==0?d:(b.created_at||'').localeCompare(a.created_at||'');});
   const el=document.getElementById('listView');
   if(!rows.length){el.innerHTML='<div class="listwrap"><div class="empty">'+(scope==='mine'?'나에게 배정된 의뢰가 없습니다.':'아직 들어온 의뢰가 없습니다.')+'</div></div>';return;}
   el.innerHTML='<div class="listwrap">'+
@@ -1561,7 +1562,7 @@ function openDetail(id){
         <div class="assignwrap"><select id="f_assignee">${assigneeOptions(r.assignee)}</select></div>
       </div>
       <div class="fld" style="margin-bottom:16px"><label>단계별 마감일 <span class="dim" style="font-weight:400;font-size:.74rem">· 완료 = 최종 마감</span></label>
-        <div class="sdue-grid">${pipelineOf(r).map(s=>`<label class="sdue-item"><span>${s==='완료'?'완료(최종)':esc(s)}</span><input type="date" class="sdue" data-stage="${esc(s)}" value="${(r.stage_due&&r.stage_due[s])||''}"></label>`).join('')}</div>
+        <div class="sdue-grid">${pipelineOf(r).map(s=>`<label class="sdue-item"><span>${s==='완료'?'완료(최종)':esc(s)}</span><input type="date" class="sdue" data-stage="${esc(s)}" value="${(r.stage_due&&r.stage_due[s])||(s==='접수·견적'?String(r.created_at||'').slice(0,10):'')}"></label>`).join('')}</div>
       </div>
       <div class="frow">
         <div class="fld"><label>금액 (원)</label><input type="number" id="f_amount" value="${r.amount??''}" placeholder="예: 1500000"></div>
@@ -1700,7 +1701,8 @@ document.getElementById('addSave').addEventListener('click',async()=>{
   const row={status:'접수·견적',source:'manual',mode:document.getElementById('a_mode').value,org_name:org,assignee:assignee||null,
     request_type:document.getElementById('a_type').value,
     phone:document.getElementById('a_phone').value.trim(),email:document.getElementById('a_email').value.trim(),
-    field:document.getElementById('a_field').value.trim(),notes:document.getElementById('a_notes').value.trim()};
+    field:document.getElementById('a_field').value.trim(),notes:document.getElementById('a_notes').value.trim(),
+    stage_due:{'접수·견적':todayStr()}};
   const {error}=await sb.from('requests').insert([row]);
   if(error){err.textContent="추가 실패: "+error.message;return;}
   ['a_org','a_assignee','a_phone','a_email','a_field','a_notes'].forEach(i=>document.getElementById(i).value='');

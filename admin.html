@@ -758,7 +758,7 @@ function orgChart(ro){
       </div>
     </div>`;
   }).join('');
-  const pmSlots=['한국 PM','글로벌 PM'].map(r=>{
+  const pmSlots=['글로벌 PM','한국 PM'].map(r=>{
     const hold=pmAll.filter(s=>s.rank===r);
     return `<div class="opm-slot" ${ro?'':'data-drop'} data-pm="${r}">
       <div class="opm-slot-h" style="color:${r==='한국 PM'?'#33507e':'#1e7d6b'}">${r}</div>

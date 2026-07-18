@@ -388,6 +388,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .trow .tt{flex:1;min-width:0;font-size:.9rem;line-height:1.3;overflow-wrap:anywhere}
 .trow.done .tt{text-decoration:line-through;color:var(--muted)}
 .trow .tstage{flex:0 0 auto;width:80px;font-size:.76rem;padding:5px 4px;border:1px solid var(--line);border-radius:6px;background:#fbfcfe;color:var(--ink2);font-weight:600}
+.trow .tstage-ro{flex:0 0 auto;font-size:.76rem;font-weight:700}
+.trow .tro-meta{flex:0 0 auto;font-size:.72rem}
 .trow .ta{flex:0 0 auto;width:104px;font-size:.76rem;padding:5px 4px;border:1px solid var(--line);border-radius:6px;background:#fbfcfe;color:var(--ink2)}
 .trow .tdue{flex:0 0 auto;width:120px;font-size:.72rem;padding:4px;border:1px solid var(--line);border-radius:6px;background:#fbfcfe;color:var(--ink2)}
 .trow .rm{background:none;border:none;color:#b6bfcf;cursor:pointer;font-size:1rem;padding:1px 5px;border-radius:6px;line-height:1}
@@ -1524,9 +1526,11 @@ function assigneeOptions(cur){
 }
 function field(k,v){if(!v)return'';const val=/^https?:\/\//.test(v)?`<a href="${esc(v)}" target="_blank" rel="noopener">${esc(v)}</a>`:esc(v);return `<div class="drow"><div class="k">${k}</div><div class="v">${val}</div></div>`;}
 
+function canManage(r){ if(isOwner())return true; if(!me)return false; const rk=me.rank||''; if(isPMrank(rk)||DIRECTORS.includes(rk))return true; return !!(r&&r.assignee&&r.assignee===me.name); }
 function openDetail(id){
   const r=rows.find(x=>x.id===id); if(!r)return; selId=id;
   const cl=Array.isArray(r.checklist)?r.checklist:[];
+  const canMng=canManage(r);
   const done=cl.filter(c=>effStage(c)==='끝').length; const pct=cl.length?Math.round(done/cl.length*100):0;
   sheet.innerHTML=`
     <div class="mhead">
@@ -1558,15 +1562,21 @@ function openDetail(id){
       <div class="checklist" style="margin-top:18px">
         <label style="font-size:.76rem;font-weight:700;color:var(--navy);letter-spacing:.3px">작업 진행 ${cl.length?`(${done}/${cl.length} · ${pct}%)`:''}</label>
         <div class="cl-bar"><i style="width:${pct}%"></i></div>
-        <div class="tasklist">${cl.map((c,idx)=>{const es=effStage(c);return `
+        <div class="tasklist">${cl.length?cl.map((c,idx)=>{const es=effStage(c);return canMng?`
           <div class="trow ${es==='끝'?'done':''}">
             <span class="tt">${esc(c.t)}</span>
             <select class="tstage" data-i="${idx}" style="border-left:3px solid ${STAGE_COLOR[es]}">${TASK_STAGES.map(s=>`<option ${es===s?'selected':''}>${s}</option>`).join('')}</select>
             <input type="date" class="tdue" data-i="${idx}" value="${c.due||''}" title="할일 마감일">
             <select class="ta" data-i="${idx}">${taskAssigneeOpts(c.a||'')}</select>
             <button class="rm" data-i="${idx}" title="삭제">&times;</button>
-          </div>`;}).join('')}</div>
-        <form class="tadd"><input placeholder="할 일 입력 후 Enter" maxlength="200"><button type="submit">추가</button></form>
+          </div>`:`
+          <div class="trow ${es==='끝'?'done':''}">
+            <span class="tt">${esc(c.t)}</span>
+            <span class="tstage-ro" style="color:${STAGE_COLOR[es]||'#888'}">${es}</span>
+            ${c.due?`<span class="dim tro-meta">${c.due}</span>`:''}
+            ${c.a?`<span class="dim tro-meta">${esc(c.a)}</span>`:''}
+          </div>`;}).join(''):'<div class="dim" style="padding:6px 2px;font-size:.86rem">등록된 작업이 없어요.</div>'}</div>
+        ${canMng?'<form class="tadd"><input placeholder="할 일 입력 후 Enter" maxlength="200"><button type="submit">추가</button></form>':'<div class="dim" style="font-size:.74rem;margin-top:8px">작업 추가·수정은 담당자·PM·디렉터·관리자만 가능해요. 내 할일 상태는 <b>내 작업</b>에서 바꿀 수 있어요.</div>'}
       </div>
       <div class="detail-data">
         <div class="dgrp"><div class="gk">의뢰처 정보</div>${field('유형',r.request_type)}${field('대표자',r.contact_name)}${field('전화',r.phone)}${field('이메일',r.email)}${field('분야',r.field)}</div>

@@ -362,13 +362,14 @@ function init(){
   document.getElementById('m_phone').value = params.get('phone')||'';
   document.getElementById('m_email').value = params.get('email')||'';
   const now=new Date();
-  document.getElementById('m_date').value = now.toLocaleDateString(lang==='ko'?'ko-KR':'en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
-  const qno='Q-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000);
+  document.getElementById('m_date').value = params.get('qdate') || now.toLocaleDateString(lang==='ko'?'ko-KR':'en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
+  const qno=params.get('qno') || ('Q-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000));
   document.getElementById('m_qno').value=qno;
   addRow(T[lang].item1,'once');
   addRow(T[lang].item2,'month');
   for(let i=0;i<3;i++) addRow('','once');
   applyLang(); calc();
+  if(params.get('auto')) setTimeout(()=>window.print(),700);   // 관리자에서 다운로드 시 자동 인쇄/PDF
   // meta inputs trigger nothing in calc but keep
   document.querySelectorAll('.line input').forEach(inp=>inp.addEventListener('input',()=>{}));
 }

@@ -418,6 +418,15 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .mfoot{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;padding-top:18px;border-top:1px solid var(--line)}
 .copy{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:.9rem}.copy.ok{background:#1e8a4c}
 .qbtn{background:#1f3f73;color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:.9rem}.qbtn:hover{background:#15294d}
+.qinfo{margin-top:16px;padding:9px 12px;background:var(--soft);border:1px solid var(--line);border-radius:10px;font-size:.86rem}.qinfo b{color:var(--navy)}
+.qtable{width:100%;border-collapse:collapse;font-size:.86rem}
+.qtable th{text-align:left;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--line)}
+.qtable td{padding:9px 10px;border-bottom:1px solid var(--line)}
+.qtable tr:hover td{background:#fafbf8}
+.qtable .qno{font-weight:800;color:var(--navy);white-space:nowrap}
+.qtable .qdl{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-weight:700;font-size:.78rem;color:#1e7d6b;cursor:pointer;white-space:nowrap}
+.qtable .qdl:hover{background:#e3f3ee}
+.qwrap{overflow-x:auto}
 .del{background:none;border:1px solid #e3c4c0;color:var(--err);border-radius:10px;padding:10px 16px;font-weight:600;font-size:.86rem}.del:hover{background:#fdf0ef}
 @media(max-width:720px){.frow{grid-template-columns:1fr}.lrow{grid-template-columns:26px 1fr 80px;font-size:.85rem}.lrow .hide-m{display:none}}
 </style>
@@ -1087,6 +1096,12 @@ function renderReport(){
   const trend=months.map(mm=>({mm,rev:rows.filter(r=>r.paid&&inM2(r.paid_at,mm)&&Number(r.amount)).reduce((s,r)=>s+Number(r.amount||0),0)}));
   function inM2(d,m){return d&&String(d).slice(0,7)===m;}
   const maxR=Math.max(1,...trend.map(t=>t.rev));
+  // 이번달 발행 견적서
+  const quotes=rows.filter(r=>r.quote_no&&inM(r.quoted_at)).sort((a,b)=>(a.quote_no<b.quote_no?1:-1));
+  const quoteCard=`<div class="ins-card ins-wide"><h3>견적서 관리 <span class="dim" style="font-weight:500;font-size:.78rem">· 이번달 발행 ${quotes.length}건</span></h3>
+    ${quotes.length?`<div class="qwrap"><table class="qtable"><thead><tr><th>견적번호</th><th>거래처</th><th>유형</th><th>발행일</th><th>금액</th><th></th></tr></thead><tbody>
+      ${quotes.map(r=>`<tr><td class="qno">${esc(r.quote_no)}</td><td>${esc(r.org_name)||'(이름없음)'}</td><td class="dim">${esc(r.request_type||'')}</td><td class="dim">${String(r.quoted_at||'').slice(0,10)}</td><td style="font-weight:700">${r.amount?fmtWon(r.amount):'<span class="dim">-</span>'}</td><td><button class="qdl" data-qid="${r.id}">📄 PDF</button></td></tr>`).join('')}
+    </tbody></table></div>`:'<p class="dim">이번달 발행한 견적서가 없어요. 의뢰 상세에서 "견적서 만들기"로 발행하세요.</p>'}</div>`;
   const kpi=(label,val,tone)=>`<div class="scard ${tone||''}"><div class="n" style="font-size:1.25rem">${val}</div><div class="l">${label}</div></div>`;
   el.innerHTML=`
     <div class="rpt-nav">
@@ -1106,11 +1121,13 @@ function renderReport(){
       <div class="ins-card"><h3>유형별 접수 (이번달)</h3>${typeList.length?typeList.map(([t,n])=>`<div class="insbar"><div class="insbar-l"><span>${esc(t)}</span><span>${n}건</span></div><div class="insbar-t"><i style="width:${n/maxT*100}%;background:#3a6db0"></i></div></div>`).join(''):'<p class="dim">이번달 접수가 없어요.</p>'}</div>
       <div class="ins-card"><h3>담당자별 완료 (이번달)</h3>${aList.length?aList.map(([a,n])=>`<div class="insbar"><div class="insbar-l"><span>${esc(a)}</span><span>${n}건</span></div><div class="insbar-t"><i style="width:${n/maxA*100}%;background:#1e8a4c"></i></div></div>`).join(''):'<p class="dim">이번달 완료가 없어요.</p>'}</div>
       <div class="ins-card ins-wide"><h3>이번달 입금 내역 · ${fmtWon(revenue)}</h3>${paidM.length?paidM.slice().sort((a,b)=>(a.paid_at<b.paid_at?1:-1)).map(r=>`<div class="insrow" data-id="${r.id}"><span class="t">${esc(r.org_name)||'(이름없음)'}</span><span class="dim">${r.assignee?esc(r.assignee)+' · ':''}${r.paid_at||''}</span><span style="font-weight:800;color:var(--navy)">${fmtWon(r.amount)}</span></div>`).join(''):'<p class="dim">이번달 입금 내역이 없어요.</p>'}</div>
+      ${quoteCard}
     </div>`;
   document.getElementById('rptPrev').addEventListener('click',()=>{reportMonth=shiftMonth(ym,-1);renderReport();});
   document.getElementById('rptNext').addEventListener('click',()=>{reportMonth=shiftMonth(ym,1);renderReport();});
   document.getElementById('rptNow').addEventListener('click',()=>{reportMonth=thisMonth();renderReport();});
   el.querySelectorAll('.insrow[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
+  el.querySelectorAll('.qdl[data-qid]').forEach(b=>b.addEventListener('click',()=>{const r=rows.find(x=>x.id===Number(b.dataset.qid));if(r)window.open('quote.html?'+quoteParams(r,{qno:r.quote_no,qdate:qdateStr(r.quoted_at),auto:'1'}).toString(),'_blank');}));
 }
 function renderInsights(){
   const el=document.getElementById('insightsView'); const all=rows;
@@ -1613,8 +1630,10 @@ function openDetail(id){
         <div class="cmlist">${(Array.isArray(r.comments)?r.comments:[]).map(c=>`<div class="cmitem ${c.sys?'sys':''}"><div class="cmhead"><b>${esc(c.who||'')}</b><span>${fmtDate(c.at)}</span></div><div class="cmtext">${esc(c.text)}</div></div>`).join('')||'<p class="dim" style="font-size:.84rem;padding:6px 0">아직 코멘트가 없습니다.</p>'}</div>
         <div class="cl-add"><input id="cmInput" placeholder="코멘트 입력 후 Enter"><button class="btn-s" id="cmAdd">등록</button></div>
       </div>
+      ${r.quote_no?`<div class="qinfo">🧾 견적번호 <b>${esc(r.quote_no)}</b>${r.quoted_at?` <span class="dim">· 발행 ${String(r.quoted_at).slice(0,10)}</span>`:''}</div>`:''}
       <div class="mfoot">
-        <button class="qbtn" id="quoteBtn">🧾 견적서 만들기</button>
+        <button class="qbtn" id="quoteBtn">🧾 견적서 ${r.quote_no?'다시 편집':'만들기'}</button>
+        ${r.quote_no?'<button class="qbtn" id="quoteDl" style="background:#1e7d6b">📄 견적서 PDF 다운로드</button>':''}
         <button class="copy" id="copyBtn">📋 내용 복사 (Claude에게 붙여넣기)</button>
         <button class="del" id="delBtn">삭제</button>
       </div>
@@ -1651,14 +1670,28 @@ function bindDetail(r){
     const t=buildText(r); try{await navigator.clipboard.writeText(t);}catch(_){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();}
     const b=e.currentTarget,o=b.textContent;b.classList.add('ok');b.textContent='✓ 복사되었습니다!';setTimeout(()=>{b.classList.remove('ok');b.textContent=o;},1600);
   });
-  document.getElementById('quoteBtn').addEventListener('click',()=>{
-    const p=new URLSearchParams({
-      org:r.org_name||'', name:r.contact_name||'', phone:r.phone||'', email:r.email||'',
-      mode:r.mode||'', lang:'ko'
-    });
-    window.open('quote.html?'+p.toString(),'_blank');
+  document.getElementById('quoteBtn').addEventListener('click',async()=>{
+    let qno=r.quote_no, qat=r.quoted_at;
+    if(!qno){ qno=nextQuoteNo(); qat=new Date().toISOString();
+      await saveField(r.id,{quote_no:qno,quoted_at:qat});
+      const list=Array.isArray(r.comments)?[...r.comments]:[]; list.push({who:(me&&me.name)||'관리자',text:`🧾 견적서 발행 (${qno})`,at:new Date().toISOString(),sys:true});
+      await sb.from('requests').update({comments:list}).eq('id',r.id); r.comments=list;
+      openDetail(r.id);
+    }
+    window.open('quote.html?'+quoteParams(r,{qno,qdate:qdateStr(qat)}).toString(),'_blank');
+  });
+  const qdl=document.getElementById('quoteDl'); if(qdl)qdl.addEventListener('click',()=>{
+    window.open('quote.html?'+quoteParams(r,{qno:r.quote_no,qdate:qdateStr(r.quoted_at),auto:'1'}).toString(),'_blank');
   });
   document.getElementById('delBtn').addEventListener('click',()=>del(r.id));
+}
+function quoteParams(r,extra){const p=new URLSearchParams({org:r.org_name||'',name:r.contact_name||'',phone:r.phone||'',email:r.email||'',mode:r.mode||'',lang:'ko'});if(extra)Object.entries(extra).forEach(([k,v])=>{if(v!=null)p.set(k,v);});return p;}
+function qdateStr(iso){ if(!iso)return''; const d=new Date(iso); return d.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}); }
+// 견적번호: Q-<연도>-NNNN (연도별 순번)
+function nextQuoteNo(){
+  const yr=new Date().getFullYear(); const prefix='Q-'+yr+'-'; let max=0;
+  rows.forEach(r=>{ if(r.quote_no&&r.quote_no.indexOf(prefix)===0){ const n=parseInt(r.quote_no.slice(prefix.length),10); if(n>max)max=n; } });
+  return prefix+String(max+1).padStart(4,'0');
 }
 
 function flashSaved(){const m=document.getElementById('savedMsg');if(!m)return;m.classList.add('show');setTimeout(()=>m.classList.remove('show'),1200);}

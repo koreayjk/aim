@@ -1685,7 +1685,7 @@ function bindDetail(r){
   });
   document.getElementById('delBtn').addEventListener('click',()=>del(r.id));
 }
-function quoteParams(r,extra){const p=new URLSearchParams({org:r.org_name||'',name:r.contact_name||'',phone:r.phone||'',email:r.email||'',mode:r.mode||'',lang:'ko'});if(extra)Object.entries(extra).forEach(([k,v])=>{if(v!=null)p.set(k,v);});return p;}
+function quoteParams(r,extra){const p=new URLSearchParams({rid:r.id,org:r.org_name||'',name:r.contact_name||'',phone:r.phone||'',email:r.email||'',mode:r.mode||'',lang:'ko'});if(extra)Object.entries(extra).forEach(([k,v])=>{if(v!=null)p.set(k,v);});return p;}
 function qdateStr(iso){ if(!iso)return''; const d=new Date(iso); return d.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}); }
 // 견적번호: Q-<연도>-NNNN (연도별 순번)
 function nextQuoteNo(){

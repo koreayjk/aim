@@ -9,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#eef2f9;--paper:#fff;--ink:#15294d;--ink2:#3e4a5b;--muted:#6e7891;--line:#dde3ec;--navy:#1f3f73;--navy2:#15294d;--soft:#eef2f9}
 *{margin:0;padding:0;box-sizing:border-box}
@@ -143,6 +144,7 @@ tbody tr.preset td.itm input{font-weight:600}
       <option value="KRW">₩ 원 (KRW)</option>
       <option value="USD">$ 달러 (USD)</option>
     </select>
+    <button class="btn btn-g" id="saveBtn">💾 견적 저장</button>
     <button class="btn btn-pdf" id="pdfBtn" data-i18n="savePdf">PDF 저장 / 인쇄</button>
   </div>
 </div>
@@ -356,7 +358,7 @@ function applyLang(){
 }
 
 // init
-function init(){
+async function init(){
   document.getElementById('m_org').value   = params.get('org')||'';
   document.getElementById('m_name').value  = params.get('name')||'';
   document.getElementById('m_phone').value = params.get('phone')||'';
@@ -369,7 +371,10 @@ function init(){
   addRow(T[lang].item2,'month');
   for(let i=0;i<3;i++) addRow('','once');
   applyLang(); calc();
-  if(params.get('auto')) setTimeout(()=>window.print(),700);   // 관리자에서 다운로드 시 자동 인쇄/PDF
+  // 저장된 견적 내용이 있으면 그대로 복원 (동일 재현)
+  const rid=params.get('rid');
+  if(rid&&sbq){ try{ const {data}=await sbq.from('requests').select('quote_data').eq('id',Number(rid)).maybeSingle(); if(data&&data.quote_data&&data.quote_data.rows) restoreQuote(data.quote_data); }catch(e){} }
+  if(params.get('auto')) setTimeout(()=>window.print(),800);   // 관리자에서 다운로드 시 자동 인쇄/PDF
   // meta inputs trigger nothing in calc but keep
   document.querySelectorAll('.line input').forEach(inp=>inp.addEventListener('input',()=>{}));
 }
@@ -379,10 +384,41 @@ document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('clic
 }));
 document.getElementById('cur').addEventListener('change',e=>{cur=e.target.value;calc();});
 (()=>{const p=document.getElementById('m_pay'); if(p) p.addEventListener('input',()=>autoGrow(p));})();
-document.getElementById('pdfBtn').addEventListener('click',()=>window.print());
+document.getElementById('pdfBtn').addEventListener('click',async()=>{await saveQuote(true);window.print();});
+(()=>{const b=document.getElementById('saveBtn'); if(b){ if(!params.get('rid'))b.style.display='none'; else b.addEventListener('click',()=>saveQuote(false)); }})();
 
 const EDGE_URL = "https://lnrugwschlcesaaertgc.supabase.co/functions/v1/create-checkout";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxucnVnd3NjaGxjZXNhYWVydGdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0ODczNzgsImV4cCI6MjA5NjA2MzM3OH0.JTpEUF2TO2NcuS1ak04hqd2IYfZ2bYn40L3EaLIwVGw";
+// 견적 내용 저장/복원 (admin과 같은 세션 공유)
+const SUP_URL="https://lnrugwschlcesaaertgc.supabase.co";
+const sbq = (window.supabase&&window.supabase.createClient)?window.supabase.createClient(SUP_URL,SUPABASE_ANON,{db:{schema:'aim'}}):null;
+function serializeQuote(){
+  const rows=[...document.querySelectorAll('#rows tr')].map(tr=>({
+    item:(tr.querySelector('.r-item')||{}).value||'',
+    freq:(tr.querySelector('.r-freq')||{}).value||'once',
+    orig:(tr.querySelector('.r-orig')||{}).value||'',
+    disc:(tr.querySelector('.r-disc')||{}).value||''
+  })).filter(r=>r.item.trim()||r.orig||r.disc);
+  const g=id=>{const el=document.getElementById(id);return el?el.value:'';};
+  return {org:g('m_org'),name:g('m_name'),phone:g('m_phone'),email:g('m_email'),qno:g('m_qno'),date:g('m_date'),valid:g('m_valid'),proj:g('m_proj'),pay:g('m_pay'),cur,lang,rows};
+}
+function restoreQuote(d){
+  if(!d||!d.rows)return;
+  if(d.lang){lang=d.lang;}
+  if(d.cur){cur=d.cur;const cs=document.getElementById('cur');if(cs)cs.value=cur;}
+  const set=(id,v)=>{const el=document.getElementById(id);if(el&&v!=null)el.value=v;};
+  set('m_org',d.org);set('m_name',d.name);set('m_phone',d.phone);set('m_email',d.email);
+  set('m_qno',d.qno);set('m_date',d.date);set('m_valid',d.valid);set('m_proj',d.proj);set('m_pay',d.pay);
+  const tb=document.getElementById('rows'); tb.innerHTML='';
+  d.rows.forEach(r=>{ addRow(r.item,r.freq); const tr=tb.lastElementChild; const o=tr.querySelector('.r-orig'),di=tr.querySelector('.r-disc'); if(o)o.value=r.orig||''; if(di)di.value=r.disc||''; tr.classList.toggle('empty-item', !(r.item||'').trim()); });
+  applyLang(); calc(); autoGrow(document.getElementById('m_pay'));
+}
+async function saveQuote(silent){
+  const rid=params.get('rid'); if(!rid||!sbq){ if(!silent)alert('저장할 의뢰 정보가 없어요.'); return; }
+  const {error}=await sbq.from('requests').update({quote_data:serializeQuote()}).eq('id',Number(rid));
+  if(error){ if(!silent)alert('저장 실패: '+error.message); return; }
+  if(!silent){const b=document.getElementById('saveBtn'); if(b){const t=b.textContent;b.textContent='저장됨 ✓';setTimeout(()=>b.textContent=t,1500);}}
+}
 
 function currentFinalAmount(){
   let d=0;

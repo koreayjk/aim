@@ -932,6 +932,16 @@ async function renameAssignee(oldName,newName){
     const u2=await sb.from('requests').update({checklist:cl}).eq('id',r.id);
     if(!u2.error){r.checklist=cl;}
   }
+  // 3) 교육 기록(완료자 done_by / 느낀점 notes)에 박힌 이름도 갱신
+  const tr=await sb.from('trainings').select('id,done_by,notes');
+  if(!tr.error){
+    for(const t of (tr.data||[])){
+      let ch=false;
+      const db=(Array.isArray(t.done_by)?t.done_by:[]).map(d=>{if(d&&d.name===oldName){ch=true;return Object.assign({},d,{name:newName});}return d;});
+      const nt=(Array.isArray(t.notes)?t.notes:[]).map(x=>{if(x&&x.who===oldName){ch=true;return Object.assign({},x,{who:newName});}return x;});
+      if(ch) await sb.from('trainings').update({done_by:db,notes:nt}).eq('id',t.id);
+    }
+  }
   await loadAll();
   if(n||affected.length){/* 조용히 반영 */}
 }

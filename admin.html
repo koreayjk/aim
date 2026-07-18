@@ -975,6 +975,9 @@ function renderSummary(){
 // ---- 알림 벨 ----
 function nSeen(){ try{return localStorage.getItem('tcs_notif_seen')||''}catch(e){return ''} }
 function nMark(){ try{localStorage.setItem('tcs_notif_seen', new Date().toISOString())}catch(e){} }
+function nAck(){ try{return JSON.parse(localStorage.getItem('tcs_notif_ack')||'{}')}catch(e){return {}} }
+function nAckSave(o){ try{localStorage.setItem('tcs_notif_ack', JSON.stringify(o))}catch(e){} }
+function notifKey(n){ return n.r.id+':'+n.kind; }
 function computeNotifs(){
   const seen=nSeen(); const out=[]; const done=new Set();
   const mine=r=> me && me.name && r.assignee===me.name;
@@ -996,7 +999,8 @@ function computeNotifs(){
 }
 function renderBell(){
   const c=document.getElementById('bellCount'); if(!c) return;
-  const n=computeNotifs().length;
+  const ack=nAck();
+  const n=computeNotifs().filter(x=>!ack[notifKey(x)]).length;   // 아직 확인 안 한(=변화된) 알림만 카운트
   c.textContent=n; c.style.display=n?'inline-flex':'none';
 }
 function toggleBell(){
@@ -1009,7 +1013,9 @@ function toggleBell(){
   }).join('') : '<div class="nempty">새로운 알림이 없어요 🎉</div>';
   p.style.display='block';
   p.querySelectorAll('.nitem[data-id]').forEach(x=>x.addEventListener('click',()=>{p.style.display='none';openDetail(Number(x.dataset.id));}));
-  nMark(); renderBell();
+  // 지금 보인 알림을 모두 "확인함"으로 기록 → 배지 사라짐. 새/새로 지난 알림이 생기면 다시 표시.
+  const ack={}; list.forEach(n=>ack[notifKey(n)]=1);
+  nAckSave(ack); nMark(); renderBell();
 }
 document.getElementById('bellBtn').addEventListener('click',e=>{e.stopPropagation();toggleBell();});
 document.addEventListener('click',e=>{const p=document.getElementById('bellPanel');if(p&&p.style.display==='block'&&!e.target.closest('.bellwrap'))p.style.display='none';});

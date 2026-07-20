@@ -314,6 +314,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .tnote-h{display:flex;align-items:center;gap:8px;font-size:.82rem;margin-bottom:3px}
 .tnote-r{color:#e0a90a;font-size:.82rem}
 .tnote-t{font-size:.92rem;line-height:1.5;white-space:pre-wrap}
+.tnote-react{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.treact{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:#fff;border-radius:16px;padding:2px 9px;font-size:.86rem;cursor:pointer;line-height:1.4}
+.treact:hover{background:#f4f6fa}
+.treact.on{background:#eaf1fb;border-color:var(--navy)}
+.treact span{font-size:.74rem;font-weight:800;color:var(--navy)}
 .todo-sec{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:4px 8px 8px}
 .todo-h{display:flex;align-items:center;gap:8px;font-size:.86rem;font-weight:800;color:var(--ink2);padding:11px 8px 8px}
 .todo-h span{margin-left:auto;background:#eef1f6;border-radius:20px;padding:1px 10px;font-size:.74rem;color:var(--muted)}
@@ -1442,7 +1447,10 @@ function trainDetail(t){
   const k=kindOf(t), id=k==='video'?ytId(t.url):'', done=myDone(t);
   const cnt=Array.isArray(t.done_by)?t.done_by:[], notes=Array.isArray(t.notes)?t.notes:[];
   const stars=n=>{n=n||0;return '★'.repeat(n)+'☆'.repeat(5-n);};
-  const noteHTML=notes.length?notes.slice().reverse().map(n=>`<div class="tnote"><div class="tnote-h"><b>${esc(n.who||'익명')}</b>${n.rating?`<span class="tnote-r">${stars(n.rating)}</span>`:''}<span class="dim">${(n.at||'').slice(0,10)}</span></div><div class="tnote-t">${esc(n.text||'')}</div></div>`).join(''):'<div class="dim" style="padding:8px 2px">아직 느낀점이 없어요. 첫 느낀점을 남겨보세요!</div>';
+  const EMO=['👍','❤️','👏','🔥'];
+  const meN=me&&me.name;
+  const reactBar=(n,i)=>`<div class="tnote-react">${EMO.map(e=>{const arr=(n.reactions&&n.reactions[e])||[];const on=arr.includes(meN);return `<button class="treact ${on?'on':''}" data-ni="${i}" data-emo="${e}" title="${esc(arr.join(', '))}">${e}${arr.length?`<span>${arr.length}</span>`:''}</button>`;}).join('')}</div>`;
+  const noteHTML=notes.length?notes.map((n,i)=>({n,i})).reverse().map(({n,i})=>`<div class="tnote"><div class="tnote-h"><b>${esc(n.who||'익명')}</b>${n.rating?`<span class="tnote-r">${stars(n.rating)}</span>`:''}<span class="dim">${(n.at||'').slice(0,10)}</span></div><div class="tnote-t">${esc(n.text||'')}</div>${reactBar(n,i)}</div>`).join(''):'<div class="dim" style="padding:8px 2px">아직 느낀점이 없어요. 첫 느낀점을 남겨보세요!</div>';
   const doneNames=cnt.map(d=>esc(d.name)).join(', ');
   const media = k==='video'
     ? `<div class="tvid">${id?`<iframe src="https://www.youtube-nocookie.com/embed/${id}" title="video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`:`<a href="${esc(t.url)}" target="_blank" class="dim">${esc(t.url)}</a>`}</div>`
@@ -1487,6 +1495,7 @@ function wireTrainDetail(el,t){
   const ed=el.querySelector('#trEdit'); if(ed)ed.addEventListener('click',()=>{trainAdding=!trainAdding;renderTraining();});
   const dl=el.querySelector('#trDel'); if(dl)dl.addEventListener('click',()=>delTraining(t.id));
   const na=el.querySelector('#tn_add'); if(na)na.addEventListener('click',()=>addTrainNote(t.id));
+  el.querySelectorAll('.treact').forEach(b=>b.addEventListener('click',()=>toggleNoteReaction(t.id,Number(b.dataset.ni),b.dataset.emo)));
   const st=el.querySelector('#tn_stars'); if(st)st.querySelectorAll('[data-s]').forEach(s=>s.addEventListener('click',()=>{const v=Number(s.dataset.s);st.dataset.v=v;st.querySelectorAll('[data-s]').forEach(x=>x.textContent=Number(x.dataset.s)<=v?'★':'☆');}));
   wireTrainForm(el,t);
 }
@@ -1530,6 +1539,19 @@ async function addTrainNote(id){
   notes.push({who:(me&&me.name)||'익명',text,at:new Date().toISOString(),rating});
   const {error}=await sb.from('trainings').update({notes}).eq('id',id);
   if(error){alert('저장 실패: '+error.message);return;}
+  t.notes=notes; renderTraining();
+}
+// 느낀점에 이모지 반응 토글
+async function toggleNoteReaction(id,idx,emo){
+  const t=trainings.find(x=>x.id===id); if(!t||!Array.isArray(t.notes)||!t.notes[idx])return;
+  const meN=(me&&me.name)||'익명';
+  const notes=t.notes.map(x=>({...x}));
+  const n=notes[idx]; const r=Object.assign({},n.reactions||{}); let arr=[...(r[emo]||[])];
+  if(arr.includes(meN)) arr=arr.filter(x=>x!==meN); else arr.push(meN);
+  if(arr.length) r[emo]=arr; else delete r[emo];
+  n.reactions=r;
+  const {error}=await sb.from('trainings').update({notes}).eq('id',id);
+  if(error){alert('반응 저장 실패: '+error.message);return;}
   t.notes=notes; renderTraining();
 }
 function renderBoard(){

@@ -277,6 +277,27 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .tthumb-book{background:linear-gradient(135deg,#243b5e,#3a2f5e)}.tthumb-book .tthumb-x{color:#e8ddc8}
 .tthumb-article{background:linear-gradient(135deg,#1e3a3a,#25405a)}.tthumb-article .tthumb-x{color:#bfe0d8}
 .tkind{margin-left:auto;font-size:.8rem}
+.tform-lab{font-size:.74rem;font-weight:700;color:var(--navy)}
+.tdue-badge{font-size:.66rem;font-weight:800;color:#b9760a;background:#fff2dd;padding:2px 7px;border-radius:7px}
+.tdue-badge.over{color:#c0392b;background:#fdeeea}.tdue-badge.soon{color:#b9760a;background:#fff2dd}
+/* 수강 현황 매트릭스 */
+.tst-table{border-collapse:collapse;font-size:.85rem;min-width:100%}
+.tst-table th{padding:8px 10px;border-bottom:2px solid var(--line);font-size:.74rem;color:var(--muted);text-align:center;vertical-align:bottom}
+.tst-table th.tst-namehead{text-align:left}
+.tst-col{min-width:96px;max-width:150px}
+.tst-th{font-weight:800;color:var(--navy);cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem}
+.tst-th:hover{text-decoration:underline}
+.tst-colsub{font-weight:400;font-size:.68rem;margin-top:2px}
+.tst-table td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center}
+.tst-name{text-align:left;font-weight:700;white-space:nowrap}
+.tst-cell.ok{color:#1e8a4c;font-weight:800}
+.tst-cell.no{color:#c9d0da}
+.tst-cell.over{color:#c0392b;font-weight:800;font-size:.72rem;background:#fdeeea}
+.tst-sum{font-weight:800}.tst-sum.warn{color:#c0392b}.tst-sum.good{color:#1e8a4c}
+.tst-all{min-width:130px}
+.tst-all .tst-allbar{display:inline-block;width:64px;height:6px;background:#eceff3;border-radius:6px;overflow:hidden;vertical-align:middle;margin-right:7px}
+.tst-all .tst-allbar>i{display:block;height:100%;background:var(--navy)}
+.tst-table tbody tr:hover td{background:#fafbf8}
 .tbook{display:flex;gap:16px;align-items:center;background:linear-gradient(135deg,#f3f0fb,#eef3f7);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
 .tbook-ic{font-size:2.6rem;flex:0 0 auto}
 .tbook-t{font-weight:800;font-size:1.05rem}
@@ -570,7 +591,7 @@ function effStage(c){ if(c.d) return '끝'; const s=c.s||''; return TASK_STAGES.
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
 let rows=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false, boardType='전체';
 let logDate=null, logMonth=null;   // 일별 활동(캘린더) 선택 상태
-let trainings=[], trainCat='전체', trainSel=null, trainAdding=false;   // 직원 교육
+let trainings=[], trainCat='전체', trainSel=null, trainAdding=false, trainMode='list', trainStaff=[];   // 직원 교육
 const DONE_CAP=5;
 function scopedRows(){ return (scope==='mine' && me && me.name) ? rows.filter(r=>r.assignee===me.name) : rows; }
 
@@ -1390,12 +1411,36 @@ async function loadTrainings(){
   if(error){el.innerHTML='<p class="dim" style="padding:20px">교육 목록 오류: '+esc(error.message)+'<br><span style="font-size:.8rem">(trainings 테이블이 없으면 18_trainings.sql 을 실행하세요)</span></p>';return;}
   trainings=data||[];
   if(trainSel && !trainings.find(t=>t.id===trainSel)) trainSel=null;
+  if(isOwner()){ const st=await sb.from('staff').select('name').eq('status','approved').order('name'); trainStaff=st.error?[]:(st.data||[]).map(x=>x.name).filter(Boolean); }
   renderTraining();
 }
+function trainModeToggle(){ return isOwner()?`<div class="tabs"><button class="${trainMode!=='status'?'on':''}" data-tmode="list">자료 목록</button><button class="${trainMode==='status'?'on':''}" data-tmode="status">수강 현황</button></div>`:''; }
 function renderTraining(){
   const el=document.getElementById('trainView'); if(!el)return;
   if(trainSel){const t=trainings.find(x=>x.id===trainSel); if(t){el.innerHTML=trainDetail(t);wireTrainDetail(el,t);return;} trainSel=null;}
+  if(isOwner()&&trainMode==='status'){ el.innerHTML=trainStatus(); wireTrainStatus(el); return; }
   el.innerHTML=trainList(); wireTrainList(el);
+}
+function trainStatus(){
+  const crew=(trainStaff.length?trainStaff:assignees).slice();
+  const req=trainings.filter(t=>t.required);
+  const total=trainings.length, today=todayStr();
+  const doneOf=(name,t)=>Array.isArray(t.done_by)&&t.done_by.some(d=>d&&d.name===name);
+  const reqHead=req.map(t=>{const cnt=(Array.isArray(t.done_by)?t.done_by.length:0);const dd=t.due_date?ddayInfo(t.due_date):null;return `<th class="tst-col"><div class="tst-th" data-topen="${t.id}" title="${esc(t.title||'')}">${esc(t.title||'')}</div><div class="tst-colsub">${cnt}/${crew.length}${t.due_date?` · ~${String(t.due_date).slice(5)}${dd?` <span class="dday ${dd.tone}">${dd.label}</span>`:''}`:''}</div></th>`;}).join('');
+  const body=crew.length?crew.map(name=>{
+    const reqDone=req.filter(t=>doneOf(name,t)).length;
+    const allDone=trainings.filter(t=>doneOf(name,t)).length;
+    const cells=req.map(t=>{const done=doneOf(name,t);const over=!done&&t.due_date&&String(t.due_date)<today;return `<td class="tst-cell ${done?'ok':over?'over':'no'}">${done?'✓':over?'지남':'·'}</td>`;}).join('');
+    const pct=total?Math.round(allDone/total*100):0;
+    return `<tr><td class="tst-name">${esc(name)}</td>${cells}<td class="tst-sum ${reqDone<req.length?'warn':'good'}">${reqDone}/${req.length}</td><td class="tst-all"><div class="tst-allbar"><i style="width:${pct}%"></i></div><span>${allDone}/${total}</span></td></tr>`;
+  }).join(''):'<tr><td class="dim" style="padding:12px">승인된 직원이 없어요.</td></tr>';
+  return `<div class="staff-head"><div><h2 style="margin:0">직원 교육 · 성장</h2><div class="dim" style="font-size:.84rem">수강 현황 · 누가 필수 자료를 봤는지 한눈에</div></div>${trainModeToggle()}</div>
+    <div class="qwrap"><table class="tst-table"><thead><tr><th class="tst-namehead">직원</th>${reqHead||'<th class="dim" style="font-weight:400">필수 자료가 없어요</th>'}<th>필수</th><th>전체 수강</th></tr></thead><tbody>${body}</tbody></table></div>
+    <p class="dim" style="margin-top:12px;font-size:.8rem">✓ 완료 · <span style="color:var(--err)">지남</span> = 마감 지났는데 미완료 · 열 제목을 누르면 해당 자료로 이동</p>`;
+}
+function wireTrainStatus(el){
+  el.querySelectorAll('[data-tmode]').forEach(b=>b.addEventListener('click',()=>{trainMode=b.dataset.tmode;renderTraining();}));
+  el.querySelectorAll('[data-topen]').forEach(x=>x.addEventListener('click',()=>{trainSel=Number(x.dataset.topen);trainMode='list';renderTraining();}));
 }
 function trainList(){
   const cats=['전체',...TRAIN_CATS];
@@ -1418,13 +1463,13 @@ function trainList(){
     return `<div class="tcard" data-tid="${t.id}">
       ${thumb}
       <div class="tcard-b">
-        <div class="tcard-top"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span>${t.required?'<span class="treq">필수</span>':''}<span class="tkind">${kindIcon(k)}</span></div>
+        <div class="tcard-top"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span>${t.required?'<span class="treq">필수</span>':''}${t.required&&t.due_date?(()=>{const dd=ddayInfo(t.due_date);return `<span class="tdue-badge ${dd?dd.tone:''}">~${String(t.due_date).slice(5)}</span>`;})():''}<span class="tkind">${kindIcon(k)}</span></div>
         <div class="tcard-t">${esc(t.title||'')}</div>
         ${k==='book'&&t.author?`<div class="dim" style="font-size:.76rem;margin:-2px 0 5px">✍ ${esc(t.author)}</div>`:''}
         <div class="tcard-m dim">👥 ${cnt}명 ${doneLabel(t)} · 💬 ${nc}</div>
       </div>
     </div>`;}).join(''):'<div class="dim" style="padding:24px;text-align:center;grid-column:1/-1">이 분야의 자료가 아직 없어요.</div>';
-  return `<div class="staff-head"><div><h2 style="margin:0">직원 교육 · 성장</h2><div class="dim" style="font-size:.84rem">영상·도서로 배우고 느낀점을 남겨요 · 실무 + 성장</div></div>${addBtn}</div>
+  return `<div class="staff-head"><div><h2 style="margin:0">직원 교육 · 성장</h2><div class="dim" style="font-size:.84rem">영상·도서로 배우고 느낀점을 남겨요 · 실무 + 성장</div></div><div style="display:flex;gap:8px;align-items:center">${trainModeToggle()}${addBtn}</div></div>
     ${progHTML}${chips}${form}<div class="tgrid">${cards}</div>`;
 }
 function trainForm(t){t=t||{};
@@ -1435,6 +1480,8 @@ function trainForm(t){t=t||{};
       <select id="tf_cat">${TRAIN_CATS.map(c=>`<option ${((t.category||'공통')===c)?'selected':''}>${c}</option>`).join('')}</select>
       <label class="tform-chk"><input type="checkbox" id="tf_req" ${t.required?'checked':''}> 필수</label>
     </div>
+    <label class="tform-lab">필수 마감일 (선택)</label>
+    <input type="date" id="tf_due" value="${esc(t.due_date||'')}">
     <input id="tf_title" placeholder="제목 (책 제목 / 영상 제목)" value="${esc(t.title||'')}">
     <input id="tf_author" placeholder="저자 (도서일 때)" value="${esc(t.author||'')}">
     <input id="tf_url" placeholder="링크 — 영상: 유튜브 / 도서: 소개·구매(선택) / 아티클: URL" value="${esc(t.url||'')}">
@@ -1459,7 +1506,7 @@ function trainDetail(t){
   const notePh = k==='book'?'이 책에서 느낀 점이나 배운 점을 적어보세요 (독후감)':'이 자료에서 느낀 점이나 배운 점을 적어보세요';
   return `<div class="tdet">
     <button class="btn-s tback" id="trBack">‹ 목록</button>
-    <div class="tdet-head"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span><span class="tkind">${kindIcon(k)}</span>${t.required?'<span class="treq">필수</span>':''}<h2 style="margin:6px 0 0">${esc(t.title||'')}</h2></div>
+    <div class="tdet-head"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span><span class="tkind">${kindIcon(k)}</span>${t.required?'<span class="treq">필수</span>':''}${t.required&&t.due_date?(()=>{const dd=ddayInfo(t.due_date);return `<span class="tdue-badge ${dd?dd.tone:''}">마감 ${String(t.due_date).slice(5)}${dd?` · ${dd.label}`:''}</span>`;})():''}<h2 style="margin:6px 0 0">${esc(t.title||'')}</h2></div>
     ${media}
     ${ceo}
     ${t.description?`<p class="tdesc">${esc(t.description)}</p>`:''}
@@ -1487,6 +1534,7 @@ function wireTrainList(el){
   el.querySelectorAll('[data-tcat]').forEach(b=>b.addEventListener('click',()=>{trainCat=b.dataset.tcat;trainAdding=false;renderTraining();}));
   el.querySelectorAll('.tcard[data-tid]').forEach(c=>c.addEventListener('click',()=>{trainSel=Number(c.dataset.tid);renderTraining();}));
   const add=el.querySelector('#trainAdd'); if(add)add.addEventListener('click',()=>{trainAdding=true;renderTraining();});
+  el.querySelectorAll('[data-tmode]').forEach(b=>b.addEventListener('click',()=>{trainMode=b.dataset.tmode;trainAdding=false;renderTraining();}));
   wireTrainForm(el,null);
 }
 function wireTrainDetail(el,t){
@@ -1508,11 +1556,12 @@ async function saveTraining(id){
   const ceo_msg=(document.getElementById('tf_ceo').value||'').trim();
   const required=document.getElementById('tf_req').checked;
   const description=(document.getElementById('tf_desc').value||'').trim();
+  const due_date=document.getElementById('tf_due').value||null;
   if(!title){alert('제목을 입력하세요.');return;}
   if(kind!=='book'&&!url){alert('링크(영상/아티클 URL)를 입력하세요.');return;}
-  const patch={title,url,category,kind,author,ceo_msg,required,description};
+  const patch={title,url,category,kind,author,ceo_msg,required,description,due_date};
   const res=id?await sb.from('trainings').update(patch).eq('id',id):await sb.from('trainings').insert(patch);
-  if(res.error){alert('저장 실패: '+res.error.message+'\\n(kind/author/ceo_msg 컬럼이 없으면 23_training_growth.sql 을 실행하세요)');return;}
+  if(res.error){alert('저장 실패: '+res.error.message+'\\n(kind/author/ceo_msg 컬럼이 없으면 23_training_growth.sql, due_date 는 24_training_due.sql 을 실행하세요)');return;}
   trainAdding=false; loadTrainings();
 }
 async function delTraining(id){

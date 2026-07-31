@@ -445,6 +445,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .cmtext{font-size:.9rem;white-space:pre-wrap;line-height:1.4}
 .cmitem.sys .cmtext{color:var(--muted);font-size:.82rem;font-style:italic}
 @media(max-width:560px){.trow{flex-wrap:wrap}.trow .tt{flex:1 0 100%}.trow .tstage,.trow .ta,.trow .tdue{flex:1}}
+.sitelink{margin-left:8px;font-weight:700;font-size:.78rem;color:var(--navy);text-decoration:none;background:var(--soft);padding:2px 9px;border-radius:8px}
+.sitelink:hover{background:#dde7f5;text-decoration:underline}
 .detail-data{margin-top:8px;border-top:1px solid var(--line);padding-top:16px}
 .dgrp{margin-bottom:16px}
 .dgrp .gk{font-weight:700;font-size:.7rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--navy);margin-bottom:8px}
@@ -1699,7 +1701,7 @@ function openDetail(id){
           </div>
         </div>
       </div>
-      <div class="fld" style="margin-bottom:16px"><label>제작 사이트 주소</label><input id="f_site" value="${esc(r.site_url||'')}" placeholder="https://koreayjk.github.io/aim/business/..."></div>
+      <div class="fld" style="margin-bottom:16px"><label>제작 사이트 주소 ${r.site_url?`<a class="sitelink" href="${esc(/^https?:\/\//i.test(r.site_url)?r.site_url:'https://'+r.site_url)}" target="_blank" rel="noopener">↗ 사이트 열기</a>`:''}</label><input id="f_site" value="${esc(r.site_url||'')}" placeholder="https://koreayjk.github.io/aim/business/..."></div>
       <div class="fld" style="margin-bottom:6px"><label>진행 메모</label><textarea id="f_notes" placeholder="작업 진행 상황, 통화 내용 등">${esc(r.notes||'')}</textarea></div>
       <span class="saved" id="savedMsg">✓ 저장됨</span>
       <div class="checklist" style="margin-top:18px">
@@ -1764,7 +1766,7 @@ function bindDetail(r){
   document.getElementById('f_amount').addEventListener('blur',e=>{const v=e.target.value.trim();saveField(r.id,{amount:v===''?null:Number(v)});});
   document.getElementById('f_paid').addEventListener('change',e=>{const patch={paid:e.target.checked};if(e.target.checked&&!document.getElementById('f_paid_at').value)patch.paid_at=todayStr();saveField(r.id,patch);openDetail(r.id);});
   document.getElementById('f_paid_at').addEventListener('change',e=>saveField(r.id,{paid_at:e.target.value||null}));
-  document.getElementById('f_site').addEventListener('blur',e=>saveField(r.id,{site_url:e.target.value.trim()}));
+  document.getElementById('f_site').addEventListener('blur',e=>{const v=e.target.value.trim();const changed=v!==(r.site_url||'');saveField(r.id,{site_url:v});if(changed){r.site_url=v;openDetail(r.id);}});
   document.getElementById('f_notes').addEventListener('blur',e=>saveField(r.id,{notes:e.target.value}));
   // imflow 단계형 작업 보드
   sheet.querySelectorAll('.tasklist .tstage').forEach(s=>s.addEventListener('change',()=>{const cl=r.checklist.map(x=>({...x}));const i=Number(s.dataset.i);cl[i].s=s.value;delete cl[i].d;if(s.value==='끝'){if(!cl[i].doneAt)cl[i].doneAt=todayStr();}else{delete cl[i].doneAt;}saveChecklist(r.id,cl);}));

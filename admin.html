@@ -1361,30 +1361,38 @@ function wireDayLog(el,name,rerender){
   el.querySelectorAll('.daylog .day-row[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
 }
 function renderMyTodos(el){
-  const meName=me&&me.name; const items=[];
-  rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach((t,ti)=>{if((t.a||'')===meName&&effStage(t)!=='끝')items.push({r,ti,label:t.t,stage:effStage(t),due:t.due||'',kind:'task'});});});
-  rows.forEach(r=>{if(r.assignee===meName&&(r.status||'')!=='완료')items.push({r,label:r.org_name||'(이름없음)',stage:r.status||'접수·견적',due:dueOf(r),kind:'proj'});});
+  const meName=me&&me.name;
   const today=todayStr();
   const bucket=due=>{if(!due)return 3;if(due<=today)return 0;const dd=ddayInfo(due);return (dd&&dd.tone==='soon')?1:2;};
-  items.forEach(it=>it.b=bucket(it.due));
-  items.sort((a,b)=>a.b!==b.b?a.b-b.b:(!a.due?1:!b.due?-1:(a.due<b.due?-1:1)));
+  const byUrgency=(a,b)=>a.b!==b.b?a.b-b.b:(!a.due?1:!b.due?-1:(a.due<b.due?-1:1));
+  // 1) 내 할 일 (체크리스트 작업)
+  const tasks=[];
+  rows.forEach(r=>{(Array.isArray(r.checklist)?r.checklist:[]).forEach((t,ti)=>{if((t.a||'')===meName&&effStage(t)!=='끝')tasks.push({r,ti,label:t.t,stage:effStage(t),due:t.due||''});});});
+  tasks.forEach(it=>it.b=bucket(it.due)); tasks.sort(byUrgency);
   const secs=[{k:0,t:'🔴 지남 · 오늘 마감',c:'over'},{k:1,t:'🟠 임박 (3일 이내)',c:'soon'},{k:2,t:'📌 예정',c:''},{k:3,t:'🗓 기한 없음',c:'muted'}];
-  let body='';
-  secs.forEach(sec=>{const list=items.filter(it=>it.b===sec.k);if(!list.length)return;
-    body+=`<div class="todo-sec"><div class="todo-h ${sec.c}">${sec.t}<span>${list.length}</span></div>`+
-      list.map(it=>{const dd=it.due?ddayInfo(it.due):null;const ctrl=it.kind==='task'
-          ?`<select class="mystage" data-id="${it.r.id}" data-ti="${it.ti}" style="border-left:3px solid ${STAGE_COLOR[it.stage]||'#ccc'}">${TASK_STAGES.map(s=>`<option ${it.stage===s?'selected':''}>${s}</option>`).join('')}</select>`
-          :todoBadge(it.kind,it.stage);
-        return `<div class="todo-item" data-id="${it.r.id}">
-        ${ctrl}
-        <span class="ti-t">${esc(it.label)} <span class="dim" style="font-weight:400;font-size:.78rem">· ${esc(it.r.org_name)||''}${it.kind==='proj'?' · 프로젝트':''}</span></span>
+  let taskBody='';
+  secs.forEach(sec=>{const list=tasks.filter(it=>it.b===sec.k);if(!list.length)return;
+    taskBody+=`<div class="todo-sec"><div class="todo-h ${sec.c}">${sec.t}<span>${list.length}</span></div>`+
+      list.map(it=>{const dd=it.due?ddayInfo(it.due):null;return `<div class="todo-item" data-id="${it.r.id}">
+        <select class="mystage" data-id="${it.r.id}" data-ti="${it.ti}" style="border-left:3px solid ${STAGE_COLOR[it.stage]||'#ccc'}">${TASK_STAGES.map(s=>`<option ${it.stage===s?'selected':''}>${s}</option>`).join('')}</select>
+        <span class="ti-t">${esc(it.label)} <span class="dim" style="font-weight:400;font-size:.78rem">· ${esc(it.r.org_name)||''}</span></span>
         ${dd?`<span class="dday ${dd.tone}">${dd.label}${it.due?' · '+it.due:''}</span>`:'<span class="dim" style="font-size:.76rem">기한 없음</span>'}
       </div>`;}).join('')+'</div>';
   });
-  if(!items.length) body='<div class="dim" style="padding:24px;text-align:center">나에게 배정된 진행중 업무가 없어요 🎉</div>';
+  if(!tasks.length) taskBody='<div class="dim" style="padding:20px;text-align:center">나에게 배정된 할 일이 없어요 🎉</div>';
+  // 2) 담당 프로젝트
+  const projs=[];
+  rows.forEach(r=>{if(r.assignee===meName&&(r.status||'')!=='완료')projs.push({r,stage:r.status||'접수·견적',due:dueOf(r)});});
+  projs.forEach(it=>it.b=bucket(it.due)); projs.sort(byUrgency);
+  const projBody=projs.length?('<div class="todo-sec">'+projs.map(it=>{const dd=it.due?ddayInfo(it.due):null;return `<div class="todo-item" data-id="${it.r.id}">
+      ${todoBadge('proj',it.stage)}
+      <span class="ti-t">${esc(it.r.org_name)||'(이름없음)'} <span class="dim" style="font-weight:400;font-size:.78rem">· ${esc(it.r.request_type||'')}</span></span>
+      ${dd?`<span class="dday ${dd.tone}">${dd.label}${it.due?' · '+it.due:''}</span>`:'<span class="dim" style="font-size:.76rem">기한 없음</span>'}
+    </div>`;}).join('')+'</div>'):'<div class="dim" style="padding:20px;text-align:center">담당 프로젝트가 없어요.</div>';
   el.innerHTML=`<div class="todo-top"><b>${esc(meName||'내')} 님의 작업</b></div>`
     +dayLogBlock(meName)
-    +`<div class="todo" style="margin-top:20px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>급한 할 일</b><span class="dim"> · 마감 급한 순</span></div>${body}</div>`;
+    +`<div class="todo" style="margin-top:20px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>✅ 급한 할 일</b><span class="dim"> · 내 세부 작업 · 마감 급한 순</span></div>${taskBody}</div>`
+    +`<div class="todo" style="margin-top:22px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>📁 담당 프로젝트</b><span class="dim"> · 마감 급한 순</span></div>${projBody}</div>`;
   wireDayLog(el,meName,()=>renderMyTodos(el));
   el.querySelectorAll('.todo-item[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
   el.querySelectorAll('.mystage').forEach(sel=>{

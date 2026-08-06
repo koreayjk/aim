@@ -599,7 +599,13 @@ function scopedRows(){ return (scope==='mine' && me && me.name) ? rows.filter(r=
 
 const gate=document.getElementById('gate'), app=document.getElementById('app'), gerr=document.getElementById('gerr');
 let me=null, authMode='login';
-function openApp(){gate.style.display='none';app.classList.add('show');if(!nSeen())nMark();loadAll();}
+function openApp(){gate.style.display='none';app.classList.add('show');if(!nSeen())nMark();loadAll();routeDeepLink();}
+function routeDeepLink(){
+  try{const p=new URLSearchParams(location.search);
+    const tid=p.get('train');
+    if(tid){ trainSel=Number(tid); setView('train'); }
+  }catch(e){}
+}
 function closeApp(){app.classList.remove('show');gate.style.display='flex';showAuth();}
 function showAuth(){document.getElementById('authSection').style.display='';document.getElementById('pendSection').style.display='none';}
 function showPending(msg){document.getElementById('authSection').style.display='none';document.getElementById('pendSection').style.display='';if(msg)document.getElementById('pendMsg').innerHTML=msg;}
@@ -1507,7 +1513,7 @@ function trainDetail(t){
   const ceo = t.ceo_msg?`<div class="tceo"><div class="tceo-h">💬 대표 한마디</div><div class="tceo-t">${esc(t.ceo_msg)}</div></div>`:'';
   const notePh = k==='book'?'이 책에서 느낀 점이나 배운 점을 적어보세요 (독후감)':'이 자료에서 느낀 점이나 배운 점을 적어보세요';
   return `<div class="tdet">
-    <button class="btn-s tback" id="trBack">‹ 목록</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><button class="btn-s tback" id="trBack">‹ 목록</button><button class="btn-s" id="trShare">🔗 공유 링크 복사</button></div>
     <div class="tdet-head"><span class="tcat" style="background:${TRAIN_COLOR[t.category]||'#888'}">${esc(t.category||'공통')}</span><span class="tkind">${kindIcon(k)}</span>${t.required?'<span class="treq">필수</span>':''}${t.required&&t.due_date?(()=>{const dd=ddayInfo(t.due_date);return `<span class="tdue-badge ${dd?dd.tone:''}">마감 ${String(t.due_date).slice(5)}${dd?` · ${dd.label}`:''}</span>`;})():''}<h2 style="margin:6px 0 0">${esc(t.title||'')}</h2></div>
     ${media}
     ${ceo}
@@ -1541,6 +1547,7 @@ function wireTrainList(el){
 }
 function wireTrainDetail(el,t){
   const back=el.querySelector('#trBack'); if(back)back.addEventListener('click',()=>{trainSel=null;trainAdding=false;renderTraining();});
+  const sh=el.querySelector('#trShare'); if(sh)sh.addEventListener('click',()=>{const url=location.origin+location.pathname+'?train='+t.id;const done=()=>{const o=sh.textContent;sh.textContent='복사됨 ✓';setTimeout(()=>sh.textContent=o,1500);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(done,()=>prompt('링크 복사:',url));}else prompt('링크 복사:',url);});
   const dn=el.querySelector('#trDone'); if(dn)dn.addEventListener('click',()=>toggleTrainDone(t.id));
   const ed=el.querySelector('#trEdit'); if(ed)ed.addEventListener('click',()=>{trainAdding=!trainAdding;renderTraining();});
   const dl=el.querySelector('#trDel'); if(dl)dl.addEventListener('click',()=>delTraining(t.id));

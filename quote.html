@@ -462,6 +462,12 @@ function itemsByFreq(freq){
     if(dv<=0) return;
     out.push({name:itemName, amount:dv});
   });
+  // 카드 결제(+3%): 일시불 결제 링크에 수수료 라인을 함께 청구
+  if(freq==='once' && cardFee && out.length){
+    const sub=out.reduce((s,x)=>s+x.amount,0);
+    const fee=Math.round(sub*0.03);
+    if(fee>0) out.push({name:(lang==='en'?'Credit card fee (3%)':'신용카드 수수료 (3%)'), amount:fee});
+  }
   return out;
 }
 

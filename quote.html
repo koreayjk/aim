@@ -356,7 +356,13 @@ function calc(){
     o+=ov; d+=dv;
   });
   let fee=0;
-  if(cardFee && d>0){ fee=Math.round(d*0.03); document.getElementById('rows').insertAdjacentHTML('beforeend', feeRowHTML(fee)); reindex(); }
+  if(cardFee && d>0){
+    fee=Math.round(d*0.03);
+    const firstEmpty=document.querySelector('#rows tr.empty-item');   // 빈 항목 줄 바로 앞(=실제 항목들 바로 다음)에 넣기
+    if(firstEmpty) firstEmpty.insertAdjacentHTML('beforebegin', feeRowHTML(fee));
+    else document.getElementById('rows').insertAdjacentHTML('beforeend', feeRowHTML(fee));
+    reindex();
+  }
   document.getElementById('t_orig').textContent=fmt(o+fee);
   document.getElementById('t_disc').textContent='- '+fmt(Math.max(0,o-d));
   document.getElementById('t_final').textContent=fmt(d+fee);

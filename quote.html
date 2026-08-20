@@ -316,6 +316,20 @@ function applyBrand(){
 
 function fmt(n){ const c=CUR[cur]; const v=(n||0).toLocaleString('en-US',{minimumFractionDigits:c.dec,maximumFractionDigits:c.dec}); return c.s+v; }
 function parseNum(s){ return parseFloat(String(s).replace(/[^0-9.]/g,''))||0; }
+// 금액 입력칸에 천단위 콤마 자동 삽입 (커서 위치 유지)
+function commaFormat(el){
+  const raw=el.value, sel=el.selectionStart||0;
+  const clean=raw.replace(/[^0-9.]/g,'');
+  const parts=clean.split('.');
+  const intp=parts[0].replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  const withCommas=intp+(parts.length>1?'.'+parts.slice(1).join(''):'');
+  if(withCommas===raw)return;
+  const digitsBefore=raw.slice(0,sel).replace(/[^0-9.]/g,'').length;
+  el.value=withCommas;
+  let pos=0,count=0;
+  while(pos<withCommas.length && count<digitsBefore){ if(/[0-9.]/.test(withCommas[pos]))count++; pos++; }
+  try{el.setSelectionRange(pos,pos);}catch(e){}
+}
 
 // rows
 const PRESETS=[{key:'item1',preset:true},{key:'item2',preset:true}];
@@ -337,6 +351,7 @@ function addRow(itemVal,freq,ph){
   const tr=tb.lastElementChild;
   const itemInp=tr.querySelector('.r-item');
   const syncEmpty=()=>{tr.classList.toggle('empty-item', !itemInp.value.trim());};
+  tr.querySelectorAll('.r-orig,.r-disc').forEach(inp=>inp.addEventListener('input',()=>commaFormat(inp)));  // 콤마 먼저, 그 다음 calc
   tr.querySelectorAll('input,select').forEach(inp=>{inp.addEventListener('input',calc);inp.addEventListener('change',calc);});
   itemInp.addEventListener('input',syncEmpty);
   syncEmpty();
@@ -454,7 +469,7 @@ function restoreQuote(d){
   set('m_qno',d.qno);set('m_date',d.date);set('m_valid',d.valid);set('m_proj',d.proj);set('m_pay',d.pay);
   cardFee=!!d.card; const cb=document.getElementById('cardFee'); if(cb)cb.checked=cardFee;
   const tb=document.getElementById('rows'); tb.innerHTML='';
-  d.rows.forEach(r=>{ addRow(r.item,r.freq); const tr=tb.lastElementChild; const o=tr.querySelector('.r-orig'),di=tr.querySelector('.r-disc'); if(o)o.value=r.orig||''; if(di)di.value=r.disc||''; tr.classList.toggle('empty-item', !(r.item||'').trim()); });
+  d.rows.forEach(r=>{ addRow(r.item,r.freq); const tr=tb.lastElementChild; const o=tr.querySelector('.r-orig'),di=tr.querySelector('.r-disc'); if(o){o.value=r.orig||'';commaFormat(o);} if(di){di.value=r.disc||'';commaFormat(di);} tr.classList.toggle('empty-item', !(r.item||'').trim()); });
   applyLang(); calc(); autoGrow(document.getElementById('m_pay'));
 }
 async function saveQuote(silent){

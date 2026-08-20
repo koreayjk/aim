@@ -431,7 +431,7 @@ async function init(){
   // 저장된 견적 내용이 있으면 그대로 복원 (동일 재현)
   const rid=params.get('rid');
   if(rid&&sbq){ try{ const {data}=await sbq.from('requests').select('quote_data').eq('id',Number(rid)).maybeSingle(); if(data&&data.quote_data&&data.quote_data.rows) restoreQuote(data.quote_data); }catch(e){} }
-  if(params.get('auto')) setTimeout(()=>window.print(),800);   // 관리자에서 다운로드 시 자동 인쇄/PDF
+  if(params.get('auto')) setTimeout(()=>printQuote(),800);   // 관리자에서 다운로드 시 자동 인쇄/PDF
   // meta inputs trigger nothing in calc but keep
   document.querySelectorAll('.line input').forEach(inp=>inp.addEventListener('input',()=>{}));
 }
@@ -442,7 +442,18 @@ document.querySelectorAll('#langSeg button').forEach(b=>b.addEventListener('clic
 document.getElementById('cur').addEventListener('change',e=>{cur=e.target.value; lang=(cur==='USD')?'en':'ko'; applyLang(); calc();});
 document.getElementById('cardFee').addEventListener('change',e=>{cardFee=e.target.checked; calc();});
 (()=>{const p=document.getElementById('m_pay'); if(p) p.addEventListener('input',()=>autoGrow(p));})();
-document.getElementById('pdfBtn').addEventListener('click',async()=>{await saveQuote(true);window.print();});
+// PDF 저장 시 파일명이 견적번호가 되도록: 인쇄 직전에 문서 제목을 견적번호로 바꿈
+function printQuote(){
+  const qno=(document.getElementById('m_qno').value||'').trim();
+  const org=(document.getElementById('m_org').value||'').trim();
+  const prev=document.title;
+  let name = qno ? (lang==='en'?('Quote_'+qno):('견적서_'+qno)) : document.title;
+  if(org) name += '_'+org;
+  document.title = name.replace(/[\\\/:*?"<>|]+/g,'-');   // 파일명 금지문자 정리
+  window.print();
+  setTimeout(()=>{document.title=prev;},2000);
+}
+document.getElementById('pdfBtn').addEventListener('click',async()=>{await saveQuote(true);printQuote();});
 (()=>{const b=document.getElementById('saveBtn'); if(b){ if(!params.get('rid'))b.style.display='none'; else b.addEventListener('click',()=>saveQuote(false)); }})();
 
 const EDGE_URL = "https://lnrugwschlcesaaertgc.supabase.co/functions/v1/create-checkout";

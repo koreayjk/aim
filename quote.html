@@ -63,6 +63,7 @@ tr.empty-item .r-freq,tr.empty-item .r-orig,tr.empty-item .r-disc{visibility:hid
 .r-freq:focus{outline:none;background:var(--soft);border-radius:6px}
 tbody input:focus{outline:none;background:var(--soft);border-radius:6px}
 tbody input.amt{text-align:right;font-variant-numeric:tabular-nums}
+tbody input.r-item::placeholder{color:#b3bccb;font-style:italic;font-weight:400}
 tbody tr.preset td.itm input{font-weight:600}
 .rowdel{background:none;border:none;color:#c9c9c9;font-size:1.05rem;cursor:pointer;padding:0 4px}
 .rowdel:hover{color:#c0392b}
@@ -318,20 +319,21 @@ function parseNum(s){ return parseFloat(String(s).replace(/[^0-9.]/g,''))||0; }
 
 // rows
 const PRESETS=[{key:'item1',preset:true},{key:'item2',preset:true}];
-function rowHTML(itemVal,freq){
+function rowHTML(itemVal,freq,ph){
   const fq=freq||'once';
   const opts=['once','month','year'].map(v=>`<option value="${v}" ${v===fq?'selected':''}>${T[lang]['freq_'+v]}</option>`).join('');
+  const esc=s=>(s||'').replace(/"/g,'&quot;');
   return `<tr>
     <td class="idx"></td>
-    <td class="itm"><input class="r-item" value="${(itemVal||'').replace(/"/g,'&quot;')}"></td>
+    <td class="itm"><input class="r-item" value="${esc(itemVal)}" placeholder="${esc(ph)}"></td>
     <td><select class="r-freq">${opts}</select></td>
     <td><input class="amt r-orig" inputmode="numeric" placeholder=""></td>
     <td><input class="amt r-disc" inputmode="numeric" placeholder=""></td>
   </tr>`;
 }
-function addRow(itemVal,freq){
+function addRow(itemVal,freq,ph){
   const tb=document.getElementById('rows');
-  tb.insertAdjacentHTML('beforeend',rowHTML(itemVal,freq));
+  tb.insertAdjacentHTML('beforeend',rowHTML(itemVal,freq,ph));
   const tr=tb.lastElementChild;
   const itemInp=tr.querySelector('.r-item');
   const syncEmpty=()=>{tr.classList.toggle('empty-item', !itemInp.value.trim());};
@@ -376,12 +378,11 @@ function applyLang(){
   applyBrand();
   document.querySelectorAll('[data-i18n-ph]').forEach(e=>{const k=e.getAttribute('data-i18n-ph'); if(t[k]!==undefined)e.placeholder=t[k];});
   document.querySelectorAll('#langSeg button').forEach(b=>b.classList.toggle('on',b.dataset.l===lang));
-  // preset rows: update item name only if it still equals the other language's default
+  // 예시 행: 언어에 맞춰 안내 placeholder 갱신 (실제 입력값은 건드리지 않음)
   const other=lang==='ko'?'en':'ko';
-  const presetRows=document.querySelectorAll('#rows tr.preset');
-  presetRows.forEach((tr,i)=>{
-    const inp=tr.querySelector('.r-item'); const key='item'+(i+1);
-    if(inp && (inp.value===T[other][key] || inp.value==='')) inp.value=T[lang][key];
+  document.querySelectorAll('#rows tr[data-eg]').forEach(tr=>{
+    const inp=tr.querySelector('.r-item'); const key=tr.dataset.eg;
+    if(inp && T[lang][key]!==undefined) inp.placeholder=T[lang][key];
   });
   // payment terms default
   const pay=document.getElementById('m_pay');
@@ -407,8 +408,9 @@ async function init(){
   document.getElementById('m_date').value = params.get('qdate') || now.toLocaleDateString(lang==='ko'?'ko-KR':'en-US',{year:'numeric',month:'2-digit',day:'2-digit'});
   const qno=params.get('qno') || ('Q-'+now.getFullYear()+String(now.getMonth()+1).padStart(2,'0')+String(now.getDate()).padStart(2,'0')+'-'+String(Math.floor(Math.random()*9000)+1000));
   document.getElementById('m_qno').value=qno;
-  addRow(T[lang].item1,'once');
-  addRow(T[lang].item2,'month');
+  // 기본 2줄은 실제 값이 아니라 "예시"(연한 회색 placeholder)로 안내만 함
+  addRow('','once',T[lang].item1);  document.getElementById('rows').lastElementChild.dataset.eg='item1';
+  addRow('','month',T[lang].item2); document.getElementById('rows').lastElementChild.dataset.eg='item2';
   for(let i=0;i<3;i++) addRow('','once');
   applyLang(); calc();
   // 저장된 견적 내용이 있으면 그대로 복원 (동일 재현)

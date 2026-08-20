@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IM America Group Corp · Texas, USA</title>
+<meta name="description" content="IM America Group Corp — 텍사스 기반 기업. 무역을 중심으로 IT(@IM), 교육(INTO Global Education), 여행(IM Tour) 사업을 운영합니다.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="IM America Group Corp">
+<meta property="og:title" content="IM America Group Corp">
+<meta property="og:description" content="하나의 회사, 네 개의 사업 — 무역 · IT · 교육 · 여행.">
+<meta property="og:url" content="https://koreayjk.github.io/aim/group.html">
+<meta property="og:locale" content="ko_KR">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,500&family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+:root{
+  --bg:#eef2f9; --panel:#ffffff; --ink:#15294d; --ink2:#3e4a5b; --muted:#6e7891;
+  --line:#dde3ec; --navy:#1f3f73; --navy2:#15294d; --soft:#e9eef7;
+  --im:#1f3f73; --trade:#1e7d6b; --camp:#b9760a; --travel:#6a48c0;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:'Pretendard','Hanken Grotesk','Noto Sans KR',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;word-break:keep-all;overflow-wrap:break-word;overflow-x:hidden}
+h1,h2,h3,.serif{font-family:'Fraunces','Pretendard','Noto Sans KR',serif;font-weight:500}
+a{text-decoration:none;color:inherit}
+.wrap{max-width:1140px;margin:0 auto;padding:0 30px}
+.kick{font-weight:700;font-size:.72rem;letter-spacing:2.4px;text-transform:uppercase;color:var(--navy)}
+
+/* header */
+header{position:sticky;top:0;z-index:60;background:rgba(238,242,249,.82);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+nav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:15px 30px;max-width:1140px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px}
+.brand .mk{width:40px;height:40px;border-radius:11px;background:var(--ink);display:grid;place-items:center}
+.brand .mk b{font-family:'Fraunces',serif;font-weight:600;font-size:1.02rem;color:#fff;letter-spacing:.3px}
+.brand .nm{font-family:'Fraunces',serif;font-weight:600;font-size:1.14rem;letter-spacing:.2px;line-height:1.1}
+.brand .nm span{display:block;font-family:'Pretendard',sans-serif;font-weight:600;font-size:.66rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted)}
+.nav-right{display:flex;align-items:center;gap:14px}
+.lang{display:inline-flex;border:1px solid var(--line);border-radius:30px;padding:3px;background:var(--panel)}
+.lang button{border:none;background:transparent;color:var(--muted);font-family:inherit;font-weight:700;font-size:.76rem;padding:6px 12px;border-radius:24px;cursor:pointer;transition:.2s}
+.lang button.on{background:var(--ink);color:#fff}
+.cta-btn{display:inline-flex;align-items:center;gap:8px;background:var(--navy);color:#fff;font-weight:700;font-size:.86rem;padding:11px 20px;border-radius:30px;transition:.25s}
+.cta-btn:hover{background:var(--navy2);transform:translateY(-1px)}
+
+/* hero */
+.hero{position:relative;padding:88px 0 64px;overflow:hidden}
+.hero::before{content:"";position:absolute;top:-180px;right:-140px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle at 30% 30%,rgba(31,63,115,.14),transparent 68%);z-index:-1}
+.hero .eyebrow{margin-bottom:18px}
+.hero h1{font-size:clamp(2.4rem,6vw,4.1rem);line-height:1.04;letter-spacing:-.5px;color:var(--navy2)}
+.hero h1 em{font-style:italic;color:var(--navy)}
+.hero p.lead{margin-top:22px;max-width:620px;font-size:1.08rem;color:var(--ink2)}
+.hero .facts{margin-top:34px;display:flex;flex-wrap:wrap;gap:12px}
+.hero .facts .f{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 18px;font-size:.86rem;font-weight:600;color:var(--ink2)}
+.hero .facts .f b{color:var(--navy);font-weight:800}
+
+/* divisions */
+.sec{padding:22px 0 84px}
+.sec-head{margin-bottom:34px}
+.sec-head h2{font-size:clamp(1.7rem,4vw,2.5rem);color:var(--navy2)}
+.sec-head h2 em{font-style:italic;color:var(--navy)}
+.sec-head p{margin-top:10px;color:var(--muted);font-size:1rem}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px 30px 26px;display:flex;flex-direction:column;gap:14px;transition:.25s;overflow:hidden}
+.card::before{content:"";position:absolute;top:0;left:0;width:100%;height:5px;background:var(--ac)}
+.card:hover{transform:translateY(-4px);box-shadow:0 26px 50px -34px rgba(20,30,60,.5);border-color:transparent}
+.card .top{display:flex;align-items:center;gap:14px}
+.card .badge{width:52px;height:52px;border-radius:14px;background:var(--ac);color:#fff;display:grid;place-items:center;font-family:'Fraunces',serif;font-weight:600;font-size:1.15rem;flex:0 0 auto;letter-spacing:.3px}
+.card .htxt .div{font-size:.72rem;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:var(--ac)}
+.card .htxt h3{font-size:1.34rem;color:var(--ink);font-weight:600;line-height:1.15}
+.card .desc{color:var(--ink2);font-size:.94rem;flex:1}
+.card .foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:4px}
+.card .go{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:.9rem;color:var(--ac)}
+.card .go svg{transition:.2s}
+.card:hover .go svg{transform:translateX(3px)}
+.card .tag{font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);background:var(--soft);border-radius:20px;padding:5px 11px}
+.card .tag.live{color:#1e8a4c;background:#e7f6ec}
+.card .tag.soon{color:#b9760a;background:#fdf3e3}
+.card.headquarters{background:linear-gradient(180deg,#f4f8ff,#ffffff)}
+
+/* company info */
+.info{background:var(--navy2);color:#dbe3f2;border-radius:24px;padding:48px 44px;display:grid;grid-template-columns:1.3fr 1fr;gap:40px;align-items:start}
+.info h2{color:#fff;font-size:1.7rem;margin-bottom:12px}
+.info p{color:#aeb9d4;font-size:.96rem;max-width:440px}
+.info .rows{display:flex;flex-direction:column;gap:14px}
+.info .row{display:flex;gap:14px;font-size:.92rem;align-items:baseline}
+.info .row .k{flex:0 0 78px;color:#8a97bb;font-weight:700;font-size:.74rem;letter-spacing:1px;text-transform:uppercase}
+.info .row .v{color:#eef2fb;font-weight:500}
+.info .row a{color:#eef2fb;border-bottom:1px solid rgba(255,255,255,.25)}
+
+footer{border-top:1px solid var(--line);padding:40px 0 46px;margin-top:60px}
+.foot-in{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;color:var(--muted);font-size:.84rem}
+.foot-in .dbaline{font-size:.78rem}
+
+@media(max-width:760px){
+  .grid{grid-template-columns:1fr}
+  .info{grid-template-columns:1fr;padding:36px 26px;gap:28px}
+  nav{padding:13px 20px}
+  .brand .nm{font-size:1rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <nav>
+    <a class="brand" href="group.html">
+      <span class="mk"><b>IM</b></span>
+      <span class="nm">IM America Group Corp<span data-i18n="brandSub">Texas, USA</span></span>
+    </a>
+    <div class="nav-right">
+      <div class="lang" id="lang">
+        <button data-lang="ko" class="on">KO</button>
+        <button data-lang="en">EN</button>
+      </div>
+      <a class="cta-btn" href="mailto:imamerica2414@gmail.com" data-i18n="contact">문의하기</a>
+    </div>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <div class="kick eyebrow" data-i18n="heroKick">IM AMERICA GROUP CORP · TEXAS, USA</div>
+    <h1 data-i18n="heroH1">하나의 회사,<br><em>네 개의 사업</em>.</h1>
+    <p class="lead" data-i18n="heroLead">IM America Group Corp는 텍사스에 기반을 둔 기업입니다. 무역을 중심으로, 아래 세 개의 사업부(DBA)를 통해 IT·교육·여행 영역까지 사람과 비즈니스를 잇습니다.</p>
+    <div class="facts">
+      <div class="f" data-i18n="fact1"><b>Texas, USA</b> · 본사</div>
+      <div class="f" data-i18n="fact2"><b>4</b> 개 사업 영역</div>
+      <div class="f" data-i18n="fact3">무역 · IT · 교육 · 여행</div>
+    </div>
+  </div>
+</section>
+
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head">
+      <div class="kick" data-i18n="divKick">OUR DIVISIONS</div>
+      <h2 data-i18n="divH2">사업 <em>영역</em></h2>
+      <p data-i18n="divSub">각 사업부는 IM America Group Corp의 영업명(DBA)으로 운영됩니다.</p>
+    </div>
+    <div class="grid">
+
+      <!-- 무역 / Trade — 본사 -->
+      <div class="card headquarters" style="--ac:var(--trade)">
+        <div class="top">
+          <div class="badge">貿</div>
+          <div class="htxt">
+            <div class="div" data-i18n="tdDiv">무역 · TRADE</div>
+            <h3 data-i18n="tdName">IM America Group Corp</h3>
+          </div>
+        </div>
+        <div class="desc" data-i18n="tdDesc">회사의 중심 사업. 미국과 한국·아시아를 잇는 무역 비즈니스를 운영합니다.</div>
+        <div class="foot">
+          <span class="go" data-i18n="tdGo">본사 · Headquarters</span>
+          <span class="tag" data-i18n="tdTag">Core</span>
+        </div>
+      </div>
+
+      <!-- @IM / IT -->
+      <a class="card" href="index.html" style="--ac:var(--im)">
+        <div class="top">
+          <div class="badge">@IM</div>
+          <div class="htxt">
+            <div class="div" data-i18n="imDiv">IT · @IM</div>
+            <h3 data-i18n="imName">IM Genesis</h3>
+          </div>
+        </div>
+        <div class="desc" data-i18n="imDesc">AI 기반 IT 사업부. 웹·앱·소프트웨어와 AI 솔루션을 만듭니다.</div>
+        <div class="foot">
+          <span class="go" data-i18n="imGo">사이트 보기 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+          <span class="tag live" data-i18n="imTag">Live</span>
+        </div>
+      </a>
+
+      <!-- 캠프 / Education -->
+      <a class="card" href="https://intoabroad.com/" target="_blank" rel="noopener" style="--ac:var(--camp)">
+        <div class="top">
+          <div class="badge">留</div>
+          <div class="htxt">
+            <div class="div" data-i18n="cpDiv">교육 · CAMP</div>
+            <h3 data-i18n="cpName">INTO Global Education</h3>
+          </div>
+        </div>
+        <div class="desc" data-i18n="cpDesc">유학·글로벌 교육 사업부. 학생들의 해외 진학과 캠프를 돕습니다.</div>
+        <div class="foot">
+          <span class="go" data-i18n="cpGo">intoabroad.com <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 17L17 7M9 7h8v8"/></svg></span>
+          <span class="tag live" data-i18n="cpTag">Live</span>
+        </div>
+      </a>
+
+      <!-- 여행 / Travel -->
+      <div class="card" style="--ac:var(--travel)">
+        <div class="top">
+          <div class="badge">旅</div>
+          <div class="htxt">
+            <div class="div" data-i18n="tvDiv">여행 · TRAVEL</div>
+            <h3 data-i18n="tvName">IM Tour</h3>
+          </div>
+        </div>
+        <div class="desc" data-i18n="tvDesc">여행 사업부. 맞춤 여행과 투어 상품을 준비하고 있습니다.</div>
+        <div class="foot">
+          <span class="go" data-i18n="tvGo" style="color:var(--muted)">준비 중</span>
+          <span class="tag soon" data-i18n="tvTag">Coming soon</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="info">
+      <div>
+        <h2 data-i18n="infoH2">회사 정보</h2>
+        <p data-i18n="infoP">모든 사업부는 하나의 법인, IM America Group Corp에 속합니다. 견적·계약·결제는 동일한 계좌로 진행되며, 사업부별 상호(브랜드)만 다릅니다.</p>
+      </div>
+      <div class="rows">
+        <div class="row"><span class="k">Company</span><span class="v">IM America Group Corp</span></div>
+        <div class="row"><span class="k" data-i18n="lAddr">주소</span><span class="v">408 E 24th St, Bryan, TX 77803, USA</span></div>
+        <div class="row"><span class="k">EIN</span><span class="v">99-1555318</span></div>
+        <div class="row"><span class="k">Email</span><span class="v"><a href="mailto:imamerica2414@gmail.com">imamerica2414@gmail.com</a></span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-in">
+    <span>© 2026 IM America Group Corp · Texas, USA</span>
+    <span class="dbaline" data-i18n="dbaLine">@IM(IM Genesis) · INTO Global Education · IM Tour 는 IM America Group Corp의 영업명(DBA)입니다.</span>
+  </div>
+</footer>
+
+<script>
+const T={
+ ko:{
+  title:"IM America Group Corp · Texas, USA",
+  brandSub:"Texas, USA", contact:"문의하기",
+  heroKick:"IM AMERICA GROUP CORP · TEXAS, USA",
+  heroH1:"하나의 회사,<br><em>네 개의 사업</em>.",
+  heroLead:"IM America Group Corp는 텍사스에 기반을 둔 기업입니다. 무역을 중심으로, 아래 세 개의 사업부(DBA)를 통해 IT·교육·여행 영역까지 사람과 비즈니스를 잇습니다.",
+  fact1:"<b>Texas, USA</b> · 본사", fact2:"<b>4</b> 개 사업 영역", fact3:"무역 · IT · 교육 · 여행",
+  divKick:"OUR DIVISIONS", divH2:"사업 <em>영역</em>", divSub:"각 사업부는 IM America Group Corp의 영업명(DBA)으로 운영됩니다.",
+  tdDiv:"무역 · TRADE", tdName:"IM America Group Corp", tdDesc:"회사의 중심 사업. 미국과 한국·아시아를 잇는 무역 비즈니스를 운영합니다.", tdGo:"본사 · Headquarters", tdTag:"Core",
+  imDiv:"IT · @IM", imName:"IM Genesis", imDesc:"AI 기반 IT 사업부. 웹·앱·소프트웨어와 AI 솔루션을 만듭니다.", imGo:"사이트 보기 <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4'><path d='M5 12h14M13 6l6 6-6 6'/></svg>", imTag:"Live",
+  cpDiv:"교육 · CAMP", cpName:"INTO Global Education", cpDesc:"유학·글로벌 교육 사업부. 학생들의 해외 진학과 캠프를 돕습니다.", cpGo:"intoabroad.com <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4'><path d='M7 17L17 7M9 7h8v8'/></svg>", cpTag:"Live",
+  tvDiv:"여행 · TRAVEL", tvName:"IM Tour", tvDesc:"여행 사업부. 맞춤 여행과 투어 상품을 준비하고 있습니다.", tvGo:"준비 중", tvTag:"Coming soon",
+  infoH2:"회사 정보", infoP:"모든 사업부는 하나의 법인, IM America Group Corp에 속합니다. 견적·계약·결제는 동일한 계좌로 진행되며, 사업부별 상호(브랜드)만 다릅니다.",
+  lAddr:"주소",
+  dbaLine:"@IM(IM Genesis) · INTO Global Education · IM Tour 는 IM America Group Corp의 영업명(DBA)입니다."
+ },
+ en:{
+  title:"IM America Group Corp · Texas, USA",
+  brandSub:"Texas, USA", contact:"Contact",
+  heroKick:"IM AMERICA GROUP CORP · TEXAS, USA",
+  heroH1:"One company,<br><em>four businesses</em>.",
+  heroLead:"IM America Group Corp is a Texas-based company. Built around trade, it connects people and businesses across IT, education, and travel through the three divisions below.",
+  fact1:"<b>Texas, USA</b> · HQ", fact2:"<b>4</b> business areas", fact3:"Trade · IT · Education · Travel",
+  divKick:"OUR DIVISIONS", divH2:"Our <em>divisions</em>", divSub:"Each division operates as a registered DBA of IM America Group Corp.",
+  tdDiv:"TRADE", tdName:"IM America Group Corp", tdDesc:"The company's core business — trade connecting the USA with Korea and Asia.", tdGo:"Headquarters", tdTag:"Core",
+  imDiv:"IT · @IM", imName:"IM Genesis", imDesc:"Our AI-driven IT division. We build web, apps, software, and AI solutions.", imGo:"Visit site <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4'><path d='M5 12h14M13 6l6 6-6 6'/></svg>", imTag:"Live",
+  cpDiv:"EDUCATION · CAMP", cpName:"INTO Global Education", cpDesc:"Our study-abroad & global education division, guiding students overseas.", cpGo:"intoabroad.com <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4'><path d='M7 17L17 7M9 7h8v8'/></svg>", cpTag:"Live",
+  tvDiv:"TRAVEL", tvName:"IM Tour", tvDesc:"Our travel division — custom trips and tour packages, coming soon.", tvGo:"Coming soon", tvTag:"Coming soon",
+  infoH2:"Company", infoP:"All divisions belong to one legal entity, IM America Group Corp. Quotes, contracts, and payments use the same account — only the division's trade name differs.",
+  lAddr:"Address",
+  dbaLine:"@IM (IM Genesis), INTO Global Education, and IM Tour are registered DBAs of IM America Group Corp."
+ }
+};
+function setLang(l){const t=T[l];document.documentElement.lang=l;try{localStorage.setItem('imLang',l)}catch(e){}document.title=t.title;
+ document.querySelectorAll('[data-i18n]').forEach(e=>{const k=e.getAttribute('data-i18n');if(t[k]!==undefined)e.innerHTML=t[k];});
+ document.querySelectorAll('#lang button').forEach(b=>b.classList.toggle('on',b.dataset.lang===l));}
+document.querySelectorAll('#lang button').forEach(b=>b.addEventListener('click',()=>setLang(b.dataset.lang)));
+(function(){var l='ko';try{var s=localStorage.getItem('imLang');if(s)l=s}catch(e){}var u=new URLSearchParams(location.search).get('lang');if(u)l=u;if(l!=='ko'&&l!=='en')l='ko';setLang(l);})();
+</script>
+</body>
+</html>

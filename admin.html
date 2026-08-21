@@ -463,6 +463,15 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .copy{background:var(--navy);color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:.9rem}.copy.ok{background:#1e8a4c}
 .qbtn{background:#1f3f73;color:#fff;border:none;border-radius:10px;padding:11px 18px;font-weight:700;font-size:.9rem}.qbtn:hover{background:#15294d}
 .qinfo{margin-top:16px;padding:9px 12px;background:var(--soft);border:1px solid var(--line);border-radius:10px;font-size:.86rem}.qinfo b{color:var(--navy)}
+.qsec{margin-top:16px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--soft)}
+.qsec-head{margin-bottom:8px}
+.qrows{display:flex;flex-direction:column;gap:6px}
+.qrow{display:grid;grid-template-columns:auto auto 1fr auto auto;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:.86rem}
+.qrow .qno{font-weight:800;color:var(--navy);white-space:nowrap}
+.qrow-acts{display:flex;gap:6px;white-space:nowrap}
+.qrow-acts .qdl{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 9px;font-weight:700;font-size:.78rem;color:#1e7d6b;cursor:pointer}
+.qrow-acts .qdl:hover{background:#eef4f2}
+@media(max-width:640px){.qrow{grid-template-columns:1fr 1fr;row-gap:6px}}
 .qtable{width:100%;border-collapse:collapse;font-size:.86rem}
 .qtable th{text-align:left;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:1px solid var(--line)}
 .qtable td{padding:9px 10px;border-bottom:1px solid var(--line)}
@@ -623,7 +632,7 @@ const STAGE_COLOR={'해야함':'#94a3b8','하는중':'#1f3f73','검토':'#d99a2b
 const STAGE_MAP={'준비':'해야함','진행':'하는중','검토':'검토','완료':'끝'};
 function effStage(c){ if(c.d) return '끝'; const s=c.s||''; return TASK_STAGES.includes(s)?s:(STAGE_MAP[s]||'해야함'); }
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
-let rows=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false, boardType='전체';
+let rows=[], quotes=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false, boardType='전체';
 // ---- 사업부(DBA) ----
 const DBAS=[{k:'@IM',label:'@IM',c:'#1f3f73'},{k:'무역',label:'무역',c:'#1e7d6b'},{k:'캠프',label:'캠프',c:'#b9760a'},{k:'여행',label:'여행',c:'#6a48c0'}];
 let dba=(function(){try{return localStorage.getItem('tcs_dba')||'@IM'}catch(e){return '@IM'}})();
@@ -1049,12 +1058,14 @@ async function renameAssignee(oldName,newName){
 }
 
 async function loadAll(){
-  const [r,a]=await Promise.all([
+  const [r,a,q]=await Promise.all([
     sb.from('requests').select('*').order('created_at',{ascending:true}),
-    sb.from('staff').select('name,status').eq('status','approved').order('name')
+    sb.from('staff').select('name,status').eq('status','approved').order('name'),
+    sb.from('quotes').select('*').order('quoted_at',{ascending:false})
   ]);
   if(r.error){alert('불러오기 실패: '+r.error.message);return;}
   rows=r.data||[]; assignees=(a.data||[]).map(x=>x.name).filter(Boolean);
+  quotes = q.error ? [] : (q.data||[]);   // quotes 테이블(29) 미적용 시 빈 배열
   renderDbaBar(); renderSummary();
   if(loadAll._first && dba==='캠프' && view==='list'){ loadAll._first=false; setView('quote'); }
   else { loadAll._first=false; render(); }
@@ -1197,12 +1208,12 @@ function renderReport(){
   const trend=months.map(mm=>({mm,rev:rows.filter(r=>r.paid&&inM2(r.paid_at,mm)&&Number(r.amount)).reduce((s,r)=>s+Number(r.amount||0),0)}));
   function inM2(d,m){return d&&String(d).slice(0,7)===m;}
   const maxR=Math.max(1,...trend.map(t=>t.rev));
-  // 이번달 발행 견적서
-  const quotes=rows.filter(r=>r.quote_no&&inM(r.quoted_at)).sort((a,b)=>(a.quote_no<b.quote_no?1:-1));
-  const quoteCard=`<div class="ins-card ins-wide"><h3>견적서 관리 <span class="dim" style="font-weight:500;font-size:.78rem">· 이번달 발행 ${quotes.length}건</span></h3>
-    ${quotes.length?`<div class="qwrap"><table class="qtable"><thead><tr><th>견적번호</th><th>거래처</th><th>유형</th><th>발행일</th><th>금액</th><th></th></tr></thead><tbody>
-      ${quotes.map(r=>`<tr><td class="qno">${esc(r.quote_no)}</td><td>${esc(r.org_name)||'(이름없음)'}</td><td class="dim">${esc(r.request_type||'')}</td><td class="dim">${String(r.quoted_at||'').slice(0,10)}</td><td style="font-weight:700">${r.amount?fmtWon(r.amount):'<span class="dim">-</span>'}</td><td><button class="qdl" data-qid="${r.id}">📄 PDF</button></td></tr>`).join('')}
-    </tbody></table></div>`:'<p class="dim">이번달 발행한 견적서가 없어요. 의뢰 상세에서 "견적서 만들기"로 발행하세요.</p>'}</div>`;
+  // 이번달 발행 견적서 (quotes 테이블 · 선택된 사업부)
+  const mQuotes=dbaQuotes().filter(x=>inM(x.quoted_at)).sort((a,b)=>String(b.quoted_at||'').localeCompare(String(a.quoted_at||'')));
+  const quoteCard=`<div class="ins-card ins-wide"><h3>견적서 관리 <span class="dim" style="font-weight:500;font-size:.78rem">· 이번달 발행 ${mQuotes.length}건</span></h3>
+    ${mQuotes.length?`<div class="qwrap"><table class="qtable"><thead><tr><th>견적번호</th><th>거래처</th><th>상태</th><th>발행일</th><th>금액</th><th></th></tr></thead><tbody>
+      ${mQuotes.map(x=>`<tr><td class="qno">${esc(x.quote_no)}</td><td>${esc(x.org_name)||'(이름없음)'}</td><td class="dim">${esc(qState(x))}</td><td class="dim">${String(x.quoted_at||'').slice(0,10)}</td><td style="font-weight:700">${x.amount?fmtWon(x.amount):'<span class="dim">-</span>'}</td><td><button class="qdl" data-qid="${x.id}">📄 PDF</button></td></tr>`).join('')}
+    </tbody></table></div>`:'<p class="dim">이번달 발행한 견적서가 없어요. 견적 관리 탭에서 발행하세요.</p>'}</div>`;
   const kpi=(label,val,tone)=>`<div class="scard ${tone||''}"><div class="n" style="font-size:1.25rem">${val}</div><div class="l">${label}</div></div>`;
   el.innerHTML=`
     <div class="rpt-nav">
@@ -1228,7 +1239,7 @@ function renderReport(){
   document.getElementById('rptNext').addEventListener('click',()=>{reportMonth=shiftMonth(ym,1);renderReport();});
   document.getElementById('rptNow').addEventListener('click',()=>{reportMonth=thisMonth();renderReport();});
   el.querySelectorAll('.insrow[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
-  el.querySelectorAll('.qdl[data-qid]').forEach(b=>b.addEventListener('click',()=>{const r=rows.find(x=>x.id===Number(b.dataset.qid));if(r)window.open('quote.html?'+quoteParams(r,{qno:r.quote_no,qdate:qdateStr(r.quoted_at),auto:'1'}).toString(),'_blank');}));
+  el.querySelectorAll('.qdl[data-qid]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qid));if(q)openQuoteEditor(q,true);}));
 }
 
 // ================= 견적 관리 (캠프 등 견적 중심 업무) =================
@@ -1240,7 +1251,7 @@ let quoteQ='';
 function renderQuotes(){
   const el=document.getElementById('quoteView'); if(!el)return;
   const showDba = (dba==='전체');
-  const all=dbaRows().filter(r=>r.quote_no);
+  const all=dbaQuotes();
   const ym=thisMonth();
   const inThisM=d=>d&&String(d).slice(0,7)===ym;
   const total=all.length;
@@ -1279,7 +1290,7 @@ function renderQuotes(){
           <button class="qdl qedit" data-qid="${r.id}" style="color:#1f3f73">✏️ 편집</button>
           <button class="qdl" data-qpdf="${r.id}">📄 PDF</button>
           <button class="qdl qlink" data-qid="${r.id}">🔗 링크</button>
-          <button class="qdl qopen" data-qid="${r.id}" title="상세" style="color:#6e7891">상세</button>
+          ${r.request_id?`<button class="qdl qopen" data-rid="${r.request_id}" title="프로젝트" style="color:#6e7891">프로젝트</button>`:''}
         </td></tr>`).join('')}
     </tbody></table></div>`
     :`<div class="empty" style="text-align:center;padding:50px 20px;color:var(--muted)">
@@ -1289,22 +1300,40 @@ function renderQuotes(){
       </div>`}`;
   document.getElementById('qcNew').addEventListener('click',()=>openQuoteCreate());
   const qs=document.getElementById('qSearch'); if(qs){qs.addEventListener('input',e=>{quoteQ=e.target.value;renderQuotes();const n=document.getElementById('qSearch');if(n){n.focus();n.setSelectionRange(n.value.length,n.value.length);}});}
-  el.querySelectorAll('.qedit[data-qid]').forEach(b=>b.addEventListener('click',()=>{const r=rows.find(x=>x.id===Number(b.dataset.qid));if(r)window.open('quote.html?'+quoteParams(r,{qno:r.quote_no,qdate:qdateStr(r.quoted_at)}).toString(),'_blank');}));
-  el.querySelectorAll('.qdl[data-qpdf]').forEach(b=>b.addEventListener('click',()=>{const r=rows.find(x=>x.id===Number(b.dataset.qpdf));if(r)window.open('quote.html?'+quoteParams(r,{qno:r.quote_no,qdate:qdateStr(r.quoted_at),auto:'1'}).toString(),'_blank');}));
-  el.querySelectorAll('.qopen[data-qid]').forEach(b=>b.addEventListener('click',()=>openDetail(Number(b.dataset.qid))));
+  el.querySelectorAll('.qedit[data-qid]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qid));if(q)openQuoteEditor(q);}));
+  el.querySelectorAll('.qdl[data-qpdf]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qpdf));if(q)openQuoteEditor(q,true);}));
+  el.querySelectorAll('.qopen[data-rid]').forEach(b=>b.addEventListener('click',()=>openDetail(Number(b.dataset.rid))));
   el.querySelectorAll('.qlink[data-qid]').forEach(b=>b.addEventListener('click',async e=>{
-    const r=rows.find(x=>x.id===Number(b.dataset.qid)); if(!r)return;
-    const url=location.origin+location.pathname.replace(/admin\.html$/,'')+'quote.html?'+quoteParams(r,{qno:r.quote_no,qdate:qdateStr(r.quoted_at)}).toString();
+    const q=quotes.find(x=>x.id===Number(b.dataset.qid)); if(!q)return;
+    const url=location.origin+location.pathname.replace(/admin\.html$/,'')+'quote.html?'+quoteParams(q,{qno:q.quote_no,qdate:qdateStr(q.quoted_at)}).toString();
     try{await navigator.clipboard.writeText(url);}catch(_){const ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();}
     const btn=e.currentTarget,o=btn.textContent;btn.textContent='✓ 복사됨';setTimeout(()=>btn.textContent=o,1400);
   }));
   el.querySelectorAll('.qstate[data-qid]').forEach(sel=>sel.addEventListener('change',async e=>{
     const id=Number(e.target.dataset.qid), val=e.target.value;
-    const {error}=await sb.from('requests').update({quote_status:val}).eq('id',id);
-    if(error){alert('상태 저장 실패: '+error.message+'\n(SQL 27_quote_status.sql 실행이 필요할 수 있어요.)');return;}
-    const row=rows.find(x=>x.id===id); if(row)row.quote_status=val;
+    const {error}=await sb.from('quotes').update({quote_status:val}).eq('id',id);
+    if(error){alert('상태 저장 실패: '+error.message+'\n(SQL 29_quotes_table.sql 실행이 필요할 수 있어요.)');return;}
+    const q=quotes.find(x=>x.id===id); if(q)q.quote_status=val;
     e.target.style.color=QSTATE_COLOR[val]||'#333';
   }));
+}
+// 프로젝트 상세: 이 의뢰에 딸린 견적서 목록 (여러 개 가능)
+function detailQuotesHTML(r){
+  const qs=quotesFor(r.id);
+  const rowsHtml = qs.length ? qs.map(q=>{
+    const st=qState(q);
+    return `<div class="qrow">
+      <span class="qno">${esc(q.quote_no||'-')}</span>
+      <span class="badge" style="background:${QSTATE_COLOR[st]}1a;color:${QSTATE_COLOR[st]};font-weight:700">${st}</span>
+      <span style="font-weight:700">${q.amount?fmtWon(q.amount):'<span class="dim">-</span>'}</span>
+      <span class="dim" style="font-size:.8rem">${String(q.quoted_at||'').slice(0,10)}</span>
+      <span class="qrow-acts"><button class="qdl" data-qedit="${q.id}" style="color:#1f3f73">✏️ 편집</button><button class="qdl" data-qpdf2="${q.id}">📄 PDF</button></span>
+    </div>`;
+  }).join('') : '<div class="dim" style="padding:6px 2px;font-size:.86rem">아직 견적서가 없어요. 아래 “새 견적서 만들기”로 만들어 보세요.</div>';
+  return `<div class="qsec">
+    <div class="qsec-head"><label style="font-size:.76rem;font-weight:700;color:var(--navy);letter-spacing:.3px">🧾 견적서 <span class="dim" style="font-weight:500">· ${qs.length}건</span></label></div>
+    <div class="qrows">${rowsHtml}</div>
+  </div>`;
 }
 function openQuoteCreate(){
   const m=document.getElementById('qcModal'); if(!m)return;
@@ -1897,10 +1926,9 @@ function openDetail(id){
         <div class="cmlist">${(Array.isArray(r.comments)?r.comments:[]).map(c=>`<div class="cmitem ${c.sys?'sys':''}"><div class="cmhead"><b>${esc(c.who||'')}</b><span>${fmtDate(c.at)}</span></div><div class="cmtext">${esc(c.text)}</div></div>`).join('')||'<p class="dim" style="font-size:.84rem;padding:6px 0">아직 코멘트가 없습니다.</p>'}</div>
         <div class="cl-add"><input id="cmInput" placeholder="코멘트 입력 후 Enter"><button class="btn-s" id="cmAdd">등록</button></div>
       </div>
-      ${r.quote_no?`<div class="qinfo">🧾 견적번호 <b>${esc(r.quote_no)}</b>${r.quoted_at?` <span class="dim">· 발행 ${String(r.quoted_at).slice(0,10)}</span>`:''}</div>`:''}
+      ${detailQuotesHTML(r)}
       <div class="mfoot">
-        <button class="qbtn" id="quoteBtn">🧾 견적서 ${r.quote_no?'다시 편집':'만들기'}</button>
-        ${r.quote_no?'<button class="qbtn" id="quoteDl" style="background:#1e7d6b">📄 견적서 PDF 다운로드</button>':''}
+        <button class="qbtn" id="quoteNew">🧾 새 견적서 만들기</button>
         <button class="copy" id="copyBtn">📋 내용 복사 (Claude에게 붙여넣기)</button>
         <button class="del" id="delBtn">삭제</button>
       </div>
@@ -1938,28 +1966,38 @@ function bindDetail(r){
     const t=buildText(r); try{await navigator.clipboard.writeText(t);}catch(_){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();}
     const b=e.currentTarget,o=b.textContent;b.classList.add('ok');b.textContent='✓ 복사되었습니다!';setTimeout(()=>{b.classList.remove('ok');b.textContent=o;},1600);
   });
-  document.getElementById('quoteBtn').addEventListener('click',async()=>{
-    let qno=r.quote_no, qat=r.quoted_at;
-    if(!qno){ qno=nextQuoteNo(); qat=new Date().toISOString();
-      await saveField(r.id,{quote_no:qno,quoted_at:qat});
-      const list=Array.isArray(r.comments)?[...r.comments]:[]; list.push({who:(me&&me.name)||'관리자',text:`🧾 견적서 발행 (${qno})`,at:new Date().toISOString(),sys:true});
-      await sb.from('requests').update({comments:list}).eq('id',r.id); r.comments=list;
-      openDetail(r.id);
-    }
-    window.open('quote.html?'+quoteParams(r,{qno,qdate:qdateStr(qat)}).toString(),'_blank');
+  document.getElementById('quoteNew').addEventListener('click',async e=>{
+    const btn=e.currentTarget; btn.disabled=true; btn.textContent='발행 중…';
+    const {data,error}=await createQuote({request_id:r.id,dba:r.dba||'@IM',org_name:r.org_name,contact_name:r.contact_name,email:r.email,phone:r.phone});
+    if(error){alert('견적 발행 실패: '+error.message+'\n(SQL 29_quotes_table.sql 실행이 필요할 수 있어요.)');btn.disabled=false;btn.textContent='🧾 새 견적서 만들기';return;}
+    const list=Array.isArray(r.comments)?[...r.comments]:[]; list.push({who:(me&&me.name)||'관리자',text:`🧾 견적서 발행 (${data.quote_no})`,at:new Date().toISOString(),sys:true});
+    await sb.from('requests').update({comments:list}).eq('id',r.id); r.comments=list;
+    await loadAll(); openDetail(r.id); openQuoteEditor(data);
   });
-  const qdl=document.getElementById('quoteDl'); if(qdl)qdl.addEventListener('click',()=>{
-    window.open('quote.html?'+quoteParams(r,{qno:r.quote_no,qdate:qdateStr(r.quoted_at),auto:'1'}).toString(),'_blank');
-  });
+  sheet.querySelectorAll('[data-qedit]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qedit));if(q)openQuoteEditor(q);}));
+  sheet.querySelectorAll('[data-qpdf2]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qpdf2));if(q)openQuoteEditor(q,true);}));
   document.getElementById('delBtn').addEventListener('click',()=>del(r.id));
 }
-function quoteParams(r,extra){const p=new URLSearchParams({rid:r.id,org:r.org_name||'',name:r.contact_name||'',phone:r.phone||'',email:r.email||'',mode:r.mode||'',dba:r.dba||'@IM',lang:'ko'});if(extra)Object.entries(extra).forEach(([k,v])=>{if(v!=null)p.set(k,v);});return p;}
+// 견적(quotes 행) → quote.html 파라미터 (qid 기준 저장/복원)
+function quoteParams(q,extra){const p=new URLSearchParams({qid:q.id,rid:q.request_id||'',org:q.org_name||'',name:q.contact_name||'',phone:q.phone||'',email:q.email||'',dba:q.dba||'@IM',lang:'ko'});if(extra)Object.entries(extra).forEach(([k,v])=>{if(v!=null)p.set(k,v);});return p;}
+function openQuoteEditor(q,auto){ window.open('quote.html?'+quoteParams(q,{qno:q.quote_no,qdate:qdateStr(q.quoted_at),auto:auto?'1':null}).toString(),'_blank'); }
 function qdateStr(iso){ if(!iso)return''; const d=new Date(iso); return d.toLocaleDateString('ko-KR',{year:'numeric',month:'2-digit',day:'2-digit'}); }
-// 견적번호: Q-<연도>-NNNN (연도별 순번)
+function quotesFor(reqId){ return quotes.filter(q=>q.request_id===reqId).sort((a,b)=>String(b.quoted_at||'').localeCompare(String(a.quoted_at||''))|| (b.id-a.id)); }
+function dbaQuotes(){ return dba==='전체'?quotes:quotes.filter(q=>(q.dba||'@IM')===dba); }
+// 견적번호: Q-<연도>-NNNN (연도별 순번). quotes + 레거시 requests 모두 스캔.
 function nextQuoteNo(){
   const yr=new Date().getFullYear(); const prefix='Q-'+yr+'-'; let max=0;
-  rows.forEach(r=>{ if(r.quote_no&&r.quote_no.indexOf(prefix)===0){ const n=parseInt(r.quote_no.slice(prefix.length),10); if(n>max)max=n; } });
+  const scan=n=>{ if(n&&n.indexOf(prefix)===0){ const k=parseInt(n.slice(prefix.length),10); if(k>max)max=k; } };
+  quotes.forEach(q=>scan(q.quote_no)); rows.forEach(r=>scan(r.quote_no));
   return prefix+String(max+1).padStart(4,'0');
+}
+// 새 견적 생성 (프로젝트에 연결하거나 독립). 생성된 quotes 행 반환.
+async function createQuote(o){
+  const qno=nextQuoteNo(); const qat=new Date().toISOString();
+  const row={request_id:o.request_id||null,dba:o.dba||'@IM',quote_no:qno,quoted_at:qat,quote_status:'발행',
+    org_name:o.org_name||null,contact_name:o.contact_name||null,email:o.email||null,phone:o.phone||null};
+  const {data,error}=await sb.from('quotes').insert([row]).select().single();
+  return {data,error};
 }
 
 function flashSaved(){const m=document.getElementById('savedMsg');if(!m)return;m.classList.add('show');setTimeout(()=>m.classList.remove('show'),1200);}
@@ -2018,20 +2056,15 @@ document.getElementById('qcSave').addEventListener('click',async()=>{
   const org=document.getElementById('qc_org').value.trim(); const err=document.getElementById('qcErr');
   if(!org){err.textContent='고객/단체명을 입력하세요.';return;}
   err.textContent='생성 중…';
-  const qno=nextQuoteNo(); const qat=new Date().toISOString();
-  const row={status:'접수·견적',source:'quote',dba:document.getElementById('qc_dba').value||'@IM',
-    org_name:org,contact_name:document.getElementById('qc_name').value.trim()||null,
-    email:document.getElementById('qc_email').value.trim(),phone:document.getElementById('qc_phone').value.trim(),
-    request_type:'견적',mode:'new',quote_no:qno,quoted_at:qat,stage_due:{'접수·견적':todayStr()}};
-  let ins=await sb.from('requests').insert([row]).select().single();
-  if(ins.error && /quote_no|quoted_at|column/i.test(ins.error.message)){
-    // 견적 컬럼이 아직 없으면 기본 필드만으로 생성 후 재시도
-    const {quote_no,quoted_at,...base}=row; ins=await sb.from('requests').insert([base]).select().single();
-  }
-  if(ins.error){err.textContent='생성 실패: '+ins.error.message;return;}
-  const nr=ins.data;
+  const {data,error}=await createQuote({
+    dba:document.getElementById('qc_dba').value||'@IM', org_name:org,
+    contact_name:document.getElementById('qc_name').value.trim(),
+    email:document.getElementById('qc_email').value.trim(),
+    phone:document.getElementById('qc_phone').value.trim()
+  });
+  if(error){err.textContent='생성 실패: '+error.message+' (SQL 29 실행 필요할 수 있어요)';return;}
   qcModal.classList.remove('show'); await loadAll();
-  window.open('quote.html?'+quoteParams(nr,{qno:nr.quote_no||qno,qdate:qdateStr(nr.quoted_at||qat)}).toString(),'_blank');
+  openQuoteEditor(data);
 });
 
 function buildText(r){

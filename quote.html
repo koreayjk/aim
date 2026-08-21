@@ -429,8 +429,13 @@ async function init(){
   for(let i=0;i<3;i++) addRow('','once');
   applyLang(); calc();
   // 저장된 견적 내용이 있으면 그대로 복원 (동일 재현)
-  const rid=params.get('rid');
-  if(rid&&sbq){ try{ const {data}=await sbq.from('requests').select('quote_data').eq('id',Number(rid)).maybeSingle(); if(data&&data.quote_data&&data.quote_data.rows) restoreQuote(data.quote_data); }catch(e){} }
+  const qid=params.get('qid'), rid=params.get('rid');
+  if(sbq){ try{
+    let data=null;
+    if(qid){ ({data}=await sbq.from('quotes').select('quote_data').eq('id',Number(qid)).maybeSingle()); }
+    else if(rid){ ({data}=await sbq.from('requests').select('quote_data').eq('id',Number(rid)).maybeSingle()); }
+    if(data&&data.quote_data&&data.quote_data.rows) restoreQuote(data.quote_data);
+  }catch(e){} }
   if(params.get('auto')) setTimeout(()=>printQuote(),800);   // 관리자에서 다운로드 시 자동 인쇄/PDF
   // meta inputs trigger nothing in calc but keep
   document.querySelectorAll('.line input').forEach(inp=>inp.addEventListener('input',()=>{}));
@@ -454,7 +459,7 @@ function printQuote(){
   setTimeout(()=>{document.title=prev;},2000);
 }
 document.getElementById('pdfBtn').addEventListener('click',async()=>{await saveQuote(true);printQuote();});
-(()=>{const b=document.getElementById('saveBtn'); if(b){ if(!params.get('rid'))b.style.display='none'; else b.addEventListener('click',()=>saveQuote(false)); }})();
+(()=>{const b=document.getElementById('saveBtn'); if(b){ if(!params.get('qid')&&!params.get('rid'))b.style.display='none'; else b.addEventListener('click',()=>saveQuote(false)); }})();
 
 const EDGE_URL = "https://lnrugwschlcesaaertgc.supabase.co/functions/v1/create-checkout";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxucnVnd3NjaGxjZXNhYWVydGdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0ODczNzgsImV4cCI6MjA5NjA2MzM3OH0.JTpEUF2TO2NcuS1ak04hqd2IYfZ2bYn40L3EaLIwVGw";
@@ -484,8 +489,11 @@ function restoreQuote(d){
   applyLang(); calc(); autoGrow(document.getElementById('m_pay'));
 }
 async function saveQuote(silent){
-  const rid=params.get('rid'); if(!rid||!sbq){ if(!silent)alert('저장할 의뢰 정보가 없어요.'); return; }
-  const {error}=await sbq.from('requests').update({quote_data:serializeQuote()}).eq('id',Number(rid));
+  const qid=params.get('qid'), rid=params.get('rid');
+  if(!sbq || (!qid&&!rid)){ if(!silent)alert('저장할 견적 정보가 없어요.'); return; }
+  let error;
+  if(qid){ ({error}=await sbq.from('quotes').update({quote_data:serializeQuote(),amount:currentFinalAmount()}).eq('id',Number(qid))); }
+  else   { ({error}=await sbq.from('requests').update({quote_data:serializeQuote()}).eq('id',Number(rid))); }  // 레거시
   if(error){ if(!silent)alert('저장 실패: '+error.message); return; }
   if(!silent){const b=document.getElementById('saveBtn'); if(b){const t=b.textContent;b.textContent='저장됨 ✓';setTimeout(()=>b.textContent=t,1500);}}
 }

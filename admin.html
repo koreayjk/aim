@@ -1291,6 +1291,7 @@ function renderQuotes(){
           <button class="qdl" data-qpdf="${r.id}">📄 PDF</button>
           <button class="qdl qlink" data-qid="${r.id}">🔗 링크</button>
           ${r.request_id?`<button class="qdl qopen" data-rid="${r.request_id}" title="프로젝트" style="color:#6e7891">프로젝트</button>`:''}
+          ${isOwner()?`<button class="qdl qdel" data-qdel="${r.id}" title="삭제(대표 전용)" style="color:#c0392b">🗑️</button>`:''}
         </td></tr>`).join('')}
     </tbody></table></div>`
     :`<div class="empty" style="text-align:center;padding:50px 20px;color:var(--muted)">
@@ -1303,6 +1304,7 @@ function renderQuotes(){
   el.querySelectorAll('.qedit[data-qid]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qid));if(q)openQuoteEditor(q);}));
   el.querySelectorAll('.qdl[data-qpdf]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qpdf));if(q)openQuoteEditor(q,true);}));
   el.querySelectorAll('.qopen[data-rid]').forEach(b=>b.addEventListener('click',()=>openDetail(Number(b.dataset.rid))));
+  el.querySelectorAll('.qdel[data-qdel]').forEach(b=>b.addEventListener('click',()=>delQuote(Number(b.dataset.qdel))));
   el.querySelectorAll('.qlink[data-qid]').forEach(b=>b.addEventListener('click',async e=>{
     const q=quotes.find(x=>x.id===Number(b.dataset.qid)); if(!q)return;
     const url=location.origin+location.pathname.replace(/admin\.html$/,'')+'quote.html?'+quoteParams(q,{qno:q.quote_no,qdate:qdateStr(q.quoted_at)}).toString();
@@ -1327,7 +1329,7 @@ function detailQuotesHTML(r){
       <span class="badge" style="background:${QSTATE_COLOR[st]}1a;color:${QSTATE_COLOR[st]};font-weight:700">${st}</span>
       <span style="font-weight:700">${q.amount?fmtWon(q.amount):'<span class="dim">-</span>'}</span>
       <span class="dim" style="font-size:.8rem">${String(q.quoted_at||'').slice(0,10)}</span>
-      <span class="qrow-acts"><button class="qdl" data-qedit="${q.id}" style="color:#1f3f73">✏️ 편집</button><button class="qdl" data-qpdf2="${q.id}">📄 PDF</button></span>
+      <span class="qrow-acts"><button class="qdl" data-qedit="${q.id}" style="color:#1f3f73">✏️ 편집</button><button class="qdl" data-qpdf2="${q.id}">📄 PDF</button>${isOwner()?`<button class="qdl" data-qdel="${q.id}" style="color:#c0392b" title="삭제(대표 전용)">🗑️</button>`:''}</span>
     </div>`;
   }).join('') : '<div class="dim" style="padding:6px 2px;font-size:.86rem">아직 견적서가 없어요. 아래 “새 견적서 만들기”로 만들어 보세요.</div>';
   return `<div class="qsec">
@@ -1966,16 +1968,12 @@ function bindDetail(r){
     const t=buildText(r); try{await navigator.clipboard.writeText(t);}catch(_){const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}ta.remove();}
     const b=e.currentTarget,o=b.textContent;b.classList.add('ok');b.textContent='✓ 복사되었습니다!';setTimeout(()=>{b.classList.remove('ok');b.textContent=o;},1600);
   });
-  document.getElementById('quoteNew').addEventListener('click',async e=>{
-    const btn=e.currentTarget; btn.disabled=true; btn.textContent='발행 중…';
-    const {data,error}=await createQuote({request_id:r.id,dba:r.dba||'@IM',org_name:r.org_name,contact_name:r.contact_name,email:r.email,phone:r.phone});
-    if(error){alert('견적 발행 실패: '+error.message+'\n(SQL 29_quotes_table.sql 실행이 필요할 수 있어요.)');btn.disabled=false;btn.textContent='🧾 새 견적서 만들기';return;}
-    const list=Array.isArray(r.comments)?[...r.comments]:[]; list.push({who:(me&&me.name)||'관리자',text:`🧾 견적서 발행 (${data.quote_no})`,at:new Date().toISOString(),sys:true});
-    await sb.from('requests').update({comments:list}).eq('id',r.id); r.comments=list;
-    await loadAll(); openDetail(r.id); openQuoteEditor(data);
+  document.getElementById('quoteNew').addEventListener('click',()=>{
+    openNewQuote({request_id:r.id,dba:r.dba||'@IM',org_name:r.org_name,contact_name:r.contact_name,email:r.email,phone:r.phone});
   });
   sheet.querySelectorAll('[data-qedit]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qedit));if(q)openQuoteEditor(q);}));
   sheet.querySelectorAll('[data-qpdf2]').forEach(b=>b.addEventListener('click',()=>{const q=quotes.find(x=>x.id===Number(b.dataset.qpdf2));if(q)openQuoteEditor(q,true);}));
+  sheet.querySelectorAll('[data-qdel]').forEach(b=>b.addEventListener('click',()=>delQuote(Number(b.dataset.qdel))));
   document.getElementById('delBtn').addEventListener('click',()=>del(r.id));
 }
 // 견적(quotes 행) → quote.html 파라미터 (qid 기준 저장/복원)
@@ -1991,13 +1989,22 @@ function nextQuoteNo(){
   quotes.forEach(q=>scan(q.quote_no)); rows.forEach(r=>scan(r.quote_no));
   return prefix+String(max+1).padStart(4,'0');
 }
-// 새 견적 생성 (프로젝트에 연결하거나 독립). 생성된 quotes 행 반환.
-async function createQuote(o){
-  const qno=nextQuoteNo(); const qat=new Date().toISOString();
-  const row={request_id:o.request_id||null,dba:o.dba||'@IM',quote_no:qno,quoted_at:qat,quote_status:'발행',
-    org_name:o.org_name||null,contact_name:o.contact_name||null,email:o.email||null,phone:o.phone||null};
-  const {data,error}=await sb.from('quotes').insert([row]).select().single();
-  return {data,error};
+// 견적 삭제 (대표만) — DB 정책(30)도 owner만 허용
+async function delQuote(id){
+  if(!isOwner()){alert('견적서 삭제는 대표만 가능합니다.');return;}
+  const q=quotes.find(x=>x.id===id);
+  if(!confirm(`견적서 ${q?(q.quote_no||''):''} 를 삭제할까요?\n되돌릴 수 없습니다.`))return;
+  const {error}=await sb.from('quotes').delete().eq('id',id);
+  if(error){alert('삭제 실패: '+error.message+'\n(SQL 30 실행이 필요할 수 있어요.)');return;}
+  await loadAll();
+}
+// 새 견적서 편집 화면 열기 (아직 저장 안 함 — 편집기의 "저장"을 눌러야 DB에 생성됨)
+function openNewQuote(o){
+  const qno=nextQuoteNo();
+  const p=new URLSearchParams({'new':'1', rid:o.request_id||'', dba:o.dba||'@IM',
+    org:o.org_name||'', name:o.contact_name||'', phone:o.phone||'', email:o.email||'',
+    qno, qdate:qdateStr(new Date().toISOString()), lang:'ko'});
+  window.open('quote.html?'+p.toString(),'_blank');
 }
 
 function flashSaved(){const m=document.getElementById('savedMsg');if(!m)return;m.classList.add('show');setTimeout(()=>m.classList.remove('show'),1200);}
@@ -2055,16 +2062,13 @@ qcModal.addEventListener('click',e=>{if(e.target===qcModal)qcModal.classList.rem
 document.getElementById('qcSave').addEventListener('click',async()=>{
   const org=document.getElementById('qc_org').value.trim(); const err=document.getElementById('qcErr');
   if(!org){err.textContent='고객/단체명을 입력하세요.';return;}
-  err.textContent='생성 중…';
-  const {data,error}=await createQuote({
+  openNewQuote({
     dba:document.getElementById('qc_dba').value||'@IM', org_name:org,
     contact_name:document.getElementById('qc_name').value.trim(),
     email:document.getElementById('qc_email').value.trim(),
     phone:document.getElementById('qc_phone').value.trim()
   });
-  if(error){err.textContent='생성 실패: '+error.message+' (SQL 29 실행 필요할 수 있어요)';return;}
-  qcModal.classList.remove('show'); await loadAll();
-  openQuoteEditor(data);
+  qcModal.classList.remove('show');
 });
 
 function buildText(r){

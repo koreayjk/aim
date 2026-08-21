@@ -459,7 +459,7 @@ function printQuote(){
   setTimeout(()=>{document.title=prev;},2000);
 }
 document.getElementById('pdfBtn').addEventListener('click',async()=>{await saveQuote(true);printQuote();});
-(()=>{const b=document.getElementById('saveBtn'); if(b){ if(!params.get('qid')&&!params.get('rid'))b.style.display='none'; else b.addEventListener('click',()=>saveQuote(false)); }})();
+(()=>{const b=document.getElementById('saveBtn'); if(b){ if(!params.get('qid')&&!params.get('rid')&&!params.get('new'))b.style.display='none'; else b.addEventListener('click',()=>saveQuote(false)); }})();
 
 const EDGE_URL = "https://lnrugwschlcesaaertgc.supabase.co/functions/v1/create-checkout";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxucnVnd3NjaGxjZXNhYWVydGdjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0ODczNzgsImV4cCI6MjA5NjA2MzM3OH0.JTpEUF2TO2NcuS1ak04hqd2IYfZ2bYn40L3EaLIwVGw";
@@ -489,11 +489,27 @@ function restoreQuote(d){
   applyLang(); calc(); autoGrow(document.getElementById('m_pay'));
 }
 async function saveQuote(silent){
-  const qid=params.get('qid'), rid=params.get('rid');
-  if(!sbq || (!qid&&!rid)){ if(!silent)alert('저장할 견적 정보가 없어요.'); return; }
+  const qid=params.get('qid'), rid=params.get('rid'), isNew=params.get('new');
+  if(!sbq || (!qid&&!rid&&!isNew)){ if(!silent)alert('저장할 견적 정보가 없어요.'); return; }
+  const g=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
   let error;
-  if(qid){ ({error}=await sbq.from('quotes').update({quote_data:serializeQuote(),amount:currentFinalAmount()}).eq('id',Number(qid))); }
-  else   { ({error}=await sbq.from('requests').update({quote_data:serializeQuote()}).eq('id',Number(rid))); }  // 레거시
+  if(qid){
+    ({error}=await sbq.from('quotes').update({quote_data:serializeQuote(),amount:currentFinalAmount(),quote_no:g('m_qno')}).eq('id',Number(qid)));
+  } else if(isNew){
+    // "새 견적서"는 여기서 처음으로 DB에 생성됨 (저장 버튼을 눌러야 저장)
+    const row={request_id:rid?Number(rid):null, dba:params.get('dba')||'@IM',
+      quote_no:g('m_qno')||params.get('qno'), quoted_at:new Date().toISOString(), quote_status:'발행',
+      org_name:g('m_org')||null, contact_name:g('m_name')||null, email:g('m_email')||null, phone:g('m_phone')||null,
+      quote_data:serializeQuote(), amount:currentFinalAmount()};
+    const ins=await sbq.from('quotes').insert([row]).select().single();
+    error=ins.error;
+    if(!error && ins.data){ // 이후 저장은 update 가 되도록 URL/파라미터 갱신
+      params.set('qid', String(ins.data.id)); params.delete('new');
+      try{const u=new URL(location.href); u.searchParams.set('qid',String(ins.data.id)); u.searchParams.delete('new'); history.replaceState(null,'',u);}catch(e){}
+    }
+  } else {
+    ({error}=await sbq.from('requests').update({quote_data:serializeQuote()}).eq('id',Number(rid)));  // 레거시
+  }
   if(error){ if(!silent)alert('저장 실패: '+error.message); return; }
   if(!silent){const b=document.getElementById('saveBtn'); if(b){const t=b.textContent;b.textContent='저장됨 ✓';setTimeout(()=>b.textContent=t,1500);}}
 }

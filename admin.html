@@ -650,7 +650,7 @@ function renderDbaBar(){
   }));
 }
 let logDate=null, logMonth=null;   // 일별 활동(캘린더) 선택 상태
-let trainings=[], trainCat='전체', trainSel=null, trainAdding=false, trainMode='list', trainStaff=[];   // 직원 교육
+let trainings=[], trainCat='전체', trainSel=null, trainAdding=false, trainMode='list', trainStaff=[], trainingsLoaded=false;   // 직원 교육
 const DONE_CAP=5;
 function scopedRows(){ const base=dbaRows(); return (scope==='mine' && me && me.name) ? base.filter(r=>r.assignee===me.name) : base; }
 
@@ -1596,7 +1596,7 @@ async function loadTrainings(){
   if(el && !trainings.length) el.innerHTML='<p class="dim" style="padding:20px">교육 자료 불러오는 중…</p>';
   const {data,error}=await sb.from('trainings').select('*').order('created_at',{ascending:false});
   if(error){el.innerHTML='<p class="dim" style="padding:20px">교육 목록 오류: '+esc(error.message)+'<br><span style="font-size:.8rem">(trainings 테이블이 없으면 18_trainings.sql 을 실행하세요)</span></p>';return;}
-  trainings=data||[];
+  trainings=data||[]; trainingsLoaded=true;
   if(trainSel && !trainings.find(t=>t.id===trainSel)) trainSel=null;
   if(isOwner()){ const st=await sb.from('staff').select('name').eq('status','approved').order('name'); trainStaff=st.error?[]:(st.data||[]).map(x=>x.name).filter(Boolean); }
   renderTraining();
@@ -1604,7 +1604,12 @@ async function loadTrainings(){
 function trainModeToggle(){ return isOwner()?`<div class="tabs"><button class="${trainMode!=='status'?'on':''}" data-tmode="list">자료 목록</button><button class="${trainMode==='status'?'on':''}" data-tmode="status">수강 현황</button></div>`:''; }
 function renderTraining(){
   const el=document.getElementById('trainView'); if(!el)return;
-  if(trainSel){const t=trainings.find(x=>x.id===trainSel); if(t){el.innerHTML=trainDetail(t);wireTrainDetail(el,t);return;} trainSel=null;}
+  if(trainSel){
+    const t=trainings.find(x=>x.id===trainSel);
+    if(t){el.innerHTML=trainDetail(t);wireTrainDetail(el,t);return;}
+    if(!trainingsLoaded){ el.innerHTML='<p class="dim" style="padding:20px">교육 자료 불러오는 중…</p>'; loadTrainings(); return; } // 아직 로딩 전 → 선택 유지
+    trainSel=null;  // 로딩 끝났는데 해당 항목이 없을 때만 목록으로
+  }
   if(isOwner()&&trainMode==='status'){ el.innerHTML=trainStatus(); wireTrainStatus(el); return; }
   el.innerHTML=trainList(); wireTrainList(el);
 }

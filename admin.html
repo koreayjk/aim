@@ -543,6 +543,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
       <button id="scAll" class="on">전체</button>
       <button id="scMine">내 작업</button>
     </div>
+    <div style="margin-left:auto;position:relative;flex:0 1 320px;display:flex;align-items:center">
+      <input id="listSearch" placeholder="🔎 프로젝트명 · 담당자 검색" autocomplete="off" style="width:100%;border:1px solid var(--line);border-radius:22px;padding:9px 34px 9px 15px;font-size:.86rem;background:#fff">
+      <button id="listSearchClear" title="지우기" style="display:none;position:absolute;right:8px;border:none;background:transparent;color:var(--muted);font-size:1.1rem;cursor:pointer;line-height:1">&times;</button>
+    </div>
   </div>
   <div id="listView"></div>
   <div id="boardView" style="display:none"></div>
@@ -632,7 +636,7 @@ const STAGE_COLOR={'해야함':'#94a3b8','하는중':'#1f3f73','검토':'#d99a2b
 const STAGE_MAP={'준비':'해야함','진행':'하는중','검토':'검토','완료':'끝'};
 function effStage(c){ if(c.d) return '끝'; const s=c.s||''; return TASK_STAGES.includes(s)?s:(STAGE_MAP[s]||'해야함'); }
 const MODE_LABEL={keep:"기존 그대로",similar:"참고 제작",new:"새로 제작"};
-let rows=[], quotes=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false, boardType='전체';
+let rows=[], quotes=[], assignees=[], selId=null, view='list', scope='all', showAllDone=false, boardType='전체', listQ='';
 // ---- 사업부(DBA) ----
 const DBAS=[{k:'@IM',label:'@IM',c:'#1f3f73'},{k:'무역',label:'무역',c:'#1e7d6b'},{k:'캠프',label:'캠프',c:'#b9760a'},{k:'여행',label:'여행',c:'#6a48c0'}];
 let dba=(function(){try{return localStorage.getItem('tcs_dba')||'@IM'}catch(e){return '@IM'}})();
@@ -653,6 +657,10 @@ let logDate=null, logMonth=null;   // 일별 활동(캘린더) 선택 상태
 let trainings=[], trainCat='전체', trainSel=null, trainAdding=false, trainMode='list', trainStaff=[], trainingsLoaded=false;   // 직원 교육
 const DONE_CAP=5;
 function scopedRows(){ const base=dbaRows(); return (scope==='mine' && me && me.name) ? base.filter(r=>r.assignee===me.name) : base; }
+// 프로젝트 검색: 이름·담당자·유형·연락처
+function matchListQ(r){ const q=listQ.trim().toLowerCase(); if(!q)return true;
+  return (r.org_name||'').toLowerCase().includes(q) || (r.assignee||'').toLowerCase().includes(q)
+      || (r.request_type||'').toLowerCase().includes(q) || (r.contact_name||'').toLowerCase().includes(q); }
 
 const gate=document.getElementById('gate'), app=document.getElementById('app'), gerr=document.getElementById('gerr');
 let me=null, authMode='login';
@@ -1145,6 +1153,14 @@ document.getElementById('tabOrg').addEventListener('click',()=>setView('org'));
 document.getElementById('tabTrain').addEventListener('click',()=>setView('train'));
 document.getElementById('scAll').addEventListener('click',()=>setScope('all'));
 document.getElementById('scMine').addEventListener('click',()=>setScope('mine'));
+(function(){
+  const inp=document.getElementById('listSearch'), clr=document.getElementById('listSearchClear');
+  if(!inp)return;
+  const apply=()=>{ listQ=inp.value; if(clr)clr.style.display=inp.value?'block':'none';
+    if(view==='board')renderBoard(); else renderList(); };
+  inp.addEventListener('input',apply);
+  if(clr)clr.addEventListener('click',()=>{inp.value='';listQ='';clr.style.display='none';inp.focus();(view==='board'?renderBoard():renderList());});
+})();
 function setScope(s){scope=s;
   document.getElementById('scAll').classList.toggle('on',s==='all');
   document.getElementById('scMine').classList.toggle('on',s==='mine');
@@ -1430,9 +1446,9 @@ async function addComment(id,text){
 
 function receiptDate(r){ return (r.stage_due&&r.stage_due['접수·견적'])||String(r.created_at||'').slice(0,10); }
 function renderList(){
-  const rows=scopedRows().slice().sort((a,b)=>{const d=receiptDate(b).localeCompare(receiptDate(a));return d!==0?d:(b.created_at||'').localeCompare(a.created_at||'');});
+  const rows=scopedRows().filter(matchListQ).slice().sort((a,b)=>{const d=receiptDate(b).localeCompare(receiptDate(a));return d!==0?d:(b.created_at||'').localeCompare(a.created_at||'');});
   const el=document.getElementById('listView');
-  if(!rows.length){el.innerHTML='<div class="listwrap"><div class="empty">'+(scope==='mine'?'나에게 배정된 의뢰가 없습니다.':'아직 들어온 의뢰가 없습니다.')+'</div></div>';return;}
+  if(!rows.length){el.innerHTML='<div class="listwrap"><div class="empty">'+(listQ.trim()?('“'+esc(listQ.trim())+'” 검색 결과가 없습니다.'):(scope==='mine'?'나에게 배정된 의뢰가 없습니다.':'아직 들어온 의뢰가 없습니다.'))+'</div></div>';return;}
   el.innerHTML='<div class="listwrap">'+
     '<div class="lrow head"><div>#</div><div>단체명</div><div class="hide-m">방식</div><div class="hide-m">담당자</div><div class="hide-m">마감</div><div>상태</div></div>'+
     rows.map((r,i)=>`<div class="lrow" data-id="${r.id}">
@@ -1804,7 +1820,7 @@ async function toggleNoteReaction(id,at,who,emo){
 function renderBoard(){
   const el=document.getElementById('boardView');
   if(scope==='mine'&&me&&me.name){ return renderMyTodos(el); }
-  const rows0=scopedRows();
+  const rows0=scopedRows().filter(matchListQ);
   const rows = boardType==='전체'?rows0:rows0.filter(r=>(r.request_type||'홈페이지')===boardType);
   // 유형 필터 칩
   const chips='<div class="btype">'+BOARD_TYPES.map(t=>`<button class="${boardType===t?'on':''}" data-btype="${esc(t)}">${t}</button>`).join('')+'</div>';

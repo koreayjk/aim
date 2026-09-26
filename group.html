@@ -91,7 +91,9 @@ nav{display:flex;align-items:center;justify-content:space-between;gap:20px;paddi
 
 footer{border-top:1px solid var(--line);padding:40px 0 46px;margin-top:60px}
 .foot-in{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:center;color:var(--muted);font-size:.84rem}
-.foot-in .dbaline{font-size:.78rem}
+.foot-in .dbaline{font-size:.78rem;flex-basis:100%}
+.footlinks a{color:var(--navy);font-weight:600;border-bottom:1px solid transparent}
+.footlinks a:hover{border-bottom-color:var(--navy)}
 
 @media(max-width:760px){
   .grid{grid-template-columns:1fr}
@@ -213,7 +215,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 46px;margin-top:60px}
     <div class="info">
       <div>
         <h2 data-i18n="infoH2">회사 정보</h2>
-        <p data-i18n="infoP">모든 사업부는 하나의 법인, IM America Group Corp에 속합니다. 견적·계약·결제는 동일한 계좌로 진행되며, 사업부별 상호(브랜드)만 다릅니다.</p>
+        <p data-i18n="infoP">IM America Group Corp는 미국 텍사스에 등록된 기업입니다. 무역을 중심으로 IT(소프트웨어·모바일 앱, 예: imvoca), 교육, 여행 사업을 운영합니다. 모든 사업부는 하나의 법인에 속하며, 사업부별 상호(DBA)만 다릅니다.</p>
       </div>
       <div class="rows">
         <div class="row"><span class="k">Company</span><span class="v">IM America Group Corp</span></div>
@@ -228,6 +230,7 @@ footer{border-top:1px solid var(--line);padding:40px 0 46px;margin-top:60px}
 <footer>
   <div class="wrap foot-in">
     <span>© 2026 IM America Group Corp · Texas, USA</span>
+    <span class="footlinks"><a href="privacy.html" data-i18n="navPrivacy">개인정보처리방침</a> · <a href="terms.html" data-i18n="navTerms">이용약관</a> · <a href="mailto:imamerica2414@gmail.com" data-i18n="navContact">문의</a></span>
     <span class="dbaline" data-i18n="dbaLine">@IM(IM Genesis) · INTO Global Education · IM Tour 는 IM America Group Corp의 영업명(DBA)입니다.</span>
   </div>
 </footer>
@@ -246,8 +249,8 @@ const T={
   imDiv:"IT · @IM", imName:"IM Genesis", imDesc:"AI 기반 IT 사업부. 웹·앱·소프트웨어와 AI 솔루션을 만듭니다.", imGo:"사이트 보기 <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4'><path d='M5 12h14M13 6l6 6-6 6'/></svg>", imTag:"Live",
   cpDiv:"교육 · CAMP", cpName:"INTO Global Education", cpDesc:"유학·글로벌 교육 사업부. 학생들의 해외 진학과 캠프를 돕습니다.", cpGo:"intoabroad.com <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4'><path d='M7 17L17 7M9 7h8v8'/></svg>", cpTag:"Live",
   tvDiv:"여행 · TRAVEL", tvName:"IM Tour", tvDesc:"여행 사업부. 맞춤 여행과 투어 상품을 준비하고 있습니다.", tvGo:"준비 중", tvTag:"Coming soon",
-  infoH2:"회사 정보", infoP:"모든 사업부는 하나의 법인, IM America Group Corp에 속합니다. 견적·계약·결제는 동일한 계좌로 진행되며, 사업부별 상호(브랜드)만 다릅니다.",
-  lAddr:"주소",
+  infoH2:"회사 정보", infoP:"IM America Group Corp는 미국 텍사스에 등록된 기업입니다. 무역을 중심으로 IT(소프트웨어·모바일 앱, 예: imvoca), 교육, 여행 사업을 운영합니다. 모든 사업부는 하나의 법인에 속하며, 사업부별 상호(DBA)만 다릅니다.",
+  lAddr:"주소", navPrivacy:"개인정보처리방침", navTerms:"이용약관", navContact:"문의",
   dbaLine:"@IM(IM Genesis) · INTO Global Education · IM Tour 는 IM America Group Corp의 영업명(DBA)입니다."
  },
  en:{
@@ -262,8 +265,8 @@ const T={
   imDiv:"IT · @IM", imName:"IM Genesis", imDesc:"Our AI-driven IT division. We build web, apps, software, and AI solutions.", imGo:"Visit site <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4'><path d='M5 12h14M13 6l6 6-6 6'/></svg>", imTag:"Live",
   cpDiv:"EDUCATION · CAMP", cpName:"INTO Global Education", cpDesc:"Our study-abroad & global education division, guiding students overseas.", cpGo:"intoabroad.com <svg width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.4'><path d='M7 17L17 7M9 7h8v8'/></svg>", cpTag:"Live",
   tvDiv:"TRAVEL", tvName:"IM Tour", tvDesc:"Our travel division — custom trips and tour packages, coming soon.", tvGo:"Coming soon", tvTag:"Coming soon",
-  infoH2:"Company", infoP:"All divisions belong to one legal entity, IM America Group Corp. Quotes, contracts, and payments use the same account — only the division's trade name differs.",
-  lAddr:"Address",
+  infoH2:"Company", infoP:"IM America Group Corp is a company registered in Texas, USA. Built around trade, it also operates in technology (software & mobile apps such as imvoca), education, and travel. All divisions belong to this single legal entity and differ only by trade name (DBA).",
+  lAddr:"Address", navPrivacy:"Privacy Policy", navTerms:"Terms", navContact:"Contact",
   dbaLine:"@IM (IM Genesis), INTO Global Education, and IM Tour are registered DBAs of IM America Group Corp."
  }
 };

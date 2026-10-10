@@ -86,6 +86,11 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .lrow:last-child{border-bottom:none}
 .lrow:hover{background:#fafbf8}
 .lrow.head{background:#fafbf8;font-weight:700;color:var(--muted);font-size:.76rem;text-transform:uppercase;letter-spacing:.5px;cursor:default}
+.lrow.done{background:#f5f6f8;opacity:.62}
+.lrow.done:hover{opacity:1;background:#eef1f5}
+.lrow.done .org-n{text-decoration:line-through;text-decoration-color:#aab2c0}
+.donedivider{padding:10px 18px;background:#eef1f5;border-bottom:1px solid var(--line);font-size:.78rem;font-weight:800;color:var(--muted);letter-spacing:.3px}
+.donedivider span{font-weight:700;color:#8a93a6}
 .lrow .org{font-weight:700;font-size:.95rem;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:8px;min-width:0;text-align:left;padding:0}
 .lrow .org .org-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lrow .org .org-meta{font-weight:400;font-size:.78rem;white-space:nowrap;flex:0 0 auto}
@@ -1456,12 +1461,17 @@ async function addComment(id,text){
 
 function receiptDate(r){ return (r.stage_due&&r.stage_due['접수·견적'])||String(r.created_at||'').slice(0,10); }
 function renderList(){
-  const rows=scopedRows().filter(matchListQ).slice().sort((a,b)=>{const d=receiptDate(b).localeCompare(receiptDate(a));return d!==0?d:(b.created_at||'').localeCompare(a.created_at||'');});
+  const isDone=r=>(r.status||'')==='완료';
+  const rows=scopedRows().filter(matchListQ).slice().sort((a,b)=>{
+    const da=isDone(a)?1:0, db=isDone(b)?1:0; if(da!==db)return da-db;   // 완료는 항상 맨 아래
+    const d=receiptDate(b).localeCompare(receiptDate(a));return d!==0?d:(b.created_at||'').localeCompare(a.created_at||'');
+  });
   const el=document.getElementById('listView');
   if(!rows.length){el.innerHTML='<div class="listwrap"><div class="empty">'+(listQ.trim()?('“'+esc(listQ.trim())+'” 검색 결과가 없습니다.'):(scope==='mine'?'나에게 배정된 의뢰가 없습니다.':'아직 들어온 의뢰가 없습니다.'))+'</div></div>';return;}
+  const doneCount=rows.filter(isDone).length, activeCount=rows.length-doneCount;
   el.innerHTML='<div class="listwrap">'+
     '<div class="lrow head"><div>#</div><div>단체명</div><div class="hide-m">방식</div><div class="hide-m">담당자</div><div class="hide-m">마감</div><div>상태</div></div>'+
-    rows.map((r,i)=>`<div class="lrow" data-id="${r.id}">
+    rows.map((r,i)=>`${(doneCount&&i===activeCount)?`<div class="donedivider">✅ 완료된 작업 <span>${doneCount}건</span></div>`:''}<div class="lrow${isDone(r)?' done':''}" data-id="${r.id}">
       <div class="idx">${i+1}</div>
       <div class="org"><span class="org-n">${esc(r.org_name)||'(이름없음)'}</span>${srcBadge(r)}${r.region?`<span class="rbadge" style="background:${REGION_COLOR[r.region]}1a;color:${REGION_COLOR[r.region]}">${REGION_LABEL[r.region]}</span>`:''}<span class="dim org-meta">${r.request_type?esc(r.request_type)+' · ':''}${fmtDate(r.created_at)}</span>${isOwner()?`<select class="rowregion" data-id="${r.id}"><option value="" ${!r.region?'selected':''}>지역-</option><option value="GP" ${r.region==='GP'?'selected':''}>🌐글로벌</option><option value="KP" ${r.region==='KP'?'selected':''}>🇰🇷한국</option></select>`:''}</div>
       <div class="hide-m dim">${MODE_LABEL[r.mode]||r.mode||esc(r.request_type)||'-'}</div>

@@ -90,6 +90,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .lrow .org .org-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lrow .org .org-meta{font-weight:400;font-size:.78rem;white-space:nowrap;flex:0 0 auto}
 .lrow .org .src{flex:0 0 auto}
+.rbadge{flex:0 0 auto;font-size:.66rem;font-weight:800;padding:2px 7px;border-radius:6px;white-space:nowrap}
+.lrow .rowregion{flex:0 0 auto;margin-left:auto;border:1px solid var(--line);border-radius:7px;padding:3px 6px;font-size:.72rem;font-weight:700;color:var(--ink2);background:#fff;cursor:pointer}
 .lrow .idx{font-family:'Fraunces',serif;color:var(--muted)}
 .dim{color:var(--muted)}
 .empty{text-align:center;color:var(--muted);padding:50px}
@@ -570,6 +572,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
     </div>
     <div class="frow">
       <div class="fld"><label>담당자</label><input id="a_assignee" placeholder="비워두면 미지정"></div>
+      <div class="fld"><label>지역 (PM)</label><select id="a_region"><option value="">미설정</option><option value="GP">🌐 글로벌</option><option value="KP">🇰🇷 한국</option></select></div>
     </div>
     <div class="frow">
       <div class="fld"><label>연락처</label><input id="a_phone"></div>
@@ -656,7 +659,14 @@ function renderDbaBar(){
 let logDate=null, logMonth=null;   // 일별 활동(캘린더) 선택 상태
 let trainings=[], trainCat='전체', trainSel=null, trainAdding=false, trainMode='list', trainStaff=[], trainingsLoaded=false;   // 직원 교육
 const DONE_CAP=5;
-function scopedRows(){ const base=dbaRows(); return (scope==='mine' && me && me.name) ? base.filter(r=>r.assignee===me.name) : base; }
+// 프로젝트 지역: 글로벌(GP) = 글로벌 PM 관리 / 한국(KP) = 한국 PM 관리
+const REGIONS=[['GP','🌐 글로벌'],['KP','🇰🇷 한국']];
+const REGION_LABEL={GP:'글로벌',KP:'한국'};
+const REGION_COLOR={GP:'#1e7d6b',KP:'#33507e'};
+function myRegion(){ const rk=me&&me.rank; if(rk==='글로벌 PM')return 'GP'; if(rk==='한국 PM')return 'KP'; return null; }
+// "내 작업": 내가 담당(assignee)이거나, 내가 그 지역 PM이면 해당 지역 프로젝트 전부
+function mineMatch(r){ if(!me||!me.name)return false; if(r.assignee===me.name)return true; const reg=myRegion(); return !!(reg && (r.region||'')===reg); }
+function scopedRows(){ const base=dbaRows(); return (scope==='mine' && me && me.name) ? base.filter(mineMatch) : base; }
 // 프로젝트 검색: 이름·담당자·유형·연락처
 function matchListQ(r){ const q=listQ.trim().toLowerCase(); if(!q)return true;
   return (r.org_name||'').toLowerCase().includes(q) || (r.assignee||'').toLowerCase().includes(q)
@@ -1104,7 +1114,7 @@ function nAckSave(o){ try{localStorage.setItem('tcs_notif_ack', JSON.stringify(o
 function notifKey(n){ return n.r.id+':'+n.kind; }
 function computeNotifs(){
   const seen=nSeen(); const out=[]; const done=new Set();
-  const mine=r=> me && me.name && r.assignee===me.name;
+  const mine=r=> mineMatch(r);
   rows.forEach(r=>{
     if((r.status||'')==='완료') return;
     const dd=ddayInfo(dueOf(r));
@@ -1453,13 +1463,21 @@ function renderList(){
     '<div class="lrow head"><div>#</div><div>단체명</div><div class="hide-m">방식</div><div class="hide-m">담당자</div><div class="hide-m">마감</div><div>상태</div></div>'+
     rows.map((r,i)=>`<div class="lrow" data-id="${r.id}">
       <div class="idx">${i+1}</div>
-      <div class="org"><span class="org-n">${esc(r.org_name)||'(이름없음)'}</span>${srcBadge(r)}<span class="dim org-meta">${r.request_type?esc(r.request_type)+' · ':''}${fmtDate(r.created_at)}</span></div>
+      <div class="org"><span class="org-n">${esc(r.org_name)||'(이름없음)'}</span>${srcBadge(r)}${r.region?`<span class="rbadge" style="background:${REGION_COLOR[r.region]}1a;color:${REGION_COLOR[r.region]}">${REGION_LABEL[r.region]}</span>`:''}<span class="dim org-meta">${r.request_type?esc(r.request_type)+' · ':''}${fmtDate(r.created_at)}</span>${isOwner()?`<select class="rowregion" data-id="${r.id}"><option value="" ${!r.region?'selected':''}>지역-</option><option value="GP" ${r.region==='GP'?'selected':''}>🌐글로벌</option><option value="KP" ${r.region==='KP'?'selected':''}>🇰🇷한국</option></select>`:''}</div>
       <div class="hide-m dim">${MODE_LABEL[r.mode]||r.mode||esc(r.request_type)||'-'}</div>
       <div class="hide-m">${r.assignee?esc(r.assignee):'<span class="dim">미지정</span>'}</div>
       <div class="hide-m dim">${r.due_date||'-'}</div>
       <div><span class="badge st-${esc(r.status||'접수·견적')}">${esc(r.status||'접수·견적')}</span></div>
     </div>`).join('')+'</div>';
   el.querySelectorAll('.lrow[data-id]').forEach(it=>it.addEventListener('click',()=>openDetail(Number(it.dataset.id))));
+  el.querySelectorAll('.rowregion').forEach(sel=>{
+    sel.addEventListener('click',e=>e.stopPropagation());
+    sel.addEventListener('change',async e=>{e.stopPropagation();const id=Number(sel.dataset.id),v=sel.value||null;
+      const {error}=await sb.from('requests').update({region:v}).eq('id',id);
+      if(error){alert('지역 저장 실패: '+error.message+'\\n(SQL 31_region.sql 실행이 필요할 수 있어요.)');return;}
+      const row=rows.find(x=>x.id===id); if(row)row.region=v; renderList();
+    });
+  });
 }
 
 function boardCard(r){
@@ -1569,7 +1587,7 @@ function renderMyTodos(el){
   if(!tasks.length) taskBody='<div class="dim" style="padding:20px;text-align:center">나에게 배정된 할 일이 없어요 🎉</div>';
   // 2) 담당 프로젝트
   const projs=[];
-  rows.forEach(r=>{if(r.assignee===meName&&(r.status||'')!=='완료')projs.push({r,stage:r.status||'접수·견적',due:dueOf(r)});});
+  rows.forEach(r=>{if(mineMatch(r)&&(r.status||'')!=='완료')projs.push({r,stage:r.status||'접수·견적',due:dueOf(r)});});
   projs.forEach(it=>it.b=bucket(it.due)); projs.sort(byUrgency);
   const projBody=projs.length?('<div class="todo-sec">'+projs.map(it=>{const dd=it.due?ddayInfo(it.due):null;return `<div class="todo-item" data-id="${it.r.id}">
       ${todoBadge('proj',it.stage)}
@@ -1579,7 +1597,7 @@ function renderMyTodos(el){
   el.innerHTML=`<div class="todo-top"><b>${esc(meName||'내')} 님의 작업</b></div>`
     +dayLogBlock(meName)
     +`<div class="todo" style="margin-top:20px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>✅ 급한 할 일</b><span class="dim"> · 내 세부 작업 · 마감 급한 순</span></div>${taskBody}</div>`
-    +`<div class="todo" style="margin-top:22px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>📁 담당 프로젝트</b><span class="dim"> · 마감 급한 순</span></div>${projBody}</div>`;
+    +`<div class="todo" style="margin-top:22px"><div class="todo-top" style="font-size:.95rem;margin-bottom:10px"><b>📁 담당 프로젝트</b><span class="dim"> · ${myRegion()?(REGION_LABEL[myRegion()]+' 프로젝트 전체(PM) · '):''}마감 급한 순</span></div>${projBody}</div>`;
   wireDayLog(el,meName,()=>renderMyTodos(el));
   el.querySelectorAll('.todo-item[data-id]').forEach(x=>x.addEventListener('click',()=>openDetail(Number(x.dataset.id))));
   el.querySelectorAll('.mystage').forEach(sel=>{
@@ -1896,6 +1914,7 @@ function openDetail(id){
       <div class="frow" style="margin-bottom:14px">
         <div class="fld"><label>담당자</label><div class="assignwrap"><select id="f_assignee">${assigneeOptions(r.assignee)}</select></div></div>
         <div class="fld"><label>사업부</label><select id="f_dba">${DBAS.map(d=>`<option value="${d.k}" ${((r.dba||'@IM')===d.k)?'selected':''}>${d.label}</option>`).join('')}</select></div>
+        <div class="fld"><label>지역 (PM)</label><select id="f_region"><option value="" ${!r.region?'selected':''}>미설정</option>${REGIONS.map(([v,l])=>`<option value="${v}" ${(r.region===v)?'selected':''}>${l}</option>`).join('')}</select></div>
       </div>
       <div class="fld" style="margin-bottom:16px"><label>단계별 마감일 <span class="dim" style="font-weight:400;font-size:.74rem">· 완료 = 최종 마감</span></label>
         <div class="sdue-grid">${pipelineOf(r).map(s=>`<label class="sdue-item"><span>${s==='완료'?'완료(최종)':esc(s)}</span><input type="date" class="sdue" data-stage="${esc(s)}" value="${(r.stage_due&&r.stage_due[s])||(s==='접수·견적'?String(r.created_at||'').slice(0,10):'')}"></label>`).join('')}</div>
@@ -1966,6 +1985,7 @@ function bindDetail(r){
   const sel=document.getElementById('f_assignee');
   sel.addEventListener('change',()=>saveField(r.id,{assignee:sel.value||null}));
   const fdb=document.getElementById('f_dba'); if(fdb)fdb.addEventListener('change',()=>{saveField(r.id,{dba:fdb.value});renderDbaBar();});
+  const frg=document.getElementById('f_region'); if(frg)frg.addEventListener('change',()=>{saveField(r.id,{region:frg.value||null});r.region=frg.value||null;});
   sheet.querySelectorAll('.sdue').forEach(inp=>inp.addEventListener('change',()=>{
     const sd=Object.assign({},r.stage_due||{}); const st=inp.dataset.stage;
     if(inp.value) sd[st]=inp.value; else delete sd[st];
@@ -2069,6 +2089,7 @@ document.getElementById('addSave').addEventListener('click',async()=>{
     request_type:document.getElementById('a_type').value,
     phone:document.getElementById('a_phone').value.trim(),email:document.getElementById('a_email').value.trim(),
     field:document.getElementById('a_field').value.trim(),notes:document.getElementById('a_notes').value.trim(),
+    region:document.getElementById('a_region').value||null,
     stage_due:{'접수·견적':todayStr()}};
   const {error}=await sb.from('requests').insert([row]);
   if(error){err.textContent="추가 실패: "+error.message;return;}

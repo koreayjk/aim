@@ -408,6 +408,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .modal.show{display:flex;align-items:flex-start;justify-content:center}
 .sheet{background:var(--panel);border-radius:20px;max-width:720px;width:100%;margin:auto;box-shadow:0 50px 90px -40px rgba(0,0,0,.5)}
 .sheet .mhead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:24px 28px 16px;border-bottom:1px solid var(--line)}
+#f_orgname[contenteditable]{outline:none;border-bottom:1px dashed transparent;border-radius:4px;cursor:text}
+#f_orgname[contenteditable]:hover{border-bottom-color:var(--line)}
+#f_orgname[contenteditable]:focus{border-bottom-color:var(--navy);background:var(--soft)}
+#f_orgname[contenteditable]:empty:before{content:attr(data-ph);color:#aab2c0}
 .sheet h2{font-size:1.4rem;font-weight:600}
 .sheet .sub{color:var(--muted);font-size:.84rem;margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .x{background:none;border:none;font-size:1.5rem;color:var(--muted);line-height:1;padding:4px}
@@ -1914,7 +1918,7 @@ function openDetail(id){
   const done=cl.filter(c=>effStage(c)==='끝').length; const pct=cl.length?Math.round(done/cl.length*100):0;
   sheet.innerHTML=`
     <div class="mhead">
-      <div><h2>${esc(r.org_name)||'(이름없음)'}</h2>
+      <div style="min-width:0;flex:1"><h2 id="f_orgname" ${canMng?'contenteditable="true" spellcheck="false" data-ph="(이름없음)"':''} title="${canMng?'클릭해서 이름 수정':''}">${esc(r.org_name||'')}</h2>
         <div class="sub">${srcBadge(r)} ${esc(r.request_type||'홈페이지')}${r.mode?(' · '+(MODE_LABEL[r.mode]||r.mode)):''} · 접수 ${fmtDate(r.created_at)}</div></div>
       <button class="x" id="mX">&times;</button>
     </div>
@@ -1996,6 +2000,17 @@ function bindDetail(r){
   sel.addEventListener('change',()=>saveField(r.id,{assignee:sel.value||null}));
   const fdb=document.getElementById('f_dba'); if(fdb)fdb.addEventListener('change',()=>{saveField(r.id,{dba:fdb.value});renderDbaBar();});
   const frg=document.getElementById('f_region'); if(frg)frg.addEventListener('change',()=>{saveField(r.id,{region:frg.value||null});r.region=frg.value||null;});
+  const fon=document.getElementById('f_orgname');
+  if(fon&&fon.getAttribute('contenteditable')==='true'){
+    fon.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();fon.blur();}});
+    fon.addEventListener('blur',async()=>{
+      const v=(fon.textContent||'').trim();
+      if(v===(r.org_name||''))return;
+      const {error}=await sb.from('requests').update({org_name:v}).eq('id',r.id);
+      if(error){alert('이름 저장 실패: '+error.message);fon.textContent=r.org_name||'';return;}
+      r.org_name=v; renderDbaBar&&renderDbaBar(); render();
+    });
+  }
   sheet.querySelectorAll('.sdue').forEach(inp=>inp.addEventListener('change',()=>{
     const sd=Object.assign({},r.stage_due||{}); const st=inp.dataset.stage;
     if(inp.value) sd[st]=inp.value; else delete sd[st];

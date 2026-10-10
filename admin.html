@@ -82,7 +82,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .src{font-size:.68rem;font-weight:700;padding:2px 7px;border-radius:6px}
 .src-web{background:var(--soft);color:var(--navy)}.src-manual{background:#fdeede;color:#a86412}
 .listwrap{background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.lrow{display:grid;grid-template-columns:34px 1fr 90px 84px 150px 124px;gap:12px;align-items:center;padding:9px 18px;border-bottom:1px solid var(--line);cursor:pointer;font-size:.9rem}
+.lrow{display:grid;grid-template-columns:34px 1fr 90px 84px 150px 100px;gap:12px;align-items:center;padding:9px 18px;border-bottom:1px solid var(--line);cursor:pointer;font-size:.9rem}
 .lrow:last-child{border-bottom:none}
 .lrow:hover{background:#fafbf8}
 .lrow.head{background:#fafbf8;font-weight:700;color:var(--muted);font-size:.76rem;text-transform:uppercase;letter-spacing:.5px;cursor:default}
@@ -93,9 +93,6 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .donedivider span{font-weight:700;color:#8a93a6}
 .lrow .dday{font-weight:800;font-size:.73rem;white-space:nowrap}
 .lrow .dday.soon{color:#b9760a}.lrow .dday.over{color:var(--err)}.lrow .dday.normal{color:var(--muted)}
-.lrow .stcell{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.stwarn{font-size:.66rem;font-weight:800;padding:2px 7px;border-radius:6px;white-space:nowrap}
-.stwarn.over{color:var(--err);background:#fdeeea}.stwarn.soon{color:#b9760a;background:#fff2dd}
 .lrow .org{font-weight:700;font-size:.95rem;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:flex-start;gap:8px;min-width:0;text-align:left;padding:0}
 .lrow .org .org-n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lrow .org .org-meta{font-weight:400;font-size:.78rem;white-space:nowrap;flex:0 0 auto}
@@ -497,7 +494,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
 .qtable .qdl:hover{background:#e3f3ee}
 .qwrap{overflow-x:auto}
 .del{background:none;border:1px solid #e3c4c0;color:var(--err);border-radius:10px;padding:10px 16px;font-weight:600;font-size:.86rem}.del:hover{background:#fdf0ef}
-@media(max-width:720px){.frow{grid-template-columns:1fr}.lrow{grid-template-columns:26px 1fr 112px;font-size:.85rem}.lrow .hide-m{display:none}}
+@media(max-width:720px){.frow{grid-template-columns:1fr}.lrow{grid-template-columns:26px 1fr 92px;font-size:.85rem}.lrow .hide-m{display:none}}
 </style>
 </head>
 <body>
@@ -1506,7 +1503,7 @@ function renderList(){
       <div class="hide-m dim">${MODE_LABEL[r.mode]||r.mode||esc(r.request_type)||'-'}</div>
       <div class="hide-m">${r.assignee?esc(r.assignee):'<span class="dim">미지정</span>'}</div>
       <div class="hide-m dim">${(()=>{const due=dueOf(r);const dd=(!isDone(r)&&due)?ddayInfo(due):null;return due?`${due}${dd?` <span class="dday ${dd.tone}">${dd.label}</span>`:''}`:'-';})()}</div>
-      <div class="stcell"><span class="badge st-${esc(r.status||'접수·견적')}">${esc(r.status||'접수·견적')}</span>${(()=>{if(isDone(r))return '';const dd=ddayInfo(dueOf(r));return (dd&&(dd.tone==='over'||dd.tone==='soon'))?`<span class="stwarn ${dd.tone}">${dd.tone==='over'?'지남':'임박'}</span>`:'';})()}</div>
+      <div><span class="badge st-${esc(r.status||'접수·견적')}">${esc(r.status||'접수·견적')}</span></div>
     </div>`).join('')+'</div>';
   el.querySelectorAll('.lrow[data-id]').forEach(it=>it.addEventListener('click',()=>openDetail(Number(it.dataset.id))));
   el.querySelectorAll('.rowregion').forEach(sel=>{

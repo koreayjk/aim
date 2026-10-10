@@ -1102,8 +1102,28 @@ async function loadAll(){
   if(loadAll._first && dba==='캠프' && view==='list'){ loadAll._first=false; setView('quote'); }
   else { loadAll._first=false; render(); }
   if(selId){const x=rows.find(v=>v.id===selId); if(x) openDetail(x.id);}
+  autoDueNotify();   // 마감 지난 프로젝트에 시스템 코멘트 자동 기록
 }
 loadAll._first=true;
+// 마감기한이 지난(진행중) 프로젝트에 "마감 지남" 코멘트를 1회 남긴다. 관리자 세션에서만, 날짜별 중복 방지.
+async function autoDueNotify(){
+  if(!isOwner())return;
+  const today=todayStr();
+  for(const r of rows){
+    if((r.status||'')==='완료')continue;
+    const due=dueOf(r); if(!due||due>=today)continue;   // 오늘 이전(지남)만
+    const marker='마감기한('+due+')';
+    const list=Array.isArray(r.comments)?r.comments:[];
+    if(list.some(c=>c&&c.sys&&typeof c.text==='string'&&c.text.indexOf(marker)>=0))continue;  // 이미 알림함
+    const cur=await sb.from('requests').select('comments').eq('id',r.id).maybeSingle();
+    const latest=(!cur.error&&cur.data&&Array.isArray(cur.data.comments))?[...cur.data.comments]:[...list];
+    if(latest.some(c=>c&&c.sys&&typeof c.text==='string'&&c.text.indexOf(marker)>=0))continue;
+    const dd=ddayInfo(due); const over=dd?dd.label.replace('D+','')+'일 지남':'';
+    latest.push({who:'시스템',text:`⚠️ ${marker}이 지났습니다${over?` (${over})`:''}. 상태를 업데이트하거나 마감일을 조정해 주세요.`,at:new Date().toISOString(),sys:true});
+    const {error}=await sb.from('requests').update({comments:latest}).eq('id',r.id);
+    if(!error){ r.comments=latest; if(selId===r.id)openDetail(r.id); }
+  }
+}
 document.getElementById('refresh').addEventListener('click',loadAll);
 
 function inThisWeek(d){if(!d)return false;const due=new Date(d+'T00:00:00');const now=new Date();const end=new Date();end.setDate(now.getDate()+7);return due>=new Date(now.toDateString())&&due<=end;}

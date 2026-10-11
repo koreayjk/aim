@@ -40,6 +40,7 @@ nav{display:flex;align-items:center;justify-content:space-between;gap:14px;paddi
 .card .cover{aspect-ratio:3/4;background:var(--soft);overflow:hidden;border-bottom:1px solid var(--line);position:relative}
 .card .cover img{width:100%;height:100%;object-fit:cover;transition:.5s}
 .card:hover .cover img{transform:scale(1.03)}
+.card .cover .webcover{display:flex;align-items:center;justify-content:center;height:100%;font-size:2.6rem;background:linear-gradient(135deg,#1f3f73,#2f6f6a);color:#fff}
 .card .pdfbadge{position:absolute;top:14px;left:14px;background:rgba(31,63,115,.95);color:#fff;font-size:.7rem;font-weight:700;letter-spacing:1px;padding:6px 12px;border-radius:30px;display:flex;align-items:center;gap:6px}
 .card .body{padding:24px 26px 28px}
 .card .body .idx{font-family:'Fraunces',serif;font-style:italic;color:var(--navy);font-size:.92rem;margin-bottom:6px}
@@ -164,6 +165,42 @@ footer .footlogo{height:36px;margin:0 auto 12px;border-radius:8px}
 <script>
 const PROJECTS = [
   {
+    name: "더케어타임스",
+    nameEn: "The Care Times",
+    loc:  "온라인 신문 · 웹",
+    locEn: "Online newspaper · Web",
+    tags:   ["웹 매체", "언론 · 뉴스", "2026"],
+    tagsEn: ["Web media", "News", "2026"],
+    url: "https://thecaretimes.net"
+  },
+  {
+    name: "시핑타임스",
+    nameEn: "Shipping Times",
+    loc:  "온라인 신문 · 웹",
+    locEn: "Online newspaper · Web",
+    tags:   ["웹 매체", "물류 · 뉴스", "2026"],
+    tagsEn: ["Web media", "Logistics News", "2026"],
+    url: "https://shippingtimes.vercel.app"
+  },
+  {
+    name: "이스라엘투데이 (한국)",
+    nameEn: "Israel Today (Korea)",
+    loc:  "온라인 신문 · 웹",
+    locEn: "Online newspaper · Web",
+    tags:   ["웹 매체", "언론 · 뉴스", "2026"],
+    tagsEn: ["Web media", "News", "2026"],
+    url: "https://israeltoday-kr.vercel.app"
+  },
+  {
+    name: "에듀와이드",
+    nameEn: "EduWide",
+    loc:  "온라인 매체 · 웹",
+    locEn: "Online media · Web",
+    tags:   ["웹 매체", "교육 · 미디어", "2026"],
+    tagsEn: ["Web media", "Education", "2026"],
+    url: "https://eduwide.vercel.app"
+  },
+  {
     name: "코너스톤 크리스천 아카데미 브로셔",
     nameEn: "Cornerstone Christian Academy Brochure",
     loc:  "8페이지 · 학교 안내서 · 인투유학",
@@ -231,13 +268,15 @@ function render(){
     const name = lang==='ko' ? p.name : p.nameEn;
     const loc  = lang==='ko' ? p.loc  : p.locEn;
     const tg   = lang==='ko' ? p.tags : p.tagsEn;
-    const cover = p.pages[0] || '';
+    const pages = p.pages || [];
+    const isWeb = !!p.url;
+    const cover = pages[0] || '';
     const tags = tg.map(x=>`<span class="tag">${x}</span>`).join('');
     return `
       <div class="card" data-idx="${i}">
         <div class="cover">
-          ${cover ? `<img src="${cover}" alt="${name}">` : ''}
-          <span class="pdfbadge">${T[lang].pdfLabel} · ${p.pages.length}p</span>
+          ${cover ? `<img src="${cover}" alt="${name}">` : (isWeb ? `<div class="webcover">🔗</div>` : '')}
+          <span class="pdfbadge">${isWeb ? (lang==='ko'?'🔗 웹사이트':'🔗 Website') : (T[lang].pdfLabel + ' · ' + pages.length + 'p')}</span>
         </div>
         <div class="body">
           <div class="idx">0${i+1}</div>
@@ -245,15 +284,19 @@ function render(){
           <div class="loc">${loc}</div>
           <div class="tags">${tags}</div>
           <div class="foot">
-            <span>${p.pages.length} ${T[lang].page}</span>
-            <span class="view">${T[lang].viewLabel}</span>
+            <span>${isWeb ? (lang==='ko'?'웹사이트':'Website') : (pages.length + ' ' + T[lang].page)}</span>
+            <span class="view">${isWeb ? (lang==='ko'?'사이트 열기 ↗':'Open ↗') : T[lang].viewLabel}</span>
           </div>
         </div>
       </div>`;
   }).join('');
   // attach click handlers
   grid.querySelectorAll('.card').forEach(c=>{
-    c.addEventListener('click', ()=>openViewer(Number(c.dataset.idx)));
+    c.addEventListener('click', ()=>{
+      const p = PROJECTS[Number(c.dataset.idx)];
+      if(p && p.url){ window.open(p.url,'_blank','noopener'); }
+      else { openViewer(Number(c.dataset.idx)); }
+    });
   });
 }
 

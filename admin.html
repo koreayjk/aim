@@ -590,7 +590,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:14px;pa
       <div class="fld"><label>이메일</label><input id="a_email"></div>
     </div>
     <div class="frow">
-      <div class="fld"><label>작업 유형</label><select id="a_type"><option>홈페이지</option><option>어플</option><option>프로그램</option><option>홍보물</option></select></div>
+      <div class="fld"><label>작업 유형</label><select id="a_type"><option>홈페이지</option><option>어플</option><option>홍보물</option></select></div>
       <div class="fld"><label>분야/업종</label><input id="a_field"></div>
     </div>
     <div class="frow">
@@ -635,10 +635,9 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { sche
 const PIPELINES={
   '홈페이지':['접수·견적','개발','검수','완료'],
   '어플':['접수·견적','기획','개발','테스트','완료'],
-  '프로그램':['접수·견적','기획','개발','테스트','완료'],
   '홍보물':['접수·견적','시안','수정','인쇄·납품','완료']
 };
-const BOARD_TYPES=['전체','홈페이지','어플','프로그램','홍보물'];
+const BOARD_TYPES=['전체','홈페이지','어플','홍보물'];
 const MACRO_ACTIVE=['접수·견적','진행중','검수'];
 const STATUSES=[...new Set(Object.values(PIPELINES).flat())]; // 전체 단계 집합 (CSS/기타용)
 function pipelineOf(r){return PIPELINES[r&&r.request_type]||PIPELINES['홈페이지'];}
@@ -1107,9 +1106,14 @@ loadAll._first=true;
 async function migrateDesignStage(){
   if(!isOwner())return;
   for(const r of rows){
-    if((r.status||'')!=='디자인')continue;
-    const {error}=await sb.from('requests').update({status:'개발'}).eq('id',r.id);
-    if(!error){ r.status='개발'; if(selId===r.id)openDetail(r.id); }
+    if((r.status||'')==='디자인'){
+      const {error}=await sb.from('requests').update({status:'개발'}).eq('id',r.id);
+      if(!error){ r.status='개발'; if(selId===r.id)openDetail(r.id); }
+    }
+    if((r.request_type||'')==='프로그램'){   // '프로그램' 유형 폐지 → '어플'로 통합
+      const {error}=await sb.from('requests').update({request_type:'어플'}).eq('id',r.id);
+      if(!error){ r.request_type='어플'; if(selId===r.id)openDetail(r.id); }
+    }
   }
 }
 // 마감기한이 지난(진행중) 프로젝트에 "마감 지남" 코멘트를 1회 남긴다. 관리자 세션에서만, 날짜별 중복 방지.
@@ -1955,7 +1959,7 @@ function openDetail(id){
       <button class="x" id="mX">&times;</button>
     </div>
     <div class="mbody">
-      <div class="fld" style="margin-bottom:14px"><label>작업 유형</label><select id="f_type">${['홈페이지','어플','프로그램','홍보물'].map(t=>`<option ${((r.request_type||'홈페이지')===t)?'selected':''}>${t}</option>`).join('')}</select></div>
+      <div class="fld" style="margin-bottom:14px"><label>작업 유형</label><select id="f_type">${['홈페이지','어플','홍보물'].map(t=>`<option ${((r.request_type||'홈페이지')===t)?'selected':''}>${t}</option>`).join('')}</select></div>
       <div class="statusbar">${pipelineOf(r).map(s=>`<button class="${(r.status||'접수·견적')===s?'on':''}" data-s="${esc(s)}">${esc(s)}</button>`).join('')}</div>
       <div class="frow" style="margin-bottom:14px">
         <div class="fld"><label>담당자</label><div class="assignwrap"><select id="f_assignee">${assigneeOptions(r.assignee)}</select></div></div>

@@ -633,8 +633,8 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { db: { schema: 'aim' } });
 
 const PIPELINES={
-  '홈페이지':['접수·견적','디자인','개발','검수','완료'],
-  '어플':['접수·견적','기획','디자인','개발','테스트','완료'],
+  '홈페이지':['접수·견적','개발','검수','완료'],
+  '어플':['접수·견적','기획','개발','테스트','완료'],
   '프로그램':['접수·견적','기획','개발','테스트','완료'],
   '홍보물':['접수·견적','시안','수정','인쇄·납품','완료']
 };
@@ -1100,8 +1100,18 @@ async function loadAll(){
   else { loadAll._first=false; render(); }
   if(selId){const x=rows.find(v=>v.id===selId); if(x) openDetail(x.id);}
   autoDueNotify();   // 마감 지난 프로젝트에 시스템 코멘트 자동 기록
+  migrateDesignStage();   // 옛 '디자인' 단계 → '개발'로 이관 (디자인 단계 폐지)
 }
 loadAll._first=true;
+// 폐지된 '디자인' 단계에 남아있는 프로젝트를 '개발'로 옮긴다 (관리자 세션에서 1회).
+async function migrateDesignStage(){
+  if(!isOwner())return;
+  for(const r of rows){
+    if((r.status||'')!=='디자인')continue;
+    const {error}=await sb.from('requests').update({status:'개발'}).eq('id',r.id);
+    if(!error){ r.status='개발'; if(selId===r.id)openDetail(r.id); }
+  }
+}
 // 마감기한이 지난(진행중) 프로젝트에 "마감 지남" 코멘트를 1회 남긴다. 관리자 세션에서만, 날짜별 중복 방지.
 async function autoDueNotify(){
   if(!isOwner())return;

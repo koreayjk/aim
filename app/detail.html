@@ -47,7 +47,7 @@ nav{display:flex;align-items:center;justify-content:space-between;gap:14px;paddi
 .store svg{width:26px;height:26px;flex:none;fill:currentColor}
 .store span{display:flex;flex-direction:column;line-height:1.15}
 .store small{font-size:.68rem;opacity:.8;font-weight:500}
-.store b{font-size:1.08rem;font-weight:700;letter-spacing:-.2px}
+.store b{font-size:1.08rem;font-weight:700;letter-spacing:-.2px;white-space:nowrap}
 .store.off{background:var(--panel);color:var(--muted);border:1.5px dashed #c3cbdb;box-shadow:none;cursor:default}
 .store.off:hover{transform:none;background:var(--panel)}
 .weblink{display:inline-flex;align-items:center;gap:6px;margin-top:16px;font-size:.88rem;font-weight:600;color:var(--violet)}
@@ -100,7 +100,7 @@ footer{border-top:1px solid var(--line);padding:34px 0}
 .frow{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:.84rem}
 
 @media(max-width:900px){ .hero{grid-template-columns:1fr;gap:34px;padding-top:44px} .feats{grid-template-columns:1fr 1fr} .others{grid-template-columns:1fr 1fr} }
-@media(max-width:620px){ .wrap{padding:0 16px} nav{padding:13px 16px} .feats,.others{grid-template-columns:1fr} .home-link span{display:none} .store{flex:1;min-width:0} .sec-h{flex-direction:column;gap:4px} }
+@media(max-width:620px){ .wrap{padding:0 16px} nav{padding:13px 16px} .feats,.others{grid-template-columns:1fr} .home-link span{display:none} .store{flex:1;min-width:0;padding:10px 12px;gap:8px} .store b{font-size:.98rem} .store svg{width:22px;height:22px} .sec-h{flex-direction:column;gap:4px} }
 </style>
 </head>
 <body>

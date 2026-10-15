@@ -66,6 +66,9 @@ nav{display:flex;align-items:center;justify-content:space-between;gap:14px;paddi
 .meta .loc{font-size:.85rem;color:var(--muted);margin-top:2px}
 .tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px}
 .tag{font-size:.72rem;font-weight:600;color:var(--muted);border:1px solid var(--line);padding:4px 11px;border-radius:20px}
+.avail{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);font-size:.78rem;font-weight:700;color:var(--muted)}
+.avail.on{color:var(--violet)}
+.avail .go{color:var(--violet)}
 
 .ghost .win{background:transparent;border:1.5px dashed #cfc9e6;box-shadow:none;display:flex;align-items:center;justify-content:center;min-height:300px}
 .proj.ghost:hover .win{transform:translateY(-6px);border-color:var(--violet)}
@@ -136,13 +139,13 @@ const T = {
   ko:{ title:"@IM — 앱 개발", home:"홈", eyebrow:"@IM Apps",
        h1:"앱 <em>개발</em>",
        sub:"모바일·웹 앱을 기획하고 개발합니다. @IM이 만든 앱을 이곳에 모읍니다.",
-       visit:"앱 보기", ghostT:"준비 중", ghostP:"곧 새로운 앱이 올라옵니다.",
+       visit:"자세히 보기", onStore:"App Store · Google Play", soon:"스토어 출시 예정", ghostT:"준비 중", ghostP:"곧 새로운 앱이 올라옵니다.",
        ctaTitle:"앱 아이디어가 <em>있으신가요?</em>", ctaSub:"모바일·웹 앱, @IM이 기획부터 출시까지 함께합니다.",
        ctaBtn:"앱 개발 문의", copyright:"© 2026 IM America Group Corp · Texas, USA" },
   en:{ title:"@IM — App Development", home:"Home", eyebrow:"@IM Apps",
        h1:"App <em>development</em>",
        sub:"We design and develop mobile & web apps. @IM's apps live here.",
-       visit:"View app", ghostT:"Coming soon", ghostP:"New apps will appear here shortly.",
+       visit:"Learn more", onStore:"App Store · Google Play", soon:"Coming to app stores", ghostT:"Coming soon", ghostP:"New apps will appear here shortly.",
        ctaTitle:"Got an <em>app idea?</em>", ctaSub:"Mobile & web apps — @IM takes you from concept to launch.",
        ctaBtn:"Start an app", copyright:"© 2025 @IM · Web & Software · Texas, USA" }
 };
@@ -156,7 +159,7 @@ function renderGrid(lang){
     const tg=(lang==='en'?(p.tagsEn||p.tags):p.tags)||[];
     const tags=tg.map(x=>`<span class="tag">${x}</span>`).join('');
     const el=document.createElement('a'); el.className='proj'; el.href='detail.html?id='+encodeURIComponent(p.id);
-    el.innerHTML=`<div class="win"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><b>${p.path}</b></span></div><div class="shot">${shot}</div><div class="meta"><h3>${p.name}</h3><div class="loc">${pick(p.loc,lang)}</div><div class="tags">${tags}</div></div></div>`;
+    el.innerHTML=`<div class="win"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><b>${p.path}</b></span></div><div class="shot">${shot}</div><div class="meta"><h3>${p.name}</h3><div class="loc">${pick(p.loc,lang)}</div><div class="tags">${tags}</div><div class="avail${(p.appStore||p.playStore)?' on':''}"><span>${(p.appStore||p.playStore)?t.onStore:t.soon}</span><span class="go">${t.visit} &rarr;</span></div></div></div>`;
     grid.appendChild(el);
   });
   const ghostN = PROJECTS.length ? 1 : 3;

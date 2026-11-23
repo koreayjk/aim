@@ -159,7 +159,7 @@ function renderGrid(lang){
     const tg=(lang==='en'?(p.tagsEn||p.tags):p.tags)||[];
     const tags=tg.map(x=>`<span class="tag">${x}</span>`).join('');
     const el=document.createElement('a'); el.className='proj'; el.href='detail.html?id='+encodeURIComponent(p.id);
-    el.innerHTML=`<div class="win"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><b>${p.path}</b></span></div><div class="shot">${shot}</div><div class="meta"><h3>${p.name}</h3><div class="loc">${pick(p.loc,lang)}</div><div class="tags">${tags}</div><div class="avail${(p.appStore||p.playStore)?' on':''}"><span>${(p.appStore||p.playStore)?t.onStore:t.soon}</span><span class="go">${t.visit} &rarr;</span></div></div></div>`;
+    el.innerHTML=`<div class="win"><div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="url"><b>${p.path}</b></span></div><div class="shot">${shot}</div><div class="meta"><h3>${p.name}</h3><div class="loc">${pick(p.loc,lang)}</div><div class="tags">${tags}</div><div class="avail${(p.appStore||p.playStore)?' on':''}"><span>${(p.appStore||p.playStore)?[p.appStore&&'App Store',p.playStore&&'Google Play'].filter(Boolean).join(' · '):t.soon}</span><span class="go">${t.visit} &rarr;</span></div></div></div>`;
     grid.appendChild(el);
   });
   const ghostN = PROJECTS.length ? 1 : 3;

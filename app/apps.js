@@ -7,6 +7,30 @@
    ==================================================== */
 window.APPS = [
   {
+    id: "svm",
+    name: "SVM Mission",
+    loc: { ko: "대학생 선교 동원 · 훈련 · 파송", en: "Mobilize · train · send college students" },
+    path: "svmagain.org/app",
+    url: "https://svmagain.org/app/",
+    appStore: "https://apps.apple.com/us/app/svm-mission/id6832082506", playStore: "",
+    cover: "https://svmagain.org/assets/images/hero.jpg",
+    tags: ["모바일 앱", "선교 · 대학생", "2026"], tagsEn: ["Mobile app", "Mission · Students", "2026"],
+    tagline: { ko: "방학마다 대학생을 열방으로, 훈련부터 파송까지 앱 하나로", en: "Sending college students to the nations every break, from training to sending in one app" },
+    desc: {
+      ko: "텍사스 브라이언–칼리지스테이션의 대학생 선교 운동 SVM(Student Volunteer Movement)의 공식 앱입니다. 학생은 선교지를 둘러보고 현지 언어로 복음 메시지를 연습하며 시즌을 지원하고, 후원자는 한 나라를 품고 그 팀을 위해 기도합니다.",
+      en: "The official app of SVM (Student Volunteer Movement) in Bryan–College Station, Texas. Students explore fields, practice the gospel message in the field's language and apply for a season; supporters carry a nation in prayer and follow its team."
+    },
+    features: [
+      { t: { ko: "1분 가입", en: "Sign up in a minute" }, d: { ko: "1분이면 가입하고 SVM 가족이 됩니다.", en: "Join the SVM family in under a minute." } },
+      { t: { ko: "선교지 둘러보기", en: "Explore the fields" }, d: { ko: "지금 열려 있는 선교지와 현지 교회를 미리 살펴봅니다.", en: "Browse the fields open now and the churches that receive students." } },
+      { t: { ko: "현지 언어 복음 메시지 연습", en: "Gospel-message practice" }, d: { ko: "가게 될 선교지의 언어로 복음 메시지를 앱에서 연습합니다.", en: "Practice the gospel message in your field's language, right in the app." } },
+      { t: { ko: "시즌 지원", en: "Apply for a season" }, d: { ko: "방학 시즌을 골라 단기 선교를 지원합니다. 학생은 항공권만 부담합니다.", en: "Pick a school break and apply for a short-term trip; students pay only their flight." } },
+      { t: { ko: "한 나라를 품고 기도", en: "Carry a nation in prayer" }, d: { ko: "기도할 나라에 이름을 적고, 그 나라로 가는 팀의 소식을 따라갑니다.", en: "Write your name on a nation and follow the team going there." } },
+      { t: { ko: "매주 훈련과 연결", en: "Weekly training" }, d: { ko: "매주 일요일 선교 모임(오후 2~4시) 훈련과 함께 준비합니다.", en: "Prepare alongside the weekly Sunday Mission Gathering (2–4 PM)." } },
+    ],
+    audience: { ko: ["선교에 헌신하려는 대학생", "기도 · 후원자", "학생을 받는 현지 교회"], en: ["College students ready to go", "Prayer partners & supporters", "Host churches on the field"] },
+  },
+  {
     id: "imnewsroom",
     name: "IM Newsroom",
     loc: { ko: "AI 편집국 · 언론사 플랫폼", en: "AI newsroom for publishers" },

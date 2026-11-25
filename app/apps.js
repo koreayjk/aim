@@ -12,7 +12,7 @@ window.APPS = [
     loc: { ko: "대학생 선교 동원 · 훈련 · 파송", en: "Mobilize · train · send college students" },
     path: "svmagain.org/app",
     url: "https://svmagain.org/app/",
-    appStore: "https://apps.apple.com/us/app/svm-mission/id6832082506", playStore: "",
+    appStore: "https://apps.apple.com/us/app/svm-mission/id6832082506", playStore: "https://play.google.com/store/apps/details?id=com.imamerica.svm",
     cover: "https://svmagain.org/assets/images/hero.jpg",
     tags: ["모바일 앱", "선교 · 대학생", "2026"], tagsEn: ["Mobile app", "Mission · Students", "2026"],
     tagline: { ko: "방학마다 대학생을 열방으로, 훈련부터 파송까지 앱 하나로", en: "Sending college students to the nations every break, from training to sending in one app" },

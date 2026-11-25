@@ -31,6 +31,30 @@ window.APPS = [
     audience: { ko: ["선교에 헌신하려는 대학생", "기도 · 후원자", "학생을 받는 현지 교회"], en: ["College students ready to go", "Prayer partners & supporters", "Host churches on the field"] },
   },
   {
+    id: "cbc",
+    name: "CBC · Christian Business Connect",
+    loc: { ko: "크리스천 사업가 모임 회원 앱", en: "Member app for a Christian business network" },
+    path: "wmto.vercel.app/connect",
+    url: "https://wmto.vercel.app/connect",
+    appStore: "", playStore: "",
+    cover: "https://wmto.vercel.app/brand/og-cbc.png",
+    tags: ["회원 앱", "사업가 네트워크", "2026"], tagsEn: ["Member app", "Business network", "2026"],
+    tagline: { ko: "소개와 감사, 1:1 만남과 성장 기록을 한 앱에서", en: "Referrals, thanks, 1:1 meetings and growth, all in one app" },
+    desc: {
+      ko: "매주 모여 서로의 일을 나누고 고객을 소개하는 크리스천 사업가 모임 CBC의 회원 앱입니다. 같은 업종은 한 모임(텐트)에 한 분이라 경쟁 없이 연결되고, 모임 밖의 소개와 만남, 배움까지 앱에서 이어 갑니다.",
+      en: "The member app for CBC, a Christian business network that meets weekly to share work and refer customers. With one member per industry in each local group (a \"tent\"), members connect without competing, and carry referrals, meetings and learning on in the app."
+    },
+    features: [
+      { t: { ko: "소개 보내기 · 받기", en: "Send & receive referrals" }, d: { ko: "회원끼리 고객을 소개하고, 소개가 어디까지 진행됐는지 상태를 기록합니다.", en: "Refer customers to one another and track where each referral stands." } },
+      { t: { ko: "감사 기록", en: "Thanks log" }, d: { ko: "소개가 성사되면 감사로 마무리합니다. 소개에 대가는 주고받지 않습니다.", en: "Close each successful referral with a thank-you; no money changes hands for referrals." } },
+      { t: { ko: "1:1 만남 기록", en: "1:1 meeting log" }, d: { ko: "모임 밖 일대일 만남을 기록하고 상대가 확인하면 완성됩니다. 사진은 두 분이 모두 동의할 때만 남깁니다.", en: "Log one-on-one meetings, confirmed by the other person; photos only with both members' consent." } },
+      { t: { ko: "90일 성장 기록", en: "90-day growth view" }, d: { ko: "최근 90일 활동을 7가지 영역으로 돌아보고, 말뚝·기둥·천막·등불 4단계로 다음 걸음을 제안합니다.", en: "Reviews the last 90 days across 7 areas and suggests next steps through four growth stages." } },
+      { t: { ko: "텐트 운영 · 돌봄", en: "Tent leadership & care" }, d: { ko: "텐트장이 매달 모임을 점검하고, 새 회원에게 동행 짝을 지정해 함께 돌봅니다.", en: "Tent leaders review their group monthly and pair each new member with a companion." } },
+      { t: { ko: "배움과 선교(WMTO)", en: "Learning & missions (WMTO)" }, d: { ko: "아카데미 이수를 기록하고, 원하는 회원은 승인을 받아 선교사 자립을 돕는 WMTO 사역에 참여합니다.", en: "Track academy courses; members who apply and are approved can join WMTO, helping missionaries become self-supporting." } },
+    ],
+    audience: { ko: ["크리스천 사업가 · 자영업자", "지역 모임(텐트) 리더", "선교에 마음 있는 사업가"], en: ["Christian business owners", "Local group (tent) leaders", "Business owners with a heart for missions"] },
+  },
+  {
     id: "imnewsroom",
     name: "IM Newsroom",
     loc: { ko: "AI 편집국 · 언론사 플랫폼", en: "AI newsroom for publishers" },
